@@ -341,11 +341,11 @@ import {
   secondsToDuration,
   createToast,
 } from '@/utils'
+import useCall from '@/composables/call'
 import { usersStore } from '@/stores/users'
 import { contactsStore } from '@/stores/contacts'
 import {
   createResource,
-  createDocumentResource,
   createListResource,
   FileUploader,
   ErrorMessage,
@@ -357,14 +357,14 @@ import {
   Avatar,
   call,
 } from 'frappe-ui'
-import { ref, computed, inject } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const { getUser, users } = usersStore()
 const { getContact, contacts } = contactsStore()
 const router = useRouter()
 
-const makeCall = inject('makeOutgoingCall')
+const { makeOutgoingCall: makeCall } = useCall()
 
 const props = defineProps({
   leadId: {

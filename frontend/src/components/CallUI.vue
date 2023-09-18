@@ -1,5 +1,4 @@
 <template>
-  <slot />
   <div
     v-show="showCallPopup"
     ref="callPopup"
@@ -106,74 +105,72 @@
       </div>
     </div>
   </div>
-  <Teleport to="#call-area">
-    <div
-      v-show="showSmallCallWindow"
-      class="flex items-center justify-between gap-3 bg-gray-900 text-base text-gray-300 -ml-3 mr-2 px-2 py-[7px] rounded-lg cursor-pointer select-none"
-      @click="toggleCallWindow"
-    >
-      <div class="flex items-center gap-2">
-        <Avatar
-          :image="contact.image"
-          :label="contact.full_name"
-          class="flex items-center justify-center !h-5 !w-5 relative"
-        />
-        <div class="truncate max-w-[120px]">
-          {{ contact.full_name }}
-        </div>
-      </div>
-      <div v-if="onCall" class="flex items-center gap-2">
-        <div class="my-1 min-w-[40px] text-center">
-          {{ counterUp?.updatedTime }}
-        </div>
-        <Button variant="solid" theme="red" class="rounded-full !h-6 !w-6">
-          <template #icon>
-            <PhoneIcon
-              class="fill-white h-4 w-4 rotate-[135deg]"
-              @click.stop="hangUpCall"
-            />
-          </template>
-        </Button>
-      </div>
-      <div v-else-if="calling" class="flex items-center gap-3">
-        <div class="my-1">
-          {{ callStatus == 'ringing' ? 'Ringing...' : 'Calling...' }}
-        </div>
-        <Button
-          variant="solid"
-          theme="red"
-          class="rounded-full !h-6 !w-6"
-          @click.stop="cancelCall"
-        >
-          <template #icon>
-            <PhoneIcon class="fill-white h-4 w-4 rotate-[135deg]" />
-          </template>
-        </Button>
-      </div>
-      <div v-else class="flex items-center gap-2">
-        <Button
-          variant="solid"
-          theme="green"
-          class="rounded-full !h-6 !w-6 pulse relative"
-          @click.stop="acceptIncomingCall"
-        >
-          <template #icon>
-            <PhoneIcon class="fill-white h-4 w-4 animate-pulse" />
-          </template>
-        </Button>
-        <Button
-          variant="solid"
-          theme="red"
-          class="rounded-full !h-6 !w-6"
-          @click.stop="rejectIncomingCall"
-        >
-          <template #icon>
-            <PhoneIcon class="fill-white h-4 w-4 rotate-[135deg]" />
-          </template>
-        </Button>
+  <div
+    v-show="showSmallCallWindow"
+    class="flex items-center justify-between gap-3 bg-gray-900 text-base text-gray-300 -ml-3 mr-2 px-2 py-[7px] rounded-lg cursor-pointer select-none"
+    @click="toggleCallWindow"
+  >
+    <div class="flex items-center gap-2">
+      <Avatar
+        :image="contact.image"
+        :label="contact.full_name"
+        class="flex items-center justify-center !h-5 !w-5 relative"
+      />
+      <div class="truncate max-w-[120px]">
+        {{ contact.full_name }}
       </div>
     </div>
-  </Teleport>
+    <div v-if="onCall" class="flex items-center gap-2">
+      <div class="my-1 min-w-[40px] text-center">
+        {{ counterUp?.updatedTime }}
+      </div>
+      <Button variant="solid" theme="red" class="rounded-full !h-6 !w-6">
+        <template #icon>
+          <PhoneIcon
+            class="fill-white h-4 w-4 rotate-[135deg]"
+            @click.stop="hangUpCall"
+          />
+        </template>
+      </Button>
+    </div>
+    <div v-else-if="calling" class="flex items-center gap-3">
+      <div class="my-1">
+        {{ callStatus == 'ringing' ? 'Ringing...' : 'Calling...' }}
+      </div>
+      <Button
+        variant="solid"
+        theme="red"
+        class="rounded-full !h-6 !w-6"
+        @click.stop="cancelCall"
+      >
+        <template #icon>
+          <PhoneIcon class="fill-white h-4 w-4 rotate-[135deg]" />
+        </template>
+      </Button>
+    </div>
+    <div v-else class="flex items-center gap-2">
+      <Button
+        variant="solid"
+        theme="green"
+        class="rounded-full !h-6 !w-6 pulse relative"
+        @click.stop="acceptIncomingCall"
+      >
+        <template #icon>
+          <PhoneIcon class="fill-white h-4 w-4 animate-pulse" />
+        </template>
+      </Button>
+      <Button
+        variant="solid"
+        theme="red"
+        class="rounded-full !h-6 !w-6"
+        @click.stop="rejectIncomingCall"
+      >
+        <template #icon>
+          <PhoneIcon class="fill-white h-4 w-4 rotate-[135deg]" />
+        </template>
+      </Button>
+    </div>
+  </div>
   <NoteModal v-model="showNoteModal" :note="note" @updateNote="updateNote" />
 </template>
 
@@ -183,31 +180,32 @@ import MinimizeIcon from '@/components/Icons/MinimizeIcon.vue'
 import DialpadIcon from '@/components/Icons/DialpadIcon.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import CountUpTimer from '@/components/CountUpTimer.vue'
-import { Device } from '@twilio/voice-sdk'
+import useCall from '@/composables/call'
 import { useDraggable, useWindowSize } from '@vueuse/core'
-import { contactsStore } from '@/stores/contacts'
 import { Avatar, call } from 'frappe-ui'
-import { onMounted, provide, ref, watch } from 'vue'
+import { onMounted, ref } from 'vue'
 import NoteModal from './NoteModal.vue'
 
-const { getContact } = contactsStore()
+let {
+  _call,
+  onCall,
+  calling,
+  muted,
+  counterUp,
+  callStatus,
+  showCallPopup,
+  showSmallCallWindow,
+  callPopup,
+  contact,
+  toggleMute,
+  acceptIncomingCall,
+  rejectIncomingCall,
+  hangUpCall,
+  cancelCall,
+  startupClient,
+  toggleCallWindow,
+} = useCall()
 
-let device = ''
-let log = ref('Connecting...')
-let _call = ref(null)
-const contact = ref({
-  full_name: '',
-  mobile_no: '',
-})
-
-let showCallPopup = ref(false)
-let showSmallCallWindow = ref(false)
-let onCall = ref(false)
-let calling = ref(false)
-let muted = ref(false)
-let callPopup = ref(null)
-let counterUp = ref(null)
-let callStatus = ref('')
 const showNoteModal = ref(false)
 const note = ref({
   title: '',
@@ -247,252 +245,7 @@ let { style } = useDraggable(callPopup, {
   preventDefault: true,
 })
 
-async function startupClient() {
-  log.value = 'Requesting Access Token...'
-
-  try {
-    const data = await call('crm.twilio.api.generate_access_token')
-    log.value = 'Got a token.'
-    intitializeDevice(data.token)
-  } catch (err) {
-    log.value = 'An error occurred. ' + err.message
-  }
-}
-
-function intitializeDevice(token) {
-  device = new Device(token, {
-    codecPreferences: ['opus', 'pcmu'],
-    fakeLocalDTMF: true,
-    enableRingingState: true,
-  })
-
-  addDeviceListeners()
-
-  device.register()
-}
-
-function addDeviceListeners() {
-  device.on('registered', () => {
-    log.value = 'Ready to make and receive calls!'
-  })
-
-  device.on('unregistered', (device) => {
-    log.value = 'Logged out'
-  })
-
-  device.on('error', (error) => {
-    log.value = 'Twilio.Device Error: ' + error.message
-  })
-
-  device.on('incoming', handleIncomingCall)
-
-  device.on('tokenWillExpire', async () => {
-    const data = await call('crm.twilio.api.generate_access_token')
-    device.updateToken(data.token)
-  })
-}
-
-// function update_call_log(conn, status = 'Completed') {
-//   console.log('connection', conn)
-//   if (!conn.parameters.CallSid) return
-//   call('crm.twilio.api.update_call_log', {
-//     call_sid: conn.parameters.CallSid,
-//     status: status,
-//   })
-// }
-
-function toggleMute() {
-  if (_call.value.isMuted()) {
-    _call.value.mute(false)
-    muted.value = false
-  } else {
-    _call.value.mute()
-    muted.value = true
-  }
-}
-
-function handleIncomingCall(call) {
-  log.value = `Incoming call from ${call.parameters.From}`
-
-  // get name of the caller from the phone number
-
-  contact.value = getContact(call.parameters.From)
-
-  if (!contact.value) {
-    contact.value = {
-      full_name: 'Unknown',
-      mobile_no: call.parameters.From,
-    }
-  }
-
-  showCallPopup.value = true
-  _call.value = call
-
-  _call.value.on('accept', (conn) => {
-    console.log('conn', conn)
-  })
-
-  // add event listener to call object
-  call.on('cancel', handleDisconnectedIncomingCall)
-  call.on('disconnect', handleDisconnectedIncomingCall)
-  call.on('reject', handleDisconnectedIncomingCall)
-}
-
-async function acceptIncomingCall() {
-  log.value = 'Accepted incoming call.'
-  onCall.value = true
-  await _call.value.accept()
-  counterUp.value.start()
-}
-
-function rejectIncomingCall() {
-  _call.value.reject()
-  log.value = 'Rejected incoming call'
-  showCallPopup.value = false
-  if (showSmallCallWindow.value == undefined) {
-    showSmallCallWindow = false
-  } else {
-    showSmallCallWindow.value = false
-  }
-  callStatus.value = ''
-  muted.value = false
-}
-
-function hangUpCall() {
-  _call.value.disconnect()
-  log.value = 'Hanging up incoming call'
-  onCall.value = false
-  callStatus.value = ''
-  muted.value = false
-  note.value = {
-    title: '',
-    content: '',
-  }
-  counterUp.value.stop()
-}
-
-function handleDisconnectedIncomingCall() {
-  log.value = `Call ended from handle disconnected Incoming call.`
-  showCallPopup.value = false
-  if (showSmallCallWindow.value == undefined) {
-    showSmallCallWindow = false
-  } else {
-    showSmallCallWindow.value = false
-  }
-  _call.value = null
-  muted.value = false
-  onCall.value = false
-  counterUp.value.stop()
-}
-
-async function makeOutgoingCall(number) {
-  contact.value = getContact(number)
-
-  if (device) {
-    log.value = `Attempting to call ${contact.value.mobile_no} ...`
-
-    try {
-      _call.value = await device.connect({
-        params: { To: contact.value.mobile_no },
-      })
-
-      _call.value.on('messageReceived', (message) => {
-        let info = message.content
-        callStatus.value = info.CallStatus
-
-        log.value = `Call status: ${info.CallStatus}`
-
-        if (info.CallStatus == 'in-progress') {
-          log.value = `Call in progress.`
-          calling.value = false
-          onCall.value = true
-          counterUp.value.start()
-        }
-      })
-
-      _call.value.on('accept', () => {
-        log.value = `Initiated call!`
-        showCallPopup.value = true
-        calling.value = true
-        onCall.value = false
-      })
-      _call.value.on('disconnect', (conn) => {
-        log.value = `Call ended from makeOutgoing call disconnect.`
-        calling.value = false
-        onCall.value = false
-        showCallPopup.value = false
-        showSmallCallWindow = false
-        _call.value = null
-        callStatus.value = ''
-        muted.value = false
-        counterUp.value.stop()
-        note.value = {
-          title: '',
-          content: '',
-        }
-        // update_call_log(conn)
-      })
-      _call.value.on('cancel', () => {
-        log.value = `Call ended from makeOutgoing call cancel.`
-        calling.value = false
-        onCall.value = false
-        showCallPopup.value = false
-        showSmallCallWindow = false
-        _call.value = null
-        callStatus.value = ''
-        muted.value = false
-        note.value = {
-          title: '',
-          content: '',
-        }
-        counterUp.value.stop()
-      })
-    } catch (error) {
-      log.value = `Could not connect call: ${error.message}`
-    }
-  } else {
-    log.value = 'Unable to make call.'
-  }
-}
-
-function cancelCall() {
-  _call.value.disconnect()
-  showCallPopup.value = false
-  if (showSmallCallWindow.value == undefined) {
-    showSmallCallWindow = false
-  } else {
-    showSmallCallWindow.value = false
-  }
-  calling.value = false
-  onCall.value = false
-  callStatus.value = ''
-  muted.value = false
-  note.value = {
-    title: '',
-    content: '',
-  }
-}
-
-function toggleCallWindow() {
-  showCallPopup.value = !showCallPopup.value
-  if (showSmallCallWindow.value == undefined) {
-    showSmallCallWindow = !showSmallCallWindow
-  } else {
-    showSmallCallWindow.value = !showSmallCallWindow.value
-  }
-}
-
 onMounted(() => startupClient())
-
-watch(
-  () => log.value,
-  (value) => {
-    console.log(value)
-  },
-  { immediate: true }
-)
-
-provide('makeOutgoingCall', makeOutgoingCall)
 </script>
 
 <style scoped>
