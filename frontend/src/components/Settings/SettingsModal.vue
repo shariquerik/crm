@@ -39,8 +39,12 @@
 <script setup>
 import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
 import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
+import UpgradeIcon from '@/components/Icons/UpgradeIcon.vue'
+import WalletsIcon from '@/components/Icons/WalletsIcon.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import ProfileSettings from '@/components/Settings/ProfileSettings.vue'
+import Plans from '@/components/Settings/Plans.vue'
+import Billing from '@/components/Settings/Billing.vue'
 import WhatsAppSettings from '@/components/Settings/WhatsAppSettings.vue'
 import TwilioSettings from '@/components/Settings/TwilioSettings.vue'
 import SidebarLink from '@/components/SidebarLink.vue'
@@ -60,6 +64,28 @@ const tabs = computed(() => {
           label: 'Profile',
           icon: ContactsIcon,
           component: markRaw(ProfileSettings),
+        },
+      ],
+    },
+    {
+      label: 'Plans',
+      hideLabel: true,
+      items: [
+        {
+          label: 'Plans',
+          icon: UpgradeIcon,
+          component: markRaw(Plans),
+        },
+      ],
+    },
+    {
+      label: 'Billing',
+      hideLabel: true,
+      items: [
+        {
+          label: 'Billing',
+          icon: WalletsIcon,
+          component: markRaw(Billing),
         },
       ],
     },
