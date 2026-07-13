@@ -1,0 +1,559 @@
+{
+ "blocks": [
+  {
+   "baseStyles": {
+    "display": "flex",
+    "flexDirection": "row",
+    "flexShrink": 0,
+    "height": "100%",
+    "overflowX": "hidden",
+    "width": "inherit"
+   },
+   "blockName": "body",
+   "children": [
+    {
+     "blockName": "crm-sidebar",
+     "componentId": "crm-sidebar",
+     "componentName": "crm-sidebar",
+     "componentProps": {
+      "activeSlug": "{{ route.params.doctype }}",
+      "sections": "{{ sidebarLayout.data || [] }}",
+      "views": "{{ views }}"
+     },
+     "isStudioComponent": true
+    },
+    {
+     "baseStyles": {
+      "display": "flex",
+      "flexDirection": "column",
+      "flexGrow": "1",
+      "gap": "16px",
+      "minWidth": "0",
+      "overflowY": "auto",
+      "padding": "24px",
+      "width": "100%"
+     },
+     "blockName": "detail-body",
+     "children": [
+      {
+       "baseStyles": {
+        "alignItems": "center",
+        "display": "flex",
+        "flexDirection": "row",
+        "gap": "12px",
+        "justifyContent": "space-between",
+        "width": "100%"
+       },
+       "blockName": "detail-header",
+       "children": [
+        {
+         "blockName": "detail-breadcrumbs",
+         "componentId": "detail-breadcrumbs",
+         "componentName": "Breadcrumbs",
+         "componentProps": {
+          "items": "{{ breadcrumbs }}"
+         }
+        },
+        {
+         "blockName": "detail-save",
+         "componentEvents": {
+          "click": {
+           "action": "Run Script",
+           "event": "click",
+           "script": "function handleEvent() { saveDoc() }"
+          }
+         },
+         "componentId": "detail-save",
+         "componentName": "Button",
+         "componentProps": {
+          "label": "Save",
+          "loading": "{{ saving }}",
+          "variant": "solid"
+         }
+        }
+       ],
+       "componentId": "detail-header",
+       "componentName": "container",
+       "originalElement": "div"
+      },
+      {
+       "blockName": "detail-error",
+       "componentId": "detail-error",
+       "componentName": "ErrorMessage",
+       "componentProps": {
+        "message": "{{ saveError }}"
+       },
+       "visibilityCondition": "{{ saveError }}"
+      },
+      {
+       "blockName": "detail-form",
+       "componentId": "detail-form",
+       "componentName": "FormLayout",
+       "componentProps": {
+        "doc": {
+         "$type": "variable",
+         "name": "doc"
+        },
+        "layout": "{{ fieldsLayout.data || [] }}"
+       },
+       "visibilityCondition": "{{ fieldsLayout.data?.length }}"
+      },
+      {
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "gap": "12px",
+        "marginTop": "8px",
+        "width": "100%"
+       },
+       "blockName": "detail-tabs",
+       "children": [
+        {
+         "blockName": "detail-tab-buttons",
+         "componentId": "detail-tab-buttons",
+         "componentName": "TabButtons",
+         "componentProps": {
+          "modelValue": {
+           "$type": "variable",
+           "name": "activeTab"
+          },
+          "options": [
+           {
+            "label": "Notes",
+            "value": "notes"
+           },
+           {
+            "label": "Tasks",
+            "value": "tasks"
+           }
+          ]
+         }
+        },
+        {
+         "baseStyles": {
+          "display": "flex",
+          "flexDirection": "column",
+          "gap": "12px",
+          "width": "100%"
+         },
+         "blockName": "detail-notes-panel",
+         "children": [
+          {
+           "baseStyles": {
+            "display": "flex",
+            "flexDirection": "column",
+            "gap": "8px",
+            "width": "100%"
+           },
+           "blockName": "detail-notes-composer",
+           "children": [
+            {
+             "baseStyles": {
+              "flexGrow": "1",
+              "minWidth": "0"
+             },
+             "blockName": "note-title",
+             "componentId": "note-title",
+             "componentName": "FormControl",
+             "componentProps": {
+              "label": "Title",
+              "modelValue": {
+               "$type": "variable",
+               "name": "noteTitle"
+              },
+              "placeholder": "Note title",
+              "type": "text"
+             }
+            },
+            {
+             "baseStyles": {
+              "flexGrow": "1",
+              "minWidth": "0"
+             },
+             "blockName": "note-content",
+             "componentId": "note-content",
+             "componentName": "FormControl",
+             "componentProps": {
+              "label": "Note",
+              "modelValue": {
+               "$type": "variable",
+               "name": "noteContent"
+              },
+              "placeholder": "Write a note\u2026",
+              "rows": 3,
+              "type": "textarea"
+             }
+            },
+            {
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "row",
+              "justifyContent": "flex-end",
+              "width": "100%"
+             },
+             "blockName": "detail-note-actions",
+             "children": [
+              {
+               "blockName": "note-add",
+               "componentEvents": {
+                "click": {
+                 "action": "Run Script",
+                 "event": "click",
+                 "script": "function handleEvent() { addNote() }"
+                }
+               },
+               "componentId": "note-add",
+               "componentName": "Button",
+               "componentProps": {
+                "label": "Add note",
+                "loading": "{{ addingNote }}",
+                "variant": "solid"
+               }
+              }
+             ],
+             "componentId": "detail-note-actions",
+             "componentName": "container",
+             "originalElement": "div"
+            }
+           ],
+           "componentId": "detail-notes-composer",
+           "componentName": "container",
+           "originalElement": "div"
+          },
+          {
+           "baseStyles": {
+            "minHeight": "180px",
+            "width": "100%"
+           },
+           "blockName": "detail-notes-rows",
+           "componentId": "detail-notes-rows",
+           "componentName": "ListView",
+           "componentProps": {
+            "columns": [
+             {
+              "key": "title",
+              "label": "Title",
+              "width": "16rem"
+             },
+             {
+              "key": "preview",
+              "label": "Note",
+              "width": "28rem"
+             },
+             {
+              "key": "modified",
+              "label": "Last Modified",
+              "width": "12rem"
+             }
+            ],
+            "options": {
+             "emptyState": {
+              "description": "Notes you add here also show up on this record in CRM.",
+              "title": "No notes yet"
+             },
+             "selectable": false,
+             "showTooltip": true
+            },
+            "rowKey": "name",
+            "rows": "{{ notes.data || [] }}"
+           }
+          }
+         ],
+         "componentId": "detail-notes-panel",
+         "componentName": "container",
+         "originalElement": "div",
+         "visibilityCondition": "{{ activeTab === 'notes' }}"
+        },
+        {
+         "baseStyles": {
+          "display": "flex",
+          "flexDirection": "column",
+          "gap": "12px",
+          "width": "100%"
+         },
+         "blockName": "detail-tasks-panel",
+         "children": [
+          {
+           "baseStyles": {
+            "alignItems": "flex-end",
+            "display": "flex",
+            "flexDirection": "row",
+            "gap": "8px",
+            "width": "100%"
+           },
+           "blockName": "detail-tasks-composer",
+           "children": [
+            {
+             "baseStyles": {
+              "flexGrow": "1",
+              "minWidth": "0"
+             },
+             "blockName": "task-title",
+             "componentId": "task-title",
+             "componentName": "FormControl",
+             "componentProps": {
+              "label": "Title",
+              "modelValue": {
+               "$type": "variable",
+               "name": "taskTitle"
+              },
+              "placeholder": "Task title",
+              "type": "text"
+             }
+            },
+            {
+             "baseStyles": {
+              "flexGrow": "0",
+              "flexShrink": "0",
+              "minWidth": "0",
+              "width": "16rem"
+             },
+             "blockName": "task-due-date",
+             "componentId": "task-due-date",
+             "componentName": "FormControl",
+             "componentProps": {
+              "label": "Due date",
+              "modelValue": {
+               "$type": "variable",
+               "name": "taskDueDate"
+              },
+              "placeholder": "Optional",
+              "type": "datetime"
+             }
+            },
+            {
+             "blockName": "task-add",
+             "componentEvents": {
+              "click": {
+               "action": "Run Script",
+               "event": "click",
+               "script": "function handleEvent() { addTask() }"
+              }
+             },
+             "componentId": "task-add",
+             "componentName": "Button",
+             "componentProps": {
+              "label": "Add task",
+              "loading": "{{ addingTask }}",
+              "variant": "solid"
+             }
+            }
+           ],
+           "componentId": "detail-tasks-composer",
+           "componentName": "container",
+           "originalElement": "div"
+          },
+          {
+           "baseStyles": {
+            "minHeight": "180px",
+            "width": "100%"
+           },
+           "blockName": "detail-tasks-rows",
+           "componentId": "detail-tasks-rows",
+           "componentName": "ListView",
+           "componentProps": {
+            "columns": [
+             {
+              "key": "title",
+              "label": "Title",
+              "width": "20rem"
+             },
+             {
+              "key": "status",
+              "label": "Status",
+              "width": "10rem"
+             },
+             {
+              "key": "priority",
+              "label": "Priority",
+              "width": "10rem"
+             },
+             {
+              "key": "due_date",
+              "label": "Due Date",
+              "width": "14rem"
+             }
+            ],
+            "options": {
+             "emptyState": {
+              "description": "Tasks you add here also show up on this record in CRM.",
+              "title": "No tasks yet"
+             },
+             "selectable": false,
+             "showTooltip": true
+            },
+            "rowKey": "name",
+            "rows": "{{ tasks.data || [] }}"
+           }
+          }
+         ],
+         "componentId": "detail-tasks-panel",
+         "componentName": "container",
+         "originalElement": "div",
+         "visibilityCondition": "{{ activeTab === 'tasks' }}"
+        }
+       ],
+       "componentId": "detail-tabs",
+       "componentName": "container",
+       "originalElement": "div"
+      }
+     ],
+     "componentId": "detail-body",
+     "componentName": "container",
+     "originalElement": "div"
+    }
+   ],
+   "componentId": "root",
+   "componentName": "div",
+   "originalElement": "body"
+  }
+ ],
+ "creation": "2026-07-13 15:52:54.332865",
+ "doctype": "Studio Page",
+ "frappe_app": "crm",
+ "is_standard": 1,
+ "modified": "2026-07-13 17:42:47.524244",
+ "modified_by": "Administrator",
+ "name": "detail",
+ "owner": "Administrator",
+ "page_name": "crm-detail",
+ "page_title": "Detail",
+ "published": 1,
+ "resources": [
+  {
+   "__unsaved": 1,
+   "auto": 1,
+   "method": "GET",
+   "params": "{}",
+   "resource_name": "sidebarLayout",
+   "resource_type": "API Resource",
+   "url": "crm.fcrm.doctype.crm_ui_customization.crm_ui_customization.get_sidebar_layout"
+  },
+  {
+   "__unsaved": 1,
+   "auto": 1,
+   "method": "GET",
+   "params": "{\"doctype\": \"{{ doctypeMap[route.params.doctype] }}\", \"name\": \"{{ route.params.id }}\"}",
+   "resource_name": "record",
+   "resource_type": "API Resource",
+   "url": "frappe.client.get"
+  },
+  {
+   "__unsaved": 1,
+   "auto": 1,
+   "method": "GET",
+   "params": "{\"doctype\": \"{{ doctypeMap[route.params.doctype] }}\", \"type\": \"Data Fields\"}",
+   "resource_name": "fieldsLayout",
+   "resource_type": "API Resource",
+   "transform": "function transform(tabs) {\n\tconst LAYOUT_BREAKS = [\"Tab Break\", \"Section Break\", \"Column Break\"]\n\t// get_fields_layout carries no child-table meta, so a grid would render column-less.\n\t// Child tables are out of scope for v1's form.\n\tconst CHILD_TABLES = [\"Table\", \"Table MultiSelect\"]\n\n\tfunction toFieldMeta(field) {\n\t\treturn {\n\t\t\tfieldname: field.fieldname,\n\t\t\tfieldtype: field.fieldtype,\n\t\t\tlabel: field.label,\n\t\t\t// Select options are a newline-joined string in meta; CRM hands some layouts\n\t\t\t// back as [{label, value}] instead.\n\t\t\toptions: Array.isArray(field.options)\n\t\t\t\t? field.options.map((option) => (option && option.value !== undefined ? option.value : option)).join(\"\\n\")\n\t\t\t\t: field.options,\n\t\t\treqd: Boolean(field.reqd),\n\t\t\thidden: Boolean(field.hidden),\n\t\t\treadOnly: Boolean(field.read_only) || field.fieldtype === \"Read Only\",\n\t\t\tprecision: field.precision ? Number(field.precision) : undefined,\n\t\t\tdescription: field.description || undefined,\n\t\t\tplaceholder: field.placeholder || undefined,\n\t\t\tdependsOn: field.depends_on || undefined,\n\t\t\tmandatoryDependsOn: field.mandatory_depends_on || undefined,\n\t\t\treadOnlyDependsOn: field.read_only_depends_on || undefined,\n\t\t}\n\t}\n\n\treturn (tabs || []).map(function (tab) {\n\t\treturn {\n\t\t\tname: tab.name,\n\t\t\tlabel: tab.label,\n\t\t\tsections: (tab.sections || []).map(function (section) {\n\t\t\t\treturn {\n\t\t\t\t\tname: section.name,\n\t\t\t\t\tlabel: section.label,\n\t\t\t\t\thideLabel: Boolean(section.hideLabel),\n\t\t\t\t\thideBorder: Boolean(section.hideBorder),\n\t\t\t\t\tcollapsible: Boolean(section.collapsible),\n\t\t\t\t\topened: section.opened !== false,\n\t\t\t\t\tcolumns: (section.columns || []).map(function (column) {\n\t\t\t\t\t\treturn {\n\t\t\t\t\t\t\tname: column.name,\n\t\t\t\t\t\t\tfields: (column.fields || [])\n\t\t\t\t\t\t\t\t// a fieldname the doctype no longer has stays an unexpanded string\n\t\t\t\t\t\t\t\t.filter((field) => field && typeof field === \"object\")\n\t\t\t\t\t\t\t\t.filter((field) => !LAYOUT_BREAKS.includes(field.fieldtype) && !CHILD_TABLES.includes(field.fieldtype))\n\t\t\t\t\t\t\t\t.map(toFieldMeta),\n\t\t\t\t\t\t}\n\t\t\t\t\t}),\n\t\t\t\t}\n\t\t\t}),\n\t\t}\n\t})\n}",
+   "url": "crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout"
+  },
+  {
+   "__unsaved": 1,
+   "auto": 1,
+   "method": "POST",
+   "params": "{\"doctype\": \"FCRM Note\", \"fields\": [\"name\", \"title\", \"content\", \"modified\"], \"filters\": \"{{ ({ reference_doctype: doctypeMap[route.params.doctype], reference_docname: route.params.id }) }}\", \"order_by\": \"creation desc\", \"limit_page_length\": 50}",
+   "resource_name": "notes",
+   "resource_type": "API Resource",
+   "transform": "function transform(notes) {\n\treturn (notes || []).map(function (note) {\n\t\tconst text = new DOMParser().parseFromString(note.content || \"\", \"text/html\").body.textContent || \"\"\n\t\treturn { ...note, preview: text.replace(/\\s+/g, \" \").trim() }\n\t})\n}",
+   "url": "frappe.client.get_list"
+  },
+  {
+   "__unsaved": 1,
+   "auto": 1,
+   "method": "POST",
+   "params": "{\"doctype\": \"CRM Task\", \"fields\": [\"name\", \"title\", \"status\", \"priority\", \"due_date\"], \"filters\": \"{{ ({ reference_doctype: doctypeMap[route.params.doctype], reference_docname: route.params.id }) }}\", \"order_by\": \"creation desc\", \"limit_page_length\": 50}",
+   "resource_name": "tasks",
+   "resource_type": "API Resource",
+   "url": "frappe.client.get_list"
+  }
+ ],
+ "route": "/:doctype/:id",
+ "studio_app": "crm-studio",
+ "variables": [
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "sidebarCollapsed",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "{}",
+   "variable_name": "views",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "{\"crm-lead\": \"CRM Lead\", \"crm-deal\": \"CRM Deal\", \"contact\": \"Contact\", \"crm-organization\": \"CRM Organization\", \"crm-task\": \"CRM Task\", \"fcrm-note\": \"FCRM Note\"}",
+   "variable_name": "doctypeMap",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "{\"crm-lead\": \"Leads\", \"crm-deal\": \"Deals\", \"contact\": \"Contacts\", \"crm-organization\": \"Organizations\", \"crm-task\": \"Tasks\", \"fcrm-note\": \"Notes\"}",
+   "variable_name": "doctypeLabels",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "{}",
+   "variable_name": "doc",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "saving",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "\"\"",
+   "variable_name": "saveError",
+   "variable_type": "String"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "\"notes\"",
+   "variable_name": "activeTab",
+   "variable_type": "String"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "\"\"",
+   "variable_name": "noteTitle",
+   "variable_type": "String"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "\"\"",
+   "variable_name": "noteContent",
+   "variable_type": "String"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "addingNote",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "\"\"",
+   "variable_name": "taskTitle",
+   "variable_type": "String"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "\"\"",
+   "variable_name": "taskDueDate",
+   "variable_type": "String"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "addingTask",
+   "variable_type": "Boolean"
+  }
+ ]
+}

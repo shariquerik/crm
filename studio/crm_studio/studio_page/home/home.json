@@ -1,0 +1,109 @@
+{
+ "blocks": [
+  {
+   "baseStyles": {
+    "display": "flex",
+    "flexDirection": "row",
+    "flexShrink": 0,
+    "height": "100%",
+    "overflowX": "hidden",
+    "width": "inherit"
+   },
+   "blockName": "body",
+   "children": [
+    {
+     "blockName": "crm-sidebar",
+     "componentId": "crm-sidebar",
+     "componentName": "crm-sidebar",
+     "componentProps": {
+      "activeSlug": "",
+      "sections": "{{ sidebarLayout.data || [] }}",
+      "views": "{{ views }}"
+     },
+     "isStudioComponent": true
+    },
+    {
+     "baseStyles": {
+      "display": "flex",
+      "flexDirection": "column",
+      "flexGrow": "1",
+      "gap": "8px",
+      "minWidth": "0",
+      "padding": "40px",
+      "width": "100%"
+     },
+     "blockName": "home-body",
+     "children": [
+      {
+       "baseStyles": {
+        "fontSize": "24px",
+        "fontWeight": "600"
+       },
+       "blockName": "home-title",
+       "componentId": "home-title",
+       "componentName": "TextBlock",
+       "componentProps": {
+        "text": "CRM on Studio"
+       }
+      },
+      {
+       "baseStyles": {
+        "color": "#6b7280"
+       },
+       "blockName": "home-subtitle",
+       "componentId": "home-subtitle",
+       "componentName": "TextBlock",
+       "componentProps": {
+        "text": "Pick a doctype from the sidebar to see its list."
+       }
+      }
+     ],
+     "componentId": "home-body",
+     "componentName": "container",
+     "originalElement": "div"
+    }
+   ],
+   "componentId": "root",
+   "componentName": "div",
+   "originalElement": "body"
+  }
+ ],
+ "creation": "2026-07-13 15:37:32.953260",
+ "doctype": "Studio Page",
+ "frappe_app": "crm",
+ "is_standard": 1,
+ "modified": "2026-07-13 17:42:47.431465",
+ "modified_by": "Administrator",
+ "name": "home",
+ "owner": "Administrator",
+ "page_name": "crm-home",
+ "page_title": "Home",
+ "published": 1,
+ "resources": [
+  {
+   "__unsaved": 1,
+   "auto": 1,
+   "method": "GET",
+   "params": "{}",
+   "resource_name": "sidebarLayout",
+   "resource_type": "API Resource",
+   "url": "crm.fcrm.doctype.crm_ui_customization.crm_ui_customization.get_sidebar_layout"
+  }
+ ],
+ "route": "/",
+ "studio_app": "crm-studio",
+ "variables": [
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "sidebarCollapsed",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "{}",
+   "variable_name": "views",
+   "variable_type": "Object"
+  }
+ ]
+}

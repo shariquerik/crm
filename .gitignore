@@ -8,6 +8,7 @@ tags
 node_modules
 crm/public/frontend
 crm/www/crm.html
+crm/public/app_builds/crm-studio
 build
 frontend/coverage
 

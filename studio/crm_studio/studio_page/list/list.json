@@ -1,0 +1,328 @@
+{
+ "blocks": [
+  {
+   "baseStyles": {
+    "display": "flex",
+    "flexDirection": "row",
+    "flexShrink": 0,
+    "height": "100%",
+    "overflowX": "hidden",
+    "width": "inherit"
+   },
+   "blockName": "body",
+   "children": [
+    {
+     "blockName": "crm-sidebar",
+     "componentId": "crm-sidebar",
+     "componentName": "crm-sidebar",
+     "componentProps": {
+      "activeSlug": "{{ route.params.doctype }}",
+      "sections": "{{ sidebarLayout.data || [] }}",
+      "views": "{{ views }}"
+     },
+     "isStudioComponent": true
+    },
+    {
+     "baseStyles": {
+      "display": "flex",
+      "flexDirection": "column",
+      "flexGrow": "1",
+      "gap": "16px",
+      "height": "100%",
+      "minHeight": "0",
+      "minWidth": "0",
+      "padding": "24px",
+      "width": "100%"
+     },
+     "blockName": "list-body",
+     "children": [
+      {
+       "baseStyles": {
+        "alignItems": "center",
+        "display": "flex",
+        "flexDirection": "row",
+        "gap": "8px",
+        "justifyContent": "space-between",
+        "width": "100%"
+       },
+       "blockName": "list-toolbar",
+       "children": [
+        {
+         "baseStyles": {
+          "alignItems": "center",
+          "display": "flex",
+          "flexDirection": "row",
+          "gap": "8px",
+          "width": "auto"
+         },
+         "blockName": "list-heading",
+         "children": [
+          {
+           "baseStyles": {
+            "fontSize": "20px",
+            "fontWeight": "600"
+           },
+           "blockName": "list-title",
+           "componentId": "list-title",
+           "componentName": "TextBlock",
+           "componentProps": {
+            "text": "{{ doctypeMap[route.params.doctype] }}"
+           }
+          },
+          {
+           "blockName": "list-view-picker",
+           "componentId": "list-view-picker",
+           "componentName": "Dropdown",
+           "componentProps": {
+            "button": {
+             "iconRight": "chevron-down",
+             "label": "{{ viewLabel }}",
+             "variant": "subtle"
+            },
+            "options": "{{ viewOptions }}"
+           }
+          }
+         ],
+         "componentId": "list-heading",
+         "componentName": "container",
+         "originalElement": "div"
+        },
+        {
+         "baseStyles": {
+          "alignItems": "center",
+          "display": "flex",
+          "flexDirection": "row",
+          "gap": "8px",
+          "width": "auto"
+         },
+         "blockName": "list-controls",
+         "children": [
+          {
+           "blockName": "list-filter",
+           "componentId": "list-filter",
+           "componentName": "Filter",
+           "componentProps": {
+            "doctype": "{{ doctypeMap[route.params.doctype] }}",
+            "modelValue": {
+             "$type": "variable",
+             "name": "filters"
+            }
+           }
+          },
+          {
+           "blockName": "list-sort",
+           "componentId": "list-sort",
+           "componentName": "SortBy",
+           "componentProps": {
+            "doctype": "{{ doctypeMap[route.params.doctype] }}",
+            "modelValue": {
+             "$type": "variable",
+             "name": "sort"
+            }
+           }
+          },
+          {
+           "blockName": "list-columns",
+           "componentId": "list-columns",
+           "componentName": "ColumnSettings",
+           "componentProps": {
+            "doctype": "{{ doctypeMap[route.params.doctype] }}",
+            "modelValue": {
+             "$type": "variable",
+             "name": "columns"
+            }
+           }
+          },
+          {
+           "blockName": "list-view-create",
+           "componentEvents": {
+            "click": {
+             "action": "Run Script",
+             "event": "click",
+             "script": "function handleEvent() { viewDialog.value = true }"
+            }
+           },
+           "componentId": "list-view-create",
+           "componentName": "Button",
+           "componentProps": {
+            "iconLeft": "plus",
+            "label": "Save view",
+            "variant": "subtle"
+           }
+          }
+         ],
+         "componentId": "list-controls",
+         "componentName": "container",
+         "originalElement": "div"
+        }
+       ],
+       "componentId": "list-toolbar",
+       "componentName": "container",
+       "originalElement": "div"
+      },
+      {
+       "baseStyles": {
+        "width": "100%"
+       },
+       "blockName": "list-quickfilter",
+       "componentId": "list-quickfilter",
+       "componentName": "QuickFilter",
+       "componentProps": {
+        "doctype": "{{ doctypeMap[route.params.doctype] }}",
+        "filters": {
+         "$type": "variable",
+         "name": "filters"
+        }
+       }
+      },
+      {
+       "baseStyles": {
+        "flexGrow": "1",
+        "minHeight": "0",
+        "width": "100%"
+       },
+       "blockName": "list-rows",
+       "componentId": "list-rows",
+       "componentName": "ListView",
+       "componentProps": {
+        "columns": "{{ wireColumns }}",
+        "options": {
+         "emptyState": {
+          "description": "Nothing to show here yet.",
+          "title": "No records"
+         },
+         "onRowClick": "(row) => router.push(`/${route.params.doctype}/${row.name}`)",
+         "selectable": false,
+         "showTooltip": true
+        },
+        "rowKey": "name",
+        "rows": "{{ listData.data.data }}"
+       }
+      },
+      {
+       "blockName": "list-view-dialog",
+       "children": [
+        {
+         "baseStyles": {
+          "width": "100%"
+         },
+         "blockName": "list-view-name",
+         "componentId": "list-view-name",
+         "componentName": "TextInput",
+         "componentProps": {
+          "modelValue": {
+           "$type": "variable",
+           "name": "newViewLabel"
+          },
+          "placeholder": "e.g. Qualified leads",
+          "size": "md"
+         }
+        }
+       ],
+       "componentId": "list-view-dialog",
+       "componentName": "Dialog",
+       "componentProps": {
+        "actions": "{{ createViewActions }}",
+        "modelValue": {
+         "$type": "variable",
+         "name": "viewDialog"
+        },
+        "size": "sm",
+        "title": "Create view"
+       }
+      }
+     ],
+     "componentId": "list-body",
+     "componentName": "container",
+     "originalElement": "div"
+    }
+   ],
+   "componentId": "root",
+   "componentName": "div",
+   "originalElement": "body"
+  }
+ ],
+ "creation": "2026-07-13 15:48:28.695184",
+ "doctype": "Studio Page",
+ "frappe_app": "crm",
+ "is_standard": 1,
+ "modified": "2026-07-13 17:42:47.571839",
+ "modified_by": "Administrator",
+ "name": "list",
+ "owner": "Administrator",
+ "page_name": "crm-list",
+ "page_title": "List",
+ "published": 1,
+ "resources": [
+  {
+   "__unsaved": 1,
+   "auto": 1,
+   "method": "POST",
+   "params": "{\"doctype\": \"{{ doctypeMap[route.params.doctype] }}\", \"filters\": {}, \"order_by\": \"modified desc\", \"page_length\": 20, \"page_length_count\": 20}",
+   "resource_name": "listData",
+   "resource_type": "API Resource",
+   "url": "crm.api.doc.get_data"
+  },
+  {
+   "__unsaved": 1,
+   "auto": 1,
+   "method": "GET",
+   "params": "{}",
+   "resource_name": "sidebarLayout",
+   "resource_type": "API Resource",
+   "url": "crm.fcrm.doctype.crm_ui_customization.crm_ui_customization.get_sidebar_layout"
+  }
+ ],
+ "route": "/:doctype",
+ "studio_app": "crm-studio",
+ "variables": [
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "sidebarCollapsed",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "{}",
+   "variable_name": "views",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "{\"crm-lead\": \"CRM Lead\", \"crm-deal\": \"CRM Deal\", \"contact\": \"Contact\", \"crm-organization\": \"CRM Organization\", \"crm-task\": \"CRM Task\", \"fcrm-note\": \"FCRM Note\"}",
+   "variable_name": "doctypeMap",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "[]",
+   "variable_name": "filters",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "[{\"fieldname\": \"modified\", \"direction\": \"desc\"}]",
+   "variable_name": "sort",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "[]",
+   "variable_name": "columns",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "viewDialog",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "\"\"",
+   "variable_name": "newViewLabel",
+   "variable_type": "String"
+  }
+ ]
+}
