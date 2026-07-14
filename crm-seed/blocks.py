@@ -44,6 +44,7 @@ def block(
 	block_name: str | None = None,
 	original_element: str | None = None,
 	is_studio_component: bool = False,
+	is_custom_vue_component: bool = False,
 ) -> dict:
 	"""One block. `component_id` is the instance id and must be unique within the page."""
 	node: dict = {
@@ -69,6 +70,8 @@ def block(
 		node["visibilityCondition"] = visibility
 	if is_studio_component:
 		node["isStudioComponent"] = True
+	if is_custom_vue_component:
+		node["isCustomVueComponent"] = True
 	return node
 
 
@@ -94,6 +97,21 @@ def studio_component(component_id_ref: str, instance_id: str, props: dict | None
 		is_studio_component=True,
 		**kw,
 	)
+
+
+def custom_component(component_name: str, component_id: str, **kw) -> dict:
+	"""A custom Vue SFC shipped by the frappe app (apps/crm/studio/<studio_app>/**/*.vue).
+
+	`studio.api.get_custom_vue_components` discovers it by FILENAME, and the app build
+	registers it as a component — but only if the block says so: StudioAppBuilder reads
+	`isCustomVueComponent` to know the name isn't one of its own, and to look the file up.
+	Without the flag the build treats it as a missing standard component and drops it.
+
+	This is the supported way past a frappe-ui component's limits (an event it doesn't
+	re-emit, state it won't let you write, a slot it renders internally): wrap it in an SFC
+	that widens the seam, and keep the app itself in blocks. See CrmListView.vue.
+	"""
+	return block(component_name, component_id, is_custom_vue_component=True, **kw)
 
 
 def bind(variable_name: str) -> dict:

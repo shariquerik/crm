@@ -43,7 +43,8 @@
         "flexShrink": "0",
         "gap": "8px",
         "justifyContent": "space-between",
-        "padding": "10px 16px",
+        "minHeight": "48px",
+        "padding": "0 20px",
         "width": "100%"
        },
        "blockName": "list-header",
@@ -127,7 +128,7 @@
         "flexShrink": "0",
         "gap": "8px",
         "justifyContent": "space-between",
-        "padding": "8px 16px",
+        "padding": "8px 20px",
         "width": "100%"
        },
        "blockName": "list-controls",
@@ -241,7 +242,7 @@
         "flexGrow": "1",
         "minHeight": "0",
         "minWidth": "0",
-        "padding": "8px 0 16px 16px",
+        "padding": "8px 0 20px 20px",
         "width": "100%"
        },
        "blockName": "list-table",
@@ -254,21 +255,28 @@
          },
          "blockName": "list-rows",
          "componentId": "list-rows",
-         "componentName": "ListView",
+         "componentName": "CrmListView",
          "componentProps": {
+          "bulkActions": "{{ bulkActions }}",
           "columns": "{{ wireColumns }}",
+          "onColumnReset": "(event) => resetColumnWidth(event.key)",
+          "onColumnResize": "(event) => resizeColumn(event.key, event.width)",
           "options": {
            "emptyState": {
             "description": "Nothing to show here yet.",
             "title": "No records"
            },
            "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
-           "selectable": false,
            "showTooltip": true
           },
           "rowKey": "name",
-          "rows": "{{ listData.data.data }}"
-         }
+          "rows": "{{ listData.data.data }}",
+          "selection": {
+           "$type": "variable",
+           "name": "selection"
+          }
+         },
+         "isCustomVueComponent": true
         }
        ],
        "componentId": "list-table",
@@ -346,6 +354,42 @@
         },
         "size": "xl",
         "title": "{{ createTitle }}"
+       }
+      },
+      {
+       "blockName": "list-delete-dialog",
+       "children": [
+        {
+         "baseStyles": {
+          "color": "#525252",
+          "fontSize": "14px"
+         },
+         "blockName": "list-delete-message",
+         "componentId": "list-delete-message",
+         "componentName": "TextBlock",
+         "componentProps": {
+          "text": "This cannot be undone."
+         }
+        },
+        {
+         "blockName": "list-delete-error",
+         "componentId": "list-delete-error",
+         "componentName": "ErrorMessage",
+         "componentProps": {
+          "message": "{{ deleteError }}"
+         },
+         "visibilityCondition": "{{ deleteError }}"
+        }
+       ],
+       "componentId": "list-delete-dialog",
+       "componentName": "Dialog",
+       "componentProps": {
+        "actions": "{{ deleteActions }}",
+        "modelValue": {
+         "$type": "variable",
+         "name": "deleteDialog"
+        },
+        "title": "{{ deleteTitle }}"
        }
       }
      ],
@@ -427,7 +471,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-14 16:58:32.181909",
+ "modified": "2026-07-14 17:48:10.829287",
  "modified_by": "Administrator",
  "name": "list",
  "owner": "Administrator",
@@ -550,6 +594,30 @@
    "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "createError",
+   "variable_type": "String"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "[]",
+   "variable_name": "selection",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "deleteDialog",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "deleting",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "\"\"",
+   "variable_name": "deleteError",
    "variable_type": "String"
   }
  ]

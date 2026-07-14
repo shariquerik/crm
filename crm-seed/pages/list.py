@@ -64,7 +64,7 @@ DEFAULT_ORDER_BY = "modified desc"
 # The screen is three stacked bands — crumbs, controls, table — and the body holds no
 # padding of its own, so each band sets its own. This one gutter keeps their left edges on
 # the same line.
-GUTTER = "16px"
+GUTTER = "20px"
 
 # Only under the crumbs: it separates "where you are" from the whole working area below it.
 # The controls and the table are ONE zone visually (the controls act on the table right under
@@ -103,6 +103,8 @@ import {{ useDoctypeMeta }} from "@framework/ui"
 import {{ getFilterableFields, parseFilters, serializeFilters }} from "@framework/ui/Filter"
 import {{ parseOrderBy, serializeOrderBy }} from "@framework/ui/SortBy"
 import {{
+	applyColumnWidth,
+	clearColumnWidth,
 	fetchFields,
 	getDefaultColumns,
 	parseColumns,
@@ -115,6 +117,7 @@ export default function setup(ctx: any) {{
 	// (it owns the fetch), and this script shares that one scope.
 	const {{ viewDialog, newViewLabel, customizing }} = ctx
 	const {{ {CREATE_LAYOUT_RESOURCE}, doctypeLabels, createDialog, newDoc, creating, createError }} = ctx
+	const {{ selection, deleteDialog, deleting, deleteError }} = ctx
 	// The route carries the doctype name itself ("CRM Lead"), already decoded by vue-router.
 	const doctype = route.params.doctype
 	// Only the saved-view page declares this resource, and only it has a :viewName.
@@ -196,6 +199,21 @@ export default function setup(ctx: any) {{
 		(columns.value || []).length ? serializeColumns(columns.value, metaFields.value) : [],
 	)
 
+	// Column resize, from CrmListView's `column-resize` / `column-reset` events. Both write into
+	// `columns` rather than into some private width state, because that IS the column model:
+	// wireColumns serializes it, and frappe-ui's getGridTemplateColumns turns each `width` into
+	// the grid's track (a string is a fixed size, a number is a flexing `fr`). So one write
+	// resizes the table, moves the width ColumnSettings shows (it v-models the same variable, ui
+	// ADR-0006), and is what a saved view stores. A reset drops the width and the column flexes
+	// again.
+	function resizeColumn(key: string, width: string) {{
+		columns.value = applyColumnWidth(columns.value || [], key, width)
+	}}
+
+	function resetColumnWidth(key: string) {{
+		columns.value = clearColumnWidth(columns.value || [], key)
+	}}
+
 	// get_data's `filters` is a DICT, so it holds one condition per field: the
 	// [fieldname, operator, value] triples serializeFilters returns collapse to
 	// {{fieldname: [operator, value]}} and a second condition on the same field wins.
@@ -247,7 +265,16 @@ export default function setup(ctx: any) {{
 	// Debounced because a filter's value box emits on every keystroke, and skipped when the
 	// wire params didn't actually change — adding an empty filter row, or picking a field
 	// that leaves the condition incomplete, must not re-hit the server.
-	let sent = JSON.stringify(listParams())
+	//
+	// A column's `width` is stripped out of that comparison: it rides along in `columns`, but
+	// it changes nothing about WHAT the server is being asked for (the fetched field set is
+	// `rows`), so a drag must repaint the grid without re-hitting the server — which, at one
+	// write per mousemove, is the whole difference between a resize and a refetch storm.
+	function fetchKey(params: Record<string, unknown>) {{
+		const wire = (params.columns as {{ width?: unknown }}[]) || []
+		return JSON.stringify({{ ...params, columns: wire.map(({{ width, ...rest }}) => rest) }})
+	}}
+	let sent = fetchKey(listParams())
 	let timer: ReturnType<typeof setTimeout> | undefined
 	watch(
 		[filters, sort, columns],
@@ -255,7 +282,7 @@ export default function setup(ctx: any) {{
 			clearTimeout(timer)
 			timer = setTimeout(() => {{
 				const params = listParams()
-				const encoded = JSON.stringify(params)
+				const encoded = fetchKey(params)
 				if (encoded === sent) return
 				sent = encoded
 				{LIST_RESOURCE}.submit(params)
@@ -357,7 +384,7 @@ export default function setup(ctx: any) {{
 		// the FIRST fetch, not a refetch — and the debounce watch above then sees the same
 		// params and skips.
 		const params = listParams()
-		sent = JSON.stringify(params)
+		sent = fetchKey(params)
 		{LIST_RESOURCE}.submit(params)
 	}}
 
@@ -408,7 +435,7 @@ export default function setup(ctx: any) {{
 				started = true
 				seedColumns(fields)
 				const params = listParams()
-				sent = JSON.stringify(params)
+				sent = fetchKey(params)
 				{LIST_RESOURCE}.submit(params)
 			}},
 			{{ immediate: true }},
@@ -577,6 +604,64 @@ export default function setup(ctx: any) {{
 		return error?.message || "Something went wrong"
 	}}
 
+	// ─── Bulk delete ────────────────────────────────────────────────────────────────────
+	// `selection` is the two-way variable CrmListView holds the ticked rows in (their docnames).
+	// Reading it is how Delete knows what to delete; writing [] is how the selection is CLEARED
+	// — the component turns that into ListView's own toggleAllRows, which is the only thing that
+	// can move a Set ListView owns.
+	const deleteTitle = computed(() =>
+		selection.value.length === 1 ? "Delete 1 record?" : `Delete ${{selection.value.length}} records?`,
+	)
+
+	// The banner's buttons (CrmListView renders them into ListSelectBanner's actions slot).
+	// Delete only opens the confirm dialog — nothing is destroyed on this click.
+	const bulkActions = computed(() => [
+		{{ label: "Delete", theme: "red", onClick: () => (deleteDialog.value = true) }},
+	])
+
+	// A refetch replaces the rows under a selection the component would otherwise keep: filter
+	// something out while it's ticked and it stays selected but invisible, and Delete would then
+	// hit records the user can't see. The selection means "these rows, the ones in front of
+	// you", so it is dropped whenever the list is re-fetched.
+	watch(() => {LIST_RESOURCE}.data, () => (selection.value = []))
+
+	async function deleteSelected() {{
+		const items = selection.value
+		if (!items.length) return
+		deleting.value = true
+		deleteError.value = ""
+		try {{
+			await call("crm.api.doc.delete_bulk_docs", {{ doctype, items }})
+			deleteDialog.value = false
+			// Over 10 records the server ENQUEUES the delete (crm.api.doc.delete_bulk_docs) and
+			// returns straight away, so the rows are still there on the next fetch. Say that,
+			// rather than showing a list that looks like the delete silently failed.
+			toast.success(
+				items.length > 10
+					? `Deleting ${{items.length}} records in the background`
+					: `Deleted ${{items.length}} record${{items.length === 1 ? "" : "s"}}`,
+			)
+			selection.value = []
+			{LIST_RESOURCE}.submit(listParams())
+		}} catch (error: any) {{
+			// The dialog stays open, holding the reason — a delete blocked by a link ("Cannot
+			// delete because it is linked with…") or by permission is exactly what to show.
+			deleteError.value = errorMessage(error)
+		}} finally {{
+			deleting.value = false
+		}}
+	}}
+
+	const deleteActions = computed(() => [
+		{{
+			label: "Delete",
+			variant: "solid",
+			theme: "red",
+			loading: deleting.value,
+			onClick: deleteSelected,
+		}},
+	])
+
 	// Exposed to the block expressions. `wireColumns` is the ColumnSettings model in the
 	// table's render shape (see modelColumns) — the control's state, not the response's.
 	return {{
@@ -589,6 +674,14 @@ export default function setup(ctx: any) {{
 		createTitle,
 		createActions,
 		openCreate,
+		// For CrmListView: its two resize events land in `columns`, and its banner's buttons
+		// come from here. (A returned binding is in scope for a block's function-valued props,
+		// the same way `openCreate` is for the toolbar's buttons.)
+		resizeColumn,
+		resetColumnWidth,
+		bulkActions,
+		deleteTitle,
+		deleteActions,
 	}}
 }}
 """.lstrip()
@@ -745,7 +838,10 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 			"alignItems": "center",
 			"justifyContent": "space-between",
 			"gap": "8px",
-			"padding": f"10px {GUTTER}",
+			# min-height rather than vertical padding: the row's height is set by the tallest
+			# control in it (Create), so a fixed floor keeps it steady whatever sits here.
+			"minHeight": "48px",
+			"padding": f"0 {GUTTER}",
 			"borderBottom": HEADER_DIVIDER,
 			"flexShrink": "0",
 		},
@@ -860,8 +956,42 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 		],
 	)
 
-	list_view = blocks.block(
-		"ListView",
+	# The confirm step for the banner's Delete: the button (a `bulkAction`) only opens this, and
+	# the delete itself hangs off the dialog's action — so a misclick in the banner costs nothing.
+	delete_dialog = blocks.block(
+		"Dialog",
+		"list-delete-dialog",
+		props={
+			"modelValue": blocks.bind("deleteDialog"),
+			"title": "{{ deleteTitle }}",
+			"actions": "{{ deleteActions }}",
+		},
+		children=[
+			blocks.block(
+				"TextBlock",
+				"list-delete-message",
+				props={"text": "This cannot be undone."},
+				styles={"fontSize": "14px", "color": doctype_guard.MUTED_TEXT},
+			),
+			# A delete the server refuses — a linked document, or no permission — says so here,
+			# and the dialog stays open.
+			blocks.block(
+				"ErrorMessage",
+				"list-delete-error",
+				props={"message": "{{ deleteError }}"},
+				visibility="{{ deleteError }}",
+			),
+		],
+	)
+
+	# CrmListView, not frappe-ui's ListView: the app's own SFC (apps/crm/studio/crm_studio/
+	# components/), which is frappe-ui's ListView with the three things it keeps to itself
+	# opened up — the column-resize event it never re-emits, the selection it won't let anyone
+	# write, and the select banner's actions slot it renders internally. Everything below is
+	# ordinary props and events because of that; without it, each one needed the page script to
+	# reach into frappe-ui's DOM. See the component's own header for the why.
+	list_view = blocks.custom_component(
+		"CrmListView",
 		"list-rows",
 		props={
 			# The page script's `wireColumns` — ColumnSettings' Column[] in the table's
@@ -871,8 +1001,19 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 			"columns": "{{ wireColumns }}",
 			"rows": f"{{{{ {LIST_RESOURCE}.data.data }}}}",
 			"rowKey": "name",
+			# Two-way, so the page both READS the selection and clears it: writing [] back into
+			# this variable is what unticks the checkboxes (CrmListView turns that into
+			# ListView's own toggleAllRows — the component owns the Set).
+			"selection": blocks.bind("selection"),
+			# The buttons in the selection banner. Delete only confirms here; the deleting is in
+			# the dialog's action, so a misclick can still be backed out of.
+			"bulkActions": "{{ bulkActions }}",
+			# A drag, and a double-click to put the column back to auto width. Both carry the
+			# column's key, and both land in `columns` — the same list ColumnSettings edits and a
+			# saved view stores — so a width is one fact, held in one place.
+			"onColumnResize": "(event) => resizeColumn(event.key, event.width)",
+			"onColumnReset": "(event) => resetColumnWidth(event.key)",
 			"options": {
-				"selectable": False,
 				"showTooltip": True,
 				# emptyState is read unguarded by ListEmptyState, so it must always be
 				# present once `options` is passed at all — otherwise an empty result
@@ -929,7 +1070,7 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 			# wins and the body overflows instead of shrinking
 			"minWidth": "0",
 		},
-		children=[header, controls, table, view_dialog, create_dialog],
+		children=[header, controls, table, view_dialog, create_dialog, delete_dialog],
 		# The whole screen hangs off the guard: it renders only once the server has confirmed
 		# the route's doctype, and only when the URL is already its canonical spelling (a slug
 		# is redirected, not rendered). Its sibling is the Not Found panel.
@@ -1027,6 +1168,13 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 			{"variable_name": "newDoc", "variable_type": "Object", "initial_value": {}},
 			{"variable_name": "creating", "variable_type": "Boolean", "initial_value": False},
 			{"variable_name": "createError", "variable_type": "String", "initial_value": ""},
+			# The ticked rows (docnames), two-way with CrmListView: the component writes the
+			# selection here, and the page clears it by writing [] back.
+			{"variable_name": "selection", "variable_type": "Object", "initial_value": []},
+			# The bulk-delete confirm dialog, opened by the Delete button in the selection banner.
+			{"variable_name": "deleteDialog", "variable_type": "Boolean", "initial_value": False},
+			{"variable_name": "deleting", "variable_type": "Boolean", "initial_value": False},
+			{"variable_name": "deleteError", "variable_type": "String", "initial_value": ""},
 		],
 		"script": SCRIPT,
 	}

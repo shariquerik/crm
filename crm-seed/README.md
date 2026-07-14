@@ -26,11 +26,28 @@ Re-running is a no-op when nothing changed — every step diffs before it writes
 | file | role |
 |---|---|
 | `config.py` | app identity + the **one** slug↔doctype map (`crm-lead` ↔ `CRM Lead`) |
-| `blocks.py` | block-tree helpers: `root`, `block`, `container`, `bind`, `studio_component` |
+| `blocks.py` | block-tree helpers: `root`, `block`, `container`, `bind`, `studio_component`, `custom_component` |
 | `studio_docs.py` | idempotent upserts for Studio App / Page / Component; publish; build |
 | `ui_customization.py` | the `CRM UI Customization` "App Sidebar" record, built from `config.DOCTYPES` |
 | `pages/*.py` | one file per Studio Page — **auto-discovered** |
 | `components/*.py` | one file per Studio Component — **auto-discovered** |
+
+### The one hand-written file OUTSIDE this folder
+
+`apps/crm/studio/crm_studio/` is generated — with a single exception, which is **source**:
+
+| file | role |
+|---|---|
+| `components/CrmListView.vue` | custom Vue SFC: frappe-ui's ListView, with the column-resize event, the selection and the select banner's actions slot opened up (a block can reach none of the three). Edit it by hand; nothing regenerates it. |
+
+A `.vue` anywhere under `apps/crm/studio/<studio_app>/` is discovered by
+`studio.api.get_custom_vue_components` (by FILENAME → component name) and registered into the app
+bundle by the build. Use it from a seeder with `blocks.custom_component("CrmListView", ...)` — the
+block must carry `isCustomVueComponent`, or the build drops it as an unknown component.
+
+This is the supported way past a frappe-ui component's limits (an event it never re-emits, state it
+won't let you write, a slot it renders internally). Reach for it **before** driving a component from
+the DOM in a page script.
 
 ## Adding a page
 
