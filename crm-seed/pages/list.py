@@ -243,8 +243,11 @@ export default function setup(ctx: any) {{
 			filters: toFiltersDict((filters.value || []).filter(isComplete)),
 			// Clearing every sort rule leaves order_by empty; get_data requires a string.
 			order_by: serializeOrderBy(sort.value || []) || "{DEFAULT_ORDER_BY}",
-			page_length: {PAGE_LENGTH},
-			page_length_count: {PAGE_LENGTH},
+			// How many rows to fetch (grown by Load More), and the page size the footer's
+			// buttons show. get_data limits the query by page_length and only echoes
+			// page_length_count back — the split is the footer's, not the server's.
+			page_length: pageLength.value,
+			page_length_count: pageSize.value,
 		}}
 		// Any non-empty `columns`/`rows` makes get_data a "custom view" that returns
 		// exactly what it was asked for — so they are sent only once the columns are
@@ -274,10 +277,36 @@ export default function setup(ctx: any) {{
 		const wire = (params.columns as {{ width?: unknown }}[]) || []
 		return JSON.stringify({{ ...params, columns: wire.map(({{ width, ...rest }}) => rest) }})
 	}}
+	// The footer's two numbers. Like every other page variable they have to be taken off `ctx`
+	// to be in scope — a variable declared on the page but not destructured here is a
+	// ReferenceError on first use, and one of those takes the WHOLE script down with it (no
+	// refetch, no Create, no delete), not just the line that missed.
+	const {{ pageSize, pageLength }} = ctx
+
+	// The footer's two moves, and both of them are just a new `pageLength` — the watcher below
+	// sees it change and re-sends the query.
+	//
+	// A page SIZE is a new page, not more of the old one: the running total goes back down to it.
+	// So it is set unconditionally, not watched for a change — after three Load Mores at 20 you
+	// are showing 60 rows with the size still 20, and clicking that same "20" has to take you
+	// back to 20 rows. Watching `pageSize` would see no change there and do nothing, which is
+	// why CrmListView reports every click on the strip rather than every change of it.
+	//
+	// "Load More" is the other way round: it leaves the size alone and grows the total by one
+	// more page of it.
+	function setPageSize(size: number) {{
+		pageSize.value = size
+		pageLength.value = size
+	}}
+
+	function loadMore() {{
+		pageLength.value += pageSize.value
+	}}
+
 	let sent = fetchKey(listParams())
 	let timer: ReturnType<typeof setTimeout> | undefined
 	watch(
-		[filters, sort, columns],
+		[filters, sort, columns, pageLength],
 		() => {{
 			clearTimeout(timer)
 			timer = setTimeout(() => {{
@@ -679,6 +708,11 @@ export default function setup(ctx: any) {{
 		// the same way `openCreate` is for the toolbar's buttons.)
 		resizeColumn,
 		resetColumnWidth,
+		// The footer's two buttons. A function only reaches a block's props by being RETURNED here
+		// — being declared in the script is not enough. (`pageSize`, the other half of the
+		// footer, needs none of this: it is a page VARIABLE, and a block binds those by name.)
+		loadMore,
+		setPageSize,
 		bulkActions,
 		deleteTitle,
 		deleteActions,
@@ -1013,6 +1047,25 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 			# saved view stores — so a width is one fact, held in one place.
 			"onColumnResize": "(event) => resizeColumn(event.key, event.width)",
 			"onColumnReset": "(event) => resetColumnWidth(event.key)",
+			# The gutter the header and rows sit in from, handed to the component instead of
+			# padded onto the block around it. Inside, it lands as a MARGIN on the header and on
+			# the rows, which leaves the scrolling box itself full-bleed — so the scrollbar keeps
+			# to the right edge of the page while the rows still stop a gutter short of it. Same
+			# 20px as every other band on this page, so the column titles line up with the crumbs.
+			"gutter": GUTTER,
+			# The footer. Both counts are the SERVER's, off the same response the rows came from:
+			# row_count is how many came back, total_count how many the filters match in all — so
+			# "Load More" shows itself exactly while there is more left to load, and hides when the
+			# two meet. The page size is two-way (the buttons write it); what a Load More actually
+			# asks for is decided in the script, not here.
+			"rowCount": f"{{{{ {LIST_RESOURCE}.data.row_count }}}}",
+			"totalCount": f"{{{{ {LIST_RESOURCE}.data.total_count }}}}",
+			# Two-way only so a button stays lit; the size that COUNTS arrives as the event below,
+			# which fires on every click — including a click on the size already selected, which is
+			# how you ask for the first N rows back after a Load More.
+			"pageSize": blocks.bind("pageSize"),
+			"onPageSize": "(size) => setPageSize(size)",
+			"onLoadMore": "() => loadMore()",
 			"options": {
 				"showTooltip": True,
 				# emptyState is read unguarded by ListEmptyState, so it must always be
@@ -1036,21 +1089,21 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 		styles={"flexGrow": "1", "minHeight": "0", "width": "100%"},
 	)
 
-	# Zone 3 — the table. It scrolls, so the gutter has to be a WRAPPER's padding, not the
-	# ListView's own: padding on a scroll container doesn't hold at the far edge of the
-	# scroll. minHeight 0 is what lets the wrapper shrink below its content so the table (not
-	# the page) is the thing that scrolls.
+	# Zone 3 — the table. Alone among the three bands it carries NO padding except the 8px that
+	# sets it off from the controls above: it runs full-bleed to the left, right and bottom
+	# edges of the page. Its gutter is the `gutter` prop above, which CrmListView spends as a
+	# MARGIN on the header and the rows — so the content still stops 20px short of the edges,
+	# while the box that scrolls does not. That is what lets the scrollbars sit in the corners
+	# where scrollbars belong: the vertical one runs the full height of the list and the
+	# horizontal one the full width, instead of stopping a gutter short of each edge. Padding
+	# here would carry them inward with the content.
 	#
-	# No padding on the RIGHT, deliberately. The scrollbar belongs to ListView's innermost box
-	# (frappe-ui puts `overflow-y-auto` on ListRows), so it is drawn at the right edge of
-	# whatever content box this wrapper hands it — a right padding here parks the scroll track
-	# that far in from the edge, floating in the middle of nothing. Full-bleed on that side
-	# puts it where a scrollbar is expected: the right end of the list. The LEFT gutter stays,
-	# because that is what keeps the column headers on the same line as the crumbs above.
+	# minHeight 0 is what lets this wrapper shrink below its content, so the table (and not the
+	# page) is the thing that scrolls.
 	table = blocks.container(
 		"list-table",
 		styles={
-			"padding": f"8px 0 {GUTTER} {GUTTER}",
+			"padding": "8px 0 0 0",
 			"flexGrow": "1",
 			"minHeight": "0",
 			"minWidth": "0",
@@ -1171,6 +1224,17 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 			# The ticked rows (docnames), two-way with CrmListView: the component writes the
 			# selection here, and the page clears it by writing [] back.
 			{"variable_name": "selection", "variable_type": "Object", "initial_value": []},
+			# The two numbers behind the footer, and they are NOT the same number.
+			#
+			# `pageSize` is the page-size the footer's buttons are set to (20 / 50 / 100) — a
+			# choice. `pageLength` is how many rows the server is actually being asked for — a
+			# running total, which is what "Load More" grows by one pageSize at a time. Holding
+			# them apart is what lets the buttons keep showing 20 after you have loaded 60 rows;
+			# one variable would have to show 60, which is not one of the buttons, and the strip
+			# would go blank. (This is how hand-written CRM does it too: page_length grows, and
+			# page_length_count stays the page size.)
+			{"variable_name": "pageSize", "variable_type": "Number", "initial_value": PAGE_LENGTH},
+			{"variable_name": "pageLength", "variable_type": "Number", "initial_value": PAGE_LENGTH},
 			# The bulk-delete confirm dialog, opened by the Delete button in the selection banner.
 			{"variable_name": "deleteDialog", "variable_type": "Boolean", "initial_value": False},
 			{"variable_name": "deleting", "variable_type": "Boolean", "initial_value": False},

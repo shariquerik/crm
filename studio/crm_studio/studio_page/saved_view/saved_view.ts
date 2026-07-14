@@ -212,8 +212,11 @@ export default function setup(ctx: any) {
 			filters: toFiltersDict((filters.value || []).filter(isComplete)),
 			// Clearing every sort rule leaves order_by empty; get_data requires a string.
 			order_by: serializeOrderBy(sort.value || []) || "modified desc",
-			page_length: 20,
-			page_length_count: 20,
+			// How many rows to fetch (grown by Load More), and the page size the footer's
+			// buttons show. get_data limits the query by page_length and only echoes
+			// page_length_count back — the split is the footer's, not the server's.
+			page_length: pageLength.value,
+			page_length_count: pageSize.value,
 		}
 		// Any non-empty `columns`/`rows` makes get_data a "custom view" that returns
 		// exactly what it was asked for — so they are sent only once the columns are
@@ -243,10 +246,36 @@ export default function setup(ctx: any) {
 		const wire = (params.columns as { width?: unknown }[]) || []
 		return JSON.stringify({ ...params, columns: wire.map(({ width, ...rest }) => rest) })
 	}
+	// The footer's two numbers. Like every other page variable they have to be taken off `ctx`
+	// to be in scope — a variable declared on the page but not destructured here is a
+	// ReferenceError on first use, and one of those takes the WHOLE script down with it (no
+	// refetch, no Create, no delete), not just the line that missed.
+	const { pageSize, pageLength } = ctx
+
+	// The footer's two moves, and both of them are just a new `pageLength` — the watcher below
+	// sees it change and re-sends the query.
+	//
+	// A page SIZE is a new page, not more of the old one: the running total goes back down to it.
+	// So it is set unconditionally, not watched for a change — after three Load Mores at 20 you
+	// are showing 60 rows with the size still 20, and clicking that same "20" has to take you
+	// back to 20 rows. Watching `pageSize` would see no change there and do nothing, which is
+	// why CrmListView reports every click on the strip rather than every change of it.
+	//
+	// "Load More" is the other way round: it leaves the size alone and grows the total by one
+	// more page of it.
+	function setPageSize(size: number) {
+		pageSize.value = size
+		pageLength.value = size
+	}
+
+	function loadMore() {
+		pageLength.value += pageSize.value
+	}
+
 	let sent = fetchKey(listParams())
 	let timer: ReturnType<typeof setTimeout> | undefined
 	watch(
-		[filters, sort, columns],
+		[filters, sort, columns, pageLength],
 		() => {
 			clearTimeout(timer)
 			timer = setTimeout(() => {
@@ -648,6 +677,11 @@ export default function setup(ctx: any) {
 		// the same way `openCreate` is for the toolbar's buttons.)
 		resizeColumn,
 		resetColumnWidth,
+		// The footer's two buttons. A function only reaches a block's props by being RETURNED here
+		// — being declared in the script is not enough. (`pageSize`, the other half of the
+		// footer, needs none of this: it is a page VARIABLE, and a block binds those by name.)
+		loadMore,
+		setPageSize,
 		bulkActions,
 		deleteTitle,
 		deleteActions,

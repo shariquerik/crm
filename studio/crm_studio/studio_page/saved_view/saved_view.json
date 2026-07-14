@@ -242,7 +242,7 @@
         "flexGrow": "1",
         "minHeight": "0",
         "minWidth": "0",
-        "padding": "8px 0 20px 20px",
+        "padding": "8px 0 0 0",
         "width": "100%"
        },
        "blockName": "list-table",
@@ -259,8 +259,11 @@
          "componentProps": {
           "bulkActions": "{{ bulkActions }}",
           "columns": "{{ wireColumns }}",
+          "gutter": "20px",
           "onColumnReset": "(event) => resetColumnWidth(event.key)",
           "onColumnResize": "(event) => resizeColumn(event.key, event.width)",
+          "onLoadMore": "() => loadMore()",
+          "onPageSize": "(size) => setPageSize(size)",
           "options": {
            "emptyState": {
             "description": "Nothing to show here yet.",
@@ -269,12 +272,18 @@
            "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
            "showTooltip": true
           },
+          "pageSize": {
+           "$type": "variable",
+           "name": "pageSize"
+          },
+          "rowCount": "{{ listData.data.row_count }}",
           "rowKey": "name",
           "rows": "{{ listData.data.data }}",
           "selection": {
            "$type": "variable",
            "name": "selection"
-          }
+          },
+          "totalCount": "{{ listData.data.total_count }}"
          },
          "isCustomVueComponent": true
         }
@@ -471,7 +480,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-14 17:48:10.875462",
+ "modified": "2026-07-14 18:36:30.898900",
  "modified_by": "Administrator",
  "name": "saved_view",
  "owner": "Administrator",
@@ -609,6 +618,18 @@
    "initial_value": "[]",
    "variable_name": "selection",
    "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "20",
+   "variable_name": "pageSize",
+   "variable_type": "Number"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "20",
+   "variable_name": "pageLength",
+   "variable_type": "Number"
   },
   {
    "__unsaved": 1,

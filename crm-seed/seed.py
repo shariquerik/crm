@@ -93,10 +93,14 @@ def seed(page_name: str | None = None, build: bool = True) -> int:
 
 	# The app bundle bakes in the component registry and the compiled page scripts, so
 	# a content-only change still needs a rebuild for scripts to take effect. Build
-	# also when the bundle is simply absent, or the route would 404 on a fresh clone.
+	# also when the bundle is simply absent, or the route would 404 on a fresh clone —
+	# and when a custom .vue component is newer than it, which no document diff can see
+	# (see studio_docs.build_is_stale: skipping THAT build serves stale code silently).
 	missing = studio_docs.build_is_missing()
-	if build and (changes or missing):
-		print("\nbuilding app bundle (vite)..." + (" [no bundle found]" if missing else ""))
+	stale = studio_docs.build_is_stale()
+	if build and (changes or missing or stale):
+		reason = " [no bundle found]" if missing else (" [component changed]" if stale else "")
+		print("\nbuilding app bundle (vite)..." + reason)
 		studio_docs.build_app()
 		frappe.db.commit()
 		print("build complete")

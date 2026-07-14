@@ -296,6 +296,18 @@ def build_app() -> None:
 	frappe.get_doc("Studio App", config.APP_NAME).generate_app_build()
 
 
+def _manifest_path() -> str:
+	# get_app_path -> apps/crm/crm (the module dir, which is where public/ lives);
+	# get_app_source_path -> apps/crm (the repo root, which is where studio/ lives).
+	import os
+
+	return os.path.join(
+		frappe.get_app_path(config.FRAPPE_APP, "public", "app_builds", config.APP_NAME),
+		".vite",
+		"manifest.json",
+	)
+
+
 def build_is_missing() -> bool:
 	"""True when the app has no built bundle yet (fresh checkout, or it was cleaned).
 
@@ -304,11 +316,35 @@ def build_is_missing() -> bool:
 	"""
 	import os
 
-	# get_app_path -> apps/crm/crm (the module dir, which is where public/ lives);
-	# get_app_source_path -> apps/crm (the repo root, which is where studio/ lives).
-	manifest = os.path.join(
-		frappe.get_app_path(config.FRAPPE_APP, "public", "app_builds", config.APP_NAME),
-		".vite",
-		"manifest.json",
-	)
-	return not os.path.exists(manifest)
+	return not os.path.exists(_manifest_path())
+
+
+def build_is_stale() -> bool:
+	"""True when a custom Vue component has been edited since the bundle was built.
+
+	The seed's other change detection diffs DOCUMENTS, and a custom component is not one:
+	it is a .vue file on disk that the build compiles into the bundle. So editing only a
+	component leaves every document byte-identical, the seed reports "no changes", the
+	build is skipped — and the browser keeps serving the old component while the file on
+	disk says otherwise. That failure is silent and reads exactly like a broken change:
+	you reload, nothing moves, and you go debugging code that was never shipped.
+
+	Mirrors Studio's own discovery (api.get_custom_vue_components): every .vue anywhere
+	under apps/<app>/studio/ is part of the bundle, so any of them being newer than the
+	manifest means the bundle is behind.
+	"""
+	import os
+
+	manifest = _manifest_path()
+	if not os.path.exists(manifest):
+		return False  # missing, not stale — build_is_missing owns that case
+
+	built_at = os.path.getmtime(manifest)
+	studio_folder = frappe.get_app_source_path(config.FRAPPE_APP, "studio")
+	for dirpath, _dirnames, filenames in os.walk(studio_folder):
+		for filename in filenames:
+			if not filename.endswith(".vue"):
+				continue
+			if os.path.getmtime(os.path.join(dirpath, filename)) > built_at:
+				return True
+	return False
