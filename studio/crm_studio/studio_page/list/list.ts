@@ -304,50 +304,188 @@ export default function setup(ctx: any) {
 	// input would read "%A%" and a re-serialize would double-wrap. A one-sided wildcard
 	// ("A%") is a deliberate prefix search and is left alone.
 	function toConditions(fields: any[], wire: [string, string, unknown][]) {
-		return parseFilters(getFilterableFields(fields, doctype), wire).map((c: any) => {
-			const value = c.value
-			const wrapped =
-				typeof value === "string" &&
-				c.operator.includes("like") &&
-				value.length > 1 &&
-				value.startsWith("%") &&
-				value.endsWith("%")
-			return wrapped ? { ...c, value: value.slice(1, -1) } : c
-		})
+		return parseFilters(getFilterableFields(fields, doctype), wire)
+			// parseFilters leaves `operator` undefined for a wire operator it doesn't know, which
+			// a hand-written URL can easily carry (?status=["nope","Open"]). Dropping the row is
+			// not just tidiness: the unwrap below reads c.operator, and one TypeError in setup()
+			// takes the WHOLE script down — no refetch, no Create, no delete.
+			.filter((c: any) => c.operator)
+			.map((c: any) => {
+				const value = c.value
+				const wrapped =
+					typeof value === "string" &&
+					c.operator.includes("like") &&
+					value.length > 1 &&
+					value.startsWith("%") &&
+					value.endsWith("%")
+				return wrapped ? { ...c, value: value.slice(1, -1) } : c
+			})
 	}
 
-	// URL filters (the format PR frappe/crm#1524 uses): one query param per fieldname
-	// whose value is a JSON [operator, value] pair, e.g. ?name=["LIKE","%A%"]. They are
-	// written into the `filters` VARIABLE, not the resource — so the controls display
-	// them and the watch above does the fetching. Deliberately one-way: filter changes
-	// are not pushed back into the URL, both because the ticket doesn't ask for it and
-	// because Studio re-runs a page's setup on `route.path` (not query) changes, so a
-	// self-inflicted query churn would be silently ignored anyway.
-	function urlConditions(fields: any[]) {
+	// URL filters: one query param per fieldname, in either of two forms — and BOTH have to
+	// work, because they are what two different callers write:
+	//
+	//   ?status=Open            a bare value means EQUALS. The form a person types, and the
+	//                           one a link from anywhere else in the app would carry. It is
+	//                           also how CRM's own saved views store a plain condition
+	//                           ({fieldname: value} — see applyView), so the two readers agree.
+	//   ?name=["LIKE","%A%"]    an explicit JSON [operator, value] pair (the format PR
+	//                           frappe/crm#1524 uses), for everything `equals` cannot say.
+	//
+	// They are written into the `filters` VARIABLE, not the resource — so the controls display
+	// them and the watch above does the fetching. The query is read LIVE off the router rather
+	// than from the `route` on ctx: that one is a snapshot taken when setup() ran, and the URL
+	// goes on changing under it (we write it ourselves below, and Back/Forward rewrites it).
+	function urlConditions(fields: any[], query: Record<string, unknown>) {
+		const filterable = getFilterableFields(fields, doctype)
+		const byName = new Map(filterable.map((f: any) => [f.fieldname, f]))
 		const wire: [string, string, unknown][] = []
-		for (const [fieldname, raw] of Object.entries(route.query || {})) {
-			if (typeof raw !== "string") continue
-			try {
-				const pair = JSON.parse(raw)
-				if (Array.isArray(pair) && pair.length === 2) wire.push([fieldname, pair[0], pair[1]])
-			} catch {
-				// not a filter param (?view=..., ?page=...) — ignore it
-			}
+		for (const [fieldname, raw] of Object.entries(query || {})) {
+			// repeated params arrive as an array; an empty one (?status=) narrows nothing but
+			// would still show an empty row in the Filter control.
+			if (typeof raw !== "string" || !raw) continue
+			// a param naming no filterable field is not a filter at all (?view=…, ?page=…).
+			// parseFilters would drop it anyway — skipping here is what lets everything below
+			// assume it HAS a field, and so know the field's type.
+			const field = byName.get(fieldname)
+			if (field) wire.push([fieldname, ...toWirePair(field, raw)])
 		}
 		return toConditions(fields, wire)
 	}
 
+	// One query param's value -> the [operator, value] the wire wants.
+	function toWirePair(field: any, raw: string): [string, unknown] {
+		try {
+			const parsed = JSON.parse(raw)
+			// A STRING head is what tells an explicit pair apart from a bare JSON value that
+			// merely looks like one (?tags=["a","b"] is a two-element list, not an operator and
+			// an argument). An unrecognised operator is dropped by toConditions, not obeyed.
+			if (Array.isArray(parsed) && parsed.length === 2 && typeof parsed[0] === "string") {
+				return [parsed[0], parsed[1]]
+			}
+		} catch {
+			// not JSON — which is the common case, a bare value
+		}
+		return ["=", equalsValue(field, raw)]
+	}
+
+	// A URL carries no types, so a bare value arrives as a string. That is what get_data wants
+	// for every fieldtype but one: parseFilters only surfaces a Check as the Yes/No its control
+	// renders when the value is a real boolean, so `?converted=1` would otherwise sit in the
+	// filter row as the string "1".
+	function equalsValue(field: any, raw: string) {
+		if (field.fieldtype !== "Check") return raw
+		return ["1", "true", "yes"].includes(raw.toLowerCase())
+	}
+
+	// The URL is the source of truth for the narrowing, in BOTH directions — so a link always
+	// lands on exactly the list it describes, and the address bar always describes the list you
+	// are looking at. Three things make that safe, and all three are properties of the app's
+	// router, not of this page:
+	//
+	//   * the app re-runs a page's setup() on route.PATH changes only (AppContainer watches
+	//     `() => route.path`), so writing the QUERY neither remounts the page nor re-enters this
+	//     script — the write cannot feed itself back into the read;
+	//   * which is also why the read cannot be left to setup(): Back/Forward (and a hand-edited
+	//     URL) change the query without changing the path, so NOTHING would re-read it and the
+	//     list would sit there showing the old filters under the new URL. Hence the watch;
+	//   * `route` on ctx is a snapshot from when setup() ran. The live query is on the router.
+	//
+	// `currentRoute` is read through BOTH shapes on purpose: Studio hands the router to a script
+	// inside a Vue ref, so what arrives is a reactive PROXY of the router — and a reactive proxy
+	// unwraps the refs hanging off it. `currentRoute` is therefore the route itself here, not the
+	// Ref<Route> vue-router's types promise (reading `.value` off it is undefined, which took the
+	// script down). Either way still tracks as a dependency, so the watch below stays reactive.
+	const liveRoute = () => ((router.currentRoute as any)?.value ?? router.currentRoute) as any
+	const liveQuery = () => (liveRoute()?.query || {}) as Record<string, unknown>
+	// Every comparison of two queries below decides whether to WRITE the URL or to RE-READ it, so
+	// it has to answer "same narrowing?", not "same object". Key order is not part of that: the
+	// router hands the query back in its own order, and a plain stringify would read that as a
+	// change — write, re-read, write, for as long as the page is open.
+	const stable = (query: Record<string, unknown>) =>
+		JSON.stringify(Object.keys(query).sort().map((key) => [key, query[key]]))
+
 	let urlApplied = false
+	// What we last put in the address bar ourselves, so the watch below can tell OUR write (which
+	// must not re-read, or a `like`'s bare value would round-trip through its %-wrapped form on
+	// every keystroke) from someone else's (Back/Forward/paste — which must).
+	let written = ""
+
+	// The narrowing can't be read until Meta is in: a wire condition can't become the
+	// FilterCondition the control renders without the field it carries.
 	watch(
-		metaFields,
-		(fields: any[]) => {
-			if (urlApplied || !fields.length) return
+		[metaFields, liveQuery],
+		([fields, query]: [any[], Record<string, unknown>]) => {
+			if (!fields.length) return
+			// Re-reading is the plain list's business: on a saved view the filters come from the
+			// VIEW, not from the query (see the syncUrl guard), so there is nothing to re-read.
+			if (urlApplied && (currentView || stable(query) === written)) return
 			urlApplied = true
-			const conditions = urlConditions(fields)
-			if (conditions.length) filters.value = conditions
+			const conditions = urlConditions(fields, query)
+			// Guarded: the first read of a URL with no filters at all must not touch `filters`,
+			// or it would fire the refetch watch before the guard's own first fetch.
+			if (conditions.length || filters.value?.length) filters.value = conditions
 		},
-		{ immediate: true },
+		{ immediate: true, deep: true },
 	)
+
+	// Only once the URL has been read, though: `filters` starts empty, and an empty mirror would
+	// wipe the very query it is about to be seeded from.
+	watch(
+		filters,
+		() => {
+			if (urlApplied) syncUrl()
+		},
+		{ deep: true },
+	)
+
+	// What goes in the URL is the wire dict actually SENT to get_data — one param per field, an
+	// unfilled row left out — so the link and the query can never disagree.
+	function syncUrl() {
+		// Only the rendered app owns its address bar. In the builder this same script runs against
+		// the BUILDER's router, where a filter clicked on the canvas would otherwise scribble
+		// ?status=… onto the editor's own URL.
+		if (!(window as any).app_name) return
+		// A saved view's URL names the VIEW, and the view — not the query — is what the narrowing
+		// comes from (applyView below). Mirroring there would rewrite /view/16 to
+		// /view/16?status=Qualified the moment it loaded, and Back would then strip the query and
+		// leave the saved view showing everything.
+		if (currentView) return
+
+		const query: Record<string, unknown> = {}
+		// Every filterable field is this page's to own — so a filter that was REMOVED leaves the
+		// URL with it. Anything else a link carried (?view=…) is not ours, and stays untouched.
+		const owned = new Set(getFilterableFields(metaFields.value, doctype).map((f: any) => f.fieldname))
+		const current = liveQuery()
+		for (const [key, value] of Object.entries(current)) {
+			if (!owned.has(key)) query[key] = value
+		}
+		for (const [fieldname, pair] of Object.entries(toFiltersDict((filters.value || []).filter(isComplete)))) {
+			query[fieldname] = toQueryValue(pair)
+		}
+
+		const encoded = stable(query)
+		if (encoded === stable(current)) return
+		written = encoded
+		// Adding or removing a filter is a discrete act and earns a history entry: Back steps back
+		// through the narrowing. Editing a value does not — a filter's value box emits on every
+		// keystroke, and an entry per character would make Back useless. Which fields are being
+		// filtered is what tells the two apart.
+		const structural = Object.keys(query).sort().join() !== Object.keys(current).sort().join()
+		if (structural) router.push({ query })
+		else router.replace({ query })
+	}
+
+	// An `=` is written BARE (?status=Open): it is the form a person can read and edit, it is what
+	// urlConditions reads back, and it is the overwhelming majority of filters. Anything else has
+	// to spell its operator out as the [operator, value] pair.
+	function toQueryValue([operator, value]: [string, unknown]) {
+		if (operator !== "=") return JSON.stringify([operator, value])
+		// a Check's `=` is a real boolean by here (serializeFilters turns its Yes/No back into
+		// one); "1"/"0" is what equalsValue reads back, and what CRM's own URLs carry.
+		if (typeof value === "boolean") return value ? "1" : "0"
+		return String(value)
+	}
 
 	// --- saved views ---------------------------------------------------------------
 	// A stored view holds get_data's WIRE shapes: a `filters` dict, an `order_by` string and
