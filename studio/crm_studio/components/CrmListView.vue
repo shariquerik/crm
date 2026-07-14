@@ -25,7 +25,8 @@
   It reaches the app bundle as a block component because it lives under
   apps/crm/studio/<studio_app>/: `studio.api.get_custom_vue_components` discovers it, and the
   build registers it with `app.component("CrmListView", ...)`. The block must carry
-  `isCustomVueComponent: true` so the builder resolves it (crm-seed's blocks.custom_component).
+  `isCustomVueComponent: true` so the builder resolves it. Editing this file changes no Studio
+  document, so nothing rebuilds on its own — hit Publish to regenerate the bundle.
 -->
 <template>
 	<ListView
