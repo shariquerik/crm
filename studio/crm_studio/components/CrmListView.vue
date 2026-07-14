@@ -97,7 +97,7 @@
 		<ListFooter
 			v-if="rows.length"
 			v-model="pageSize"
-			class="shrink-0 border-t border-outline-gray-2 py-2"
+			class="shrink-0 border-t border-outline-gray-1 py-2"
 			:style="{ paddingInline: gutter }"
 			:options="{ rowCount, totalCount, pageLengthOptions }"
 			@loadMore="emit('load-more')"
