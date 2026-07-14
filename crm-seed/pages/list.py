@@ -7,7 +7,17 @@ See config.py for why a slug would have capped the page at a fixed list. Rows co
 straight out of `crm.api.doc.get_data` and the columns out of the doctype's Meta
 (`in_list_view`), so nothing here is per-doctype either.
 
-The toolbar holds @framework/ui's four list controls — Filter, SortBy, QuickFilter,
+The screen has two header rows. The first says where you are and what you can add: frappe-ui
+Breadcrumbs (the doctype), the view picker as its second crumb, and Create — which opens a
+quick-entry dialog over CRM's "Quick Entry" layout (fields_layout.py) and inserts the record.
+The second row is how you narrow it: the quick inputs on the left, the popovers on the right.
+
+The two menus split along that line. The view picker holds the views AND "Save view", because
+saving is something you do to a VIEW; the toolbar's "..." holds what you do to the CONTROLS
+themselves (customize the quick filters). Neither is a toolbar button: the toolbar is for
+narrowing the list.
+
+That second row holds @framework/ui's four list controls — Filter, SortBy, QuickFilter,
 ColumnSettings: controlled, meta-driven controls that hold no data of their own. Their
 v-models are the page variables `filters`, `sort` and `columns`, in the controls' NATIVE
 shapes (FilterCondition[] / Sort[] / Column[], ADR-0001); the page script translates
@@ -28,7 +38,9 @@ builder, and the only differences are the `currentView` resource and the list re
 import json
 
 import blocks
+import config
 import doctype_guard
+import fields_layout
 from components import crm_sidebar
 
 PAGE_NAME = "crm-list"
@@ -42,8 +54,23 @@ LIST_RESOURCE = "listData"
 # meta-derived standard view when the name matches nothing, so a stale URL still renders.
 VIEW_RESOURCE = "currentView"
 
+# The Create dialog's form: CRM's "Quick Entry" layout for the route's doctype, rendered by
+# the same FormLayout the detail page uses (see fields_layout.py).
+CREATE_LAYOUT_RESOURCE = "createLayout"
+
 PAGE_LENGTH = 20
 DEFAULT_ORDER_BY = "modified desc"
+
+# The screen is three stacked bands — crumbs, controls, table — and the body holds no
+# padding of its own, so each band sets its own. This one gutter keeps their left edges on
+# the same line.
+GUTTER = "16px"
+
+# Only under the crumbs: it separates "where you are" from the whole working area below it.
+# The controls and the table are ONE zone visually (the controls act on the table right under
+# them), so a rule between those two would cut the thing it's supposed to sit on — their own
+# padding is enough to keep them apart.
+HEADER_DIVIDER = "1px solid var(--outline-gray-1)"
 
 # The picker's entry for the plain /:doctype route — the list as the doctype's meta defines
 # it, with nothing saved.
@@ -68,7 +95,7 @@ SCRIPT = f"""
 // block expressions ({{{{ wireColumns }}}}), which is how the table repaints the instant
 // ColumnSettings changes, without waiting for the refetch.
 import {{ computed, getCurrentScope, onScopeDispose, ref, watch }} from "vue"
-import {{ call }} from "frappe-ui"
+import {{ call, toast }} from "frappe-ui"
 // The controls ship the wire translation as pure helpers; the page script is compiled
 // into the app bundle by studio's vite, which aliases @framework/ui — so reuse them
 // rather than re-deriving the operator / column tables.
@@ -86,7 +113,8 @@ export default function setup(ctx: any) {{
 	const {{ {LIST_RESOURCE}, filters, sort, columns, route, router }} = ctx
 	// `{crm_sidebar.VIEWS_VARIABLE}` is not destructured here — the sidebar's snippet below already declares it
 	// (it owns the fetch), and this script shares that one scope.
-	const {{ viewDialog, newViewLabel }} = ctx
+	const {{ viewDialog, newViewLabel, customizing }} = ctx
+	const {{ {CREATE_LAYOUT_RESOURCE}, doctypeLabels, createDialog, newDoc, creating, createError }} = ctx
 	// The route carries the doctype name itself ("CRM Lead"), already decoded by vue-router.
 	const doctype = route.params.doctype
 	// Only the saved-view page declares this resource, and only it has a :viewName.
@@ -398,12 +426,55 @@ export default function setup(ctx: any) {{
 		return row?.label || {VIEW_RESOURCE}?.data?.label || "View"
 	}})
 
+	// The picker lists the views AND the one thing you do to a view — save the current state as
+	// a new one. "Save view" belongs here, next to the views it creates, rather than as a fifth
+	// button in the toolbar: the toolbar is for narrowing the list, not for managing views.
+	// Two groups, so "Save view" reads as an action on the list rather than as one more view to
+	// switch to. `options` (not the deprecated `items`) is the current key for a group's rows,
+	// and hideLabel keeps the second group as a plain divided section with no heading.
+	//
+	// A `lucide-*` icon is a CSS class Tailwind only emits where it SCANS the name — and this
+	// script is compiled into the app bundle from the exported .ts, which Studio's tailwind
+	// content DOES cover. (The block JSON is not, which is why the Dropdown's own button icon
+	// below is a Feather name instead.)
 	const viewOptions = computed(() => [
-		{{ label: "{DEFAULT_VIEW_LABEL}", onClick: () => router.push(`/${{{LINK_DOCTYPE}}}`) }},
-		...doctypeViews.value.map((view: any) => ({{
-			label: view.label,
-			onClick: () => router.push(`/${{{LINK_DOCTYPE}}}/view/${{view.name}}`),
-		}})),
+		{{
+			group: "Views",
+			options: [
+				{{ label: "{DEFAULT_VIEW_LABEL}", onClick: () => router.push(`/${{{LINK_DOCTYPE}}}`) }},
+				...doctypeViews.value.map((view: any) => ({{
+					label: view.label,
+					onClick: () => router.push(`/${{{LINK_DOCTYPE}}}/view/${{view.name}}`),
+				}})),
+			],
+		}},
+		{{
+			group: "Actions",
+			hideLabel: true,
+			options: [
+				{{
+					label: "Save view",
+					icon: "lucide-plus",
+					onClick: () => {{
+						viewDialog.value = true
+					}},
+				}},
+			],
+		}},
+	])
+
+	// The toolbar's "..." menu: what you do TO the controls, as opposed to what you do WITH
+	// them. QuickFilter owns its edit mode through a `customizing` v-model it deliberately
+	// leaves to the host — so this is the trigger, and the control itself draws the chip
+	// editor and its Done button in place of the inputs.
+	const controlOptions = computed(() => [
+		{{
+			label: "Customize Quick Filter",
+			icon: "lucide-sliders-horizontal",
+			onClick: () => {{
+				customizing.value = true
+			}},
+		}},
 	])
 
 	// "Create view": the current control state, saved. listParams() is already exactly what a
@@ -443,9 +514,82 @@ export default function setup(ctx: any) {{
 		}},
 	])
 
+	// --- the header ------------------------------------------------------------------
+	// The curated doctypes have a nicer plural ("Leads"); anything else — and any doctype
+	// can be reached by URL — shows as its own name. Same fallback as the detail page.
+	const doctypeLabel = computed(() => doctypeLabels.value[doctype] || doctype)
+
+	// One crumb: the list itself. The VIEW is the second crumb, and it is a Dropdown rather
+	// than a Breadcrumbs item (an item is a link, not a picker) — so the block tree draws it
+	// next to the "/" separator instead. See build_page.
+	const breadcrumbs = computed(() => [
+		{{ label: doctypeLabel.value, route: `/${{{LINK_DOCTYPE}}}` }},
+	])
+
+	// --- create ------------------------------------------------------------------------
+	// "Create" opens a quick-entry dialog: CRM's "Quick Entry" layout for the route's
+	// doctype, handed to the same FormLayout the detail page uses. get_fields_layout
+	// synthesizes a layout for a doctype that has none, so this stays as generic as the
+	// rest of the page — nothing per-doctype is registered anywhere.
+	// The doctype's own name, not the sidebar's plural: "New CRM Lead", never "New Leads".
+	const createTitle = `New ${{doctype}}`
+
+	function openCreate() {{
+		// A fresh blank doc each time: FormLayout edits this object in place, so reusing the
+		// last one would pre-fill the form with an abandoned draft.
+		newDoc.value = {{}}
+		createError.value = ""
+		// The layout is fetched on the FIRST open, not with the page: a user who only browses
+		// the list never pays for it. Its creation params (the route's doctype) are already
+		// right, so a bare fetch() is correct here.
+		if (!{CREATE_LAYOUT_RESOURCE}.data && !{CREATE_LAYOUT_RESOURCE}.loading) {CREATE_LAYOUT_RESOURCE}.fetch()
+		createDialog.value = true
+	}}
+
+	async function createDoc() {{
+		if (creating.value) return
+		creating.value = true
+		createError.value = ""
+		try {{
+			// The same insert CRM's own frontend does — no CRM-specific endpoint needed. The
+			// server enforces mandatory fields and permissions; a missing one throws, and the
+			// dialog stays open showing why.
+			const doc = await call("frappe.client.insert", {{ doc: {{ doctype, ...(newDoc.value || {{}}) }} }})
+			createDialog.value = false
+			toast.success(`${{doctype}} created`)
+			// Straight into the new record, where the full form is.
+			router.push(`/${{{LINK_DOCTYPE}}}/${{encodeURIComponent(doc.name)}}`)
+		}} catch (error: any) {{
+			createError.value = errorMessage(error)
+		}} finally {{
+			creating.value = false
+		}}
+	}}
+
+	const createActions = computed(() => [
+		{{ label: "Create", variant: "solid", loading: creating.value, onClick: createDoc }},
+	])
+
+	// frappe-ui's `call` rejects with the server messages attached (e.g. "Value missing for
+	// CRM Lead: First Name"); never swallow them.
+	function errorMessage(error: any) {{
+		if (error?.messages?.length) return error.messages.join("\\n")
+		return error?.message || "Something went wrong"
+	}}
+
 	// Exposed to the block expressions. `wireColumns` is the ColumnSettings model in the
 	// table's render shape (see modelColumns) — the control's state, not the response's.
-	return {{ wireColumns: modelColumns, viewLabel, viewOptions, createViewActions }}
+	return {{
+		wireColumns: modelColumns,
+		breadcrumbs,
+		viewLabel,
+		viewOptions,
+		controlOptions,
+		createViewActions,
+		createTitle,
+		createActions,
+		openCreate,
+	}}
 }}
 """.lstrip()
 
@@ -493,16 +637,40 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 	# whose operator it owns, so each control sees the other's edits with no plumbing.
 	# `fields` is left unbound, so the surfaced inputs default to the doctype's Meta
 	# (`in_standard_filter` fields, plus `name`).
-	quick_filter = blocks.block(
-		"QuickFilter",
-		"list-quickfilter",
-		props={"doctype": DOCTYPE_EXPR, "filters": blocks.bind("filters")},
-		styles={"width": "100%"},
+	# Styles are set on the WRAPPER, not on the QuickFilter block: the component's template is
+	# a v-if/v-else pair, so Vue has no single root to fall the `style` attr through to and
+	# Studio's baseStyles are silently dropped (verified in the DOM — the root carries no
+	# style attribute at all). It shared a row with nothing before, so a column parent
+	# stretched it anyway; now that it sits beside the popovers it has to be told to take the
+	# leftover room. QuickFilter measures its own width to decide how many inputs fit inline
+	# before collapsing them behind "N more" — so the wrapper's width IS what the user sees.
+	quick_filter = blocks.container(
+		"list-quickfilter-wrap",
+		styles={"flexGrow": "1", "minWidth": "0", "width": "auto"},
+		children=[
+			blocks.block(
+				"QuickFilter",
+				"list-quickfilter",
+				# `customizing` is the control's edit mode, and it is deliberately the HOST's to
+				# own — the control draws the chip editor but offers no way in. The "..." menu is
+				# that way in; binding it here is what connects the two. `fields` stays UNBOUND:
+				# it defaults to undefined, which is what makes the control fall back to Meta's
+				# `in_standard_filter` set — an Object variable would start as [] and surface no
+				# inputs at all.
+				props={
+					"doctype": DOCTYPE_EXPR,
+					"filters": blocks.bind("filters"),
+					"customizing": blocks.bind("customizing"),
+				},
+			)
+		],
 	)
 
-	# The view picker. Its options are built in the page script (each one carries the
-	# router.push that switches to it), so this is a pure renderer of `viewOptions`; the
-	# button reads the view currently on screen.
+	# The view picker — the header's SECOND crumb. Breadcrumbs items are links, not pickers,
+	# so the view can't be one of them: it is a Dropdown sitting after a "/" of our own
+	# (frappe-ui only draws separators BETWEEN its own items). Its options are built in the
+	# page script (each carries the router.push that switches to it), so this is a pure
+	# renderer of `viewOptions`; the button reads the view currently on screen.
 	view_picker = blocks.block(
 		"Dropdown",
 		"list-view-picker",
@@ -510,17 +678,28 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 			"options": "{{ viewOptions }}",
 			"button": {
 				"label": "{{ viewLabel }}",
-				"variant": "subtle",
+				"variant": "ghost",
 				"iconRight": "chevron-down",
 			},
 		},
 	)
 
-	create_view = blocks.block(
-		"Button",
-		"list-view-create",
-		props={"label": "Save view", "variant": "subtle", "iconLeft": "plus"},
-		events={"click": blocks.event("click", "function handleEvent() { viewDialog.value = true }")},
+	# The toolbar's "..." — the actions ON the controls (today: customize the quick filters).
+	# Its options are built in the page script, like the view picker's.
+	#
+	# `more-horizontal` is a FEATHER name, not a `lucide-` one, and that is on purpose: a
+	# lucide icon is a CSS class Tailwind only emits where it SCANS the name, and Studio scans
+	# the exported page scripts (.ts) but never the page's block JSON — so a `lucide-*` icon
+	# named only here would render as an empty box. Button routes any non-`lucide-` string to
+	# FeatherIcon, which is a component and needs no such generation.
+	control_menu = blocks.block(
+		"Dropdown",
+		"list-control-menu",
+		props={
+			"options": "{{ controlOptions }}",
+			"button": {"icon": "more-horizontal", "variant": "subtle"},
+			"placement": "right",
+		},
 	)
 
 	# The name prompt. frappe-ui's Dialog is `v-model`-driven and renders its children in the
@@ -549,42 +728,134 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 		],
 	)
 
-	toolbar = blocks.container(
-		"list-toolbar",
+	create_button = blocks.block(
+		"Button",
+		"list-create",
+		props={"label": "Create", "variant": "solid", "iconLeft": "plus"},
+		events={"click": blocks.event("click", "function handleEvent() { openCreate() }")},
+	)
+
+	# Row 1 — where you are, and the one thing you can add here. Its own band: the body
+	# carries no padding of its own (see body), so each row states its own — that is what
+	# keeps the three zones (crumbs / controls / table) from bleeding into one another.
+	header = blocks.container(
+		"list-header",
 		styles={
 			"flexDirection": "row",
 			"alignItems": "center",
 			"justifyContent": "space-between",
 			"gap": "8px",
+			"padding": f"10px {GUTTER}",
+			"borderBottom": HEADER_DIVIDER,
+			"flexShrink": "0",
 		},
 		children=[
 			blocks.container(
-				"list-heading",
+				"list-crumbs",
 				styles={
 					"flexDirection": "row",
 					"alignItems": "center",
-					"gap": "8px",
+					"gap": "2px",
 					"width": "auto",
+					# a long doctype/view name must truncate inside the crumbs, not push the
+					# Create button off the row
+					"minWidth": "0",
 				},
 				children=[
 					blocks.block(
+						"Breadcrumbs",
+						"list-breadcrumbs",
+						props={"items": "{{ breadcrumbs }}"},
+					),
+					blocks.block(
 						"TextBlock",
-						"list-title",
-						props={"text": DOCTYPE_EXPR},
-						styles={"fontSize": "20px", "fontWeight": "600"},
+						"list-crumb-separator",
+						props={"text": "/"},
+						styles={"color": "var(--ink-gray-4)", "flexShrink": "0"},
 					),
 					view_picker,
 				],
 			),
+			create_button,
+		],
+	)
+
+	# Row 2 — how you narrow it. The quick inputs take the room; the popovers and the "..."
+	# sit right. Same gutter as row 1, and no rule beneath it: it belongs to the table below
+	# (see HEADER_DIVIDER).
+	controls = blocks.container(
+		"list-controls",
+		styles={
+			"flexDirection": "row",
+			# TOP-aligned, not centred: QuickFilter wraps to a second line once its inputs stop
+			# fitting ("Show less"), and a centred row would then drift the popovers down to the
+			# middle of that block, out of line with the inputs they belong beside. Anchored to
+			# the top they stay on the first line however tall the left side grows.
+			"alignItems": "flex-start",
+			"justifyContent": "space-between",
+			"gap": "8px",
+			"padding": f"8px {GUTTER}",
+			"flexShrink": "0",
+		},
+		children=[
+			quick_filter,
 			blocks.container(
-				"list-controls",
+				"list-control-buttons",
 				styles={
 					"flexDirection": "row",
 					"alignItems": "center",
 					"gap": "8px",
 					"width": "auto",
+					"flexShrink": "0",
 				},
-				children=[filter_control, sort_control, column_settings, create_view],
+				# Gone while the quick filters are being customized: the row then belongs to the
+				# chip editor and its Done button, and the popovers beside it would act on a list
+				# the user isn't looking at. It also frees the whole row for the chips. The "..."
+				# that STARTED customizing is in here too, so the way out is Done — one exit, and
+				# no way to re-enter a mode you are already in.
+				visibility="{{ !customizing }}",
+				children=[filter_control, sort_control, column_settings, control_menu],
+			),
+		],
+	)
+
+	# The Create dialog. Same FormLayout the detail page renders, over the "Quick Entry"
+	# layout instead of "Data Fields" — so a doctype's short new-record form is whatever CRM
+	# says it is, and a doctype without one gets the layout get_fields_layout synthesizes.
+	# The Create button is built in the page script (its onClick lives there) and bound as
+	# data, exactly like the Save-view dialog's.
+	create_dialog = blocks.block(
+		"Dialog",
+		"list-create-dialog",
+		props={
+			"modelValue": blocks.bind("createDialog"),
+			"title": "{{ createTitle }}",
+			"size": "xl",
+			"actions": "{{ createActions }}",
+		},
+		children=[
+			blocks.block(
+				"FormLayout",
+				"list-create-form",
+				props={
+					"layout": f"{{{{ {CREATE_LAYOUT_RESOURCE}.data || [] }}}}",
+					# two-way: FormLayout's `defineModel("doc")` writes the edits straight into
+					# `newDoc`, which is what gets inserted.
+					"doc": blocks.bind("newDoc"),
+				},
+				# Don't mount before the layout has landed: FormLayout renders frappe-ui's Tabs,
+				# which reads `props.tabs[0].label` unguarded — an empty layout throws in the
+				# render function (same guard as the detail page's form).
+				visibility=f"{{{{ {CREATE_LAYOUT_RESOURCE}.data?.length }}}}",
+				styles={"width": "100%"},
+			),
+			# A rejected insert (a missing mandatory field, no permission) says so here, and the
+			# dialog stays open with what the user typed.
+			blocks.block(
+				"ErrorMessage",
+				"list-create-error",
+				props={"message": "{{ createError }}"},
+				visibility="{{ createError }}",
 			),
 		],
 	)
@@ -624,11 +895,33 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 		styles={"flexGrow": "1", "minHeight": "0", "width": "100%"},
 	)
 
+	# Zone 3 — the table. It scrolls, so the gutter has to be a WRAPPER's padding, not the
+	# ListView's own: padding on a scroll container doesn't hold at the far edge of the
+	# scroll. minHeight 0 is what lets the wrapper shrink below its content so the table (not
+	# the page) is the thing that scrolls.
+	#
+	# No padding on the RIGHT, deliberately. The scrollbar belongs to ListView's innermost box
+	# (frappe-ui puts `overflow-y-auto` on ListRows), so it is drawn at the right edge of
+	# whatever content box this wrapper hands it — a right padding here parks the scroll track
+	# that far in from the edge, floating in the middle of nothing. Full-bleed on that side
+	# puts it where a scrollbar is expected: the right end of the list. The LEFT gutter stays,
+	# because that is what keeps the column headers on the same line as the crumbs above.
+	table = blocks.container(
+		"list-table",
+		styles={
+			"padding": f"8px 0 {GUTTER} {GUTTER}",
+			"flexGrow": "1",
+			"minHeight": "0",
+			"minWidth": "0",
+		},
+		children=[list_view],
+	)
+
 	body = blocks.container(
 		"list-body",
 		styles={
-			"padding": "24px",
-			"gap": "16px",
+			# No padding and no gap here on purpose: the three zones each carry their own,
+			# so the crumbs / controls / table bands can be spaced (and divided) separately.
 			"flexGrow": "1",
 			"height": "100%",
 			"minHeight": "0",
@@ -636,7 +929,7 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 			# wins and the body overflows instead of shrinking
 			"minWidth": "0",
 		},
-		children=[toolbar, quick_filter, list_view, view_dialog],
+		children=[header, controls, table, view_dialog, create_dialog],
 		# The whole screen hangs off the guard: it renders only once the server has confirmed
 		# the route's doctype, and only when the URL is already its canonical spelling (a slug
 		# is redirected, not rendered). Its sibling is the Not Found panel.
@@ -667,7 +960,14 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 		),
 	}
 
-	resources = [resource, crm_sidebar.RESOURCE, doctype_guard.RESOURCE]
+	resources = [
+		resource,
+		crm_sidebar.RESOURCE,
+		doctype_guard.RESOURCE,
+		# auto=0 and NOT fired by the guard either: the page script fetches it the first time
+		# the Create dialog opens (see openCreate).
+		fields_layout.resource(CREATE_LAYOUT_RESOURCE, fields_layout.QUICK_ENTRY),
+	]
 	if saved_view:
 		resources.append(
 			{
@@ -710,6 +1010,23 @@ def build_page(page_name: str, page_title: str, route: str, saved_view: bool) ->
 			# The "Create view" dialog's open state and its name box.
 			{"variable_name": "viewDialog", "variable_type": "Boolean", "initial_value": False},
 			{"variable_name": "newViewLabel", "variable_type": "String", "initial_value": ""},
+			# QuickFilter's edit mode, flipped by the toolbar's "..." menu. The control renders
+			# its chip editor while this is true and clears it itself on Done.
+			{"variable_name": "customizing", "variable_type": "Boolean", "initial_value": False},
+			# doctype -> its nicer plural, for the breadcrumb. Only the curated doctypes have
+			# one; a list of any OTHER doctype still opens here (the route carries the name, so
+			# there is nothing to register) and falls back to showing the doctype itself.
+			{
+				"variable_name": "doctypeLabels",
+				"variable_type": "Object",
+				"initial_value": config.DOCTYPE_LABELS,
+			},
+			# The Create dialog: its open state, the doc being typed (FormLayout's model) and
+			# the insert's in-flight / failed state.
+			{"variable_name": "createDialog", "variable_type": "Boolean", "initial_value": False},
+			{"variable_name": "newDoc", "variable_type": "Object", "initial_value": {}},
+			{"variable_name": "creating", "variable_type": "Boolean", "initial_value": False},
+			{"variable_name": "createError", "variable_type": "String", "initial_value": ""},
 		],
 		"script": SCRIPT,
 	}

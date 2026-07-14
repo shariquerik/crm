@@ -27,11 +27,9 @@
       "display": "flex",
       "flexDirection": "column",
       "flexGrow": "1",
-      "gap": "16px",
       "height": "100%",
       "minHeight": "0",
       "minWidth": "0",
-      "padding": "24px",
       "width": "100%"
      },
      "blockName": "list-body",
@@ -39,34 +37,46 @@
       {
        "baseStyles": {
         "alignItems": "center",
+        "borderBottom": "1px solid var(--outline-gray-1)",
         "display": "flex",
         "flexDirection": "row",
+        "flexShrink": "0",
         "gap": "8px",
         "justifyContent": "space-between",
+        "padding": "10px 16px",
         "width": "100%"
        },
-       "blockName": "list-toolbar",
+       "blockName": "list-header",
        "children": [
         {
          "baseStyles": {
           "alignItems": "center",
           "display": "flex",
           "flexDirection": "row",
-          "gap": "8px",
+          "gap": "2px",
+          "minWidth": "0",
           "width": "auto"
          },
-         "blockName": "list-heading",
+         "blockName": "list-crumbs",
          "children": [
           {
+           "blockName": "list-breadcrumbs",
+           "componentId": "list-breadcrumbs",
+           "componentName": "Breadcrumbs",
+           "componentProps": {
+            "items": "{{ breadcrumbs }}"
+           }
+          },
+          {
            "baseStyles": {
-            "fontSize": "20px",
-            "fontWeight": "600"
+            "color": "var(--ink-gray-4)",
+            "flexShrink": "0"
            },
-           "blockName": "list-title",
-           "componentId": "list-title",
+           "blockName": "list-crumb-separator",
+           "componentId": "list-crumb-separator",
            "componentName": "TextBlock",
            "componentProps": {
-            "text": "{{ route.params.doctype }}"
+            "text": "/"
            }
           },
           {
@@ -77,13 +87,79 @@
             "button": {
              "iconRight": "chevron-down",
              "label": "{{ viewLabel }}",
-             "variant": "subtle"
+             "variant": "ghost"
             },
             "options": "{{ viewOptions }}"
            }
           }
          ],
-         "componentId": "list-heading",
+         "componentId": "list-crumbs",
+         "componentName": "container",
+         "originalElement": "div"
+        },
+        {
+         "blockName": "list-create",
+         "componentEvents": {
+          "click": {
+           "action": "Run Script",
+           "event": "click",
+           "script": "function handleEvent() { openCreate() }"
+          }
+         },
+         "componentId": "list-create",
+         "componentName": "Button",
+         "componentProps": {
+          "iconLeft": "plus",
+          "label": "Create",
+          "variant": "solid"
+         }
+        }
+       ],
+       "componentId": "list-header",
+       "componentName": "container",
+       "originalElement": "div"
+      },
+      {
+       "baseStyles": {
+        "alignItems": "flex-start",
+        "display": "flex",
+        "flexDirection": "row",
+        "flexShrink": "0",
+        "gap": "8px",
+        "justifyContent": "space-between",
+        "padding": "8px 16px",
+        "width": "100%"
+       },
+       "blockName": "list-controls",
+       "children": [
+        {
+         "baseStyles": {
+          "display": "flex",
+          "flexDirection": "column",
+          "flexGrow": "1",
+          "minWidth": "0",
+          "width": "auto"
+         },
+         "blockName": "list-quickfilter-wrap",
+         "children": [
+          {
+           "blockName": "list-quickfilter",
+           "componentId": "list-quickfilter",
+           "componentName": "QuickFilter",
+           "componentProps": {
+            "customizing": {
+             "$type": "variable",
+             "name": "customizing"
+            },
+            "doctype": "{{ route.params.doctype }}",
+            "filters": {
+             "$type": "variable",
+             "name": "filters"
+            }
+           }
+          }
+         ],
+         "componentId": "list-quickfilter-wrap",
          "componentName": "container",
          "originalElement": "div"
         },
@@ -92,10 +168,11 @@
           "alignItems": "center",
           "display": "flex",
           "flexDirection": "row",
+          "flexShrink": "0",
           "gap": "8px",
           "width": "auto"
          },
-         "blockName": "list-controls",
+         "blockName": "list-control-buttons",
          "children": [
           {
            "blockName": "list-filter",
@@ -134,70 +211,69 @@
            }
           },
           {
-           "blockName": "list-view-create",
-           "componentEvents": {
-            "click": {
-             "action": "Run Script",
-             "event": "click",
-             "script": "function handleEvent() { viewDialog.value = true }"
-            }
-           },
-           "componentId": "list-view-create",
-           "componentName": "Button",
+           "blockName": "list-control-menu",
+           "componentId": "list-control-menu",
+           "componentName": "Dropdown",
            "componentProps": {
-            "iconLeft": "plus",
-            "label": "Save view",
-            "variant": "subtle"
+            "button": {
+             "icon": "more-horizontal",
+             "variant": "subtle"
+            },
+            "options": "{{ controlOptions }}",
+            "placement": "right"
            }
           }
          ],
-         "componentId": "list-controls",
+         "componentId": "list-control-buttons",
          "componentName": "container",
-         "originalElement": "div"
+         "originalElement": "div",
+         "visibilityCondition": "{{ !customizing }}"
         }
        ],
-       "componentId": "list-toolbar",
+       "componentId": "list-controls",
        "componentName": "container",
        "originalElement": "div"
       },
       {
        "baseStyles": {
-        "width": "100%"
-       },
-       "blockName": "list-quickfilter",
-       "componentId": "list-quickfilter",
-       "componentName": "QuickFilter",
-       "componentProps": {
-        "doctype": "{{ route.params.doctype }}",
-        "filters": {
-         "$type": "variable",
-         "name": "filters"
-        }
-       }
-      },
-      {
-       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
         "flexGrow": "1",
         "minHeight": "0",
+        "minWidth": "0",
+        "padding": "8px 0 16px 16px",
         "width": "100%"
        },
-       "blockName": "list-rows",
-       "componentId": "list-rows",
-       "componentName": "ListView",
-       "componentProps": {
-        "columns": "{{ wireColumns }}",
-        "options": {
-         "emptyState": {
-          "description": "Nothing to show here yet.",
-          "title": "No records"
+       "blockName": "list-table",
+       "children": [
+        {
+         "baseStyles": {
+          "flexGrow": "1",
+          "minHeight": "0",
+          "width": "100%"
          },
-         "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
-         "selectable": false,
-         "showTooltip": true
-        },
-        "rowKey": "name",
-        "rows": "{{ listData.data.data }}"
-       }
+         "blockName": "list-rows",
+         "componentId": "list-rows",
+         "componentName": "ListView",
+         "componentProps": {
+          "columns": "{{ wireColumns }}",
+          "options": {
+           "emptyState": {
+            "description": "Nothing to show here yet.",
+            "title": "No records"
+           },
+           "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
+           "selectable": false,
+           "showTooltip": true
+          },
+          "rowKey": "name",
+          "rows": "{{ listData.data.data }}"
+         }
+        }
+       ],
+       "componentId": "list-table",
+       "componentName": "container",
+       "originalElement": "div"
       },
       {
        "blockName": "list-view-dialog",
@@ -229,6 +305,47 @@
         },
         "size": "sm",
         "title": "Create view"
+       }
+      },
+      {
+       "blockName": "list-create-dialog",
+       "children": [
+        {
+         "baseStyles": {
+          "width": "100%"
+         },
+         "blockName": "list-create-form",
+         "componentId": "list-create-form",
+         "componentName": "FormLayout",
+         "componentProps": {
+          "doc": {
+           "$type": "variable",
+           "name": "newDoc"
+          },
+          "layout": "{{ createLayout.data || [] }}"
+         },
+         "visibilityCondition": "{{ createLayout.data?.length }}"
+        },
+        {
+         "blockName": "list-create-error",
+         "componentId": "list-create-error",
+         "componentName": "ErrorMessage",
+         "componentProps": {
+          "message": "{{ createError }}"
+         },
+         "visibilityCondition": "{{ createError }}"
+        }
+       ],
+       "componentId": "list-create-dialog",
+       "componentName": "Dialog",
+       "componentProps": {
+        "actions": "{{ createActions }}",
+        "modelValue": {
+         "$type": "variable",
+         "name": "createDialog"
+        },
+        "size": "xl",
+        "title": "{{ createTitle }}"
        }
       }
      ],
@@ -310,7 +427,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-14 15:20:36.276726",
+ "modified": "2026-07-14 16:58:32.220510",
  "modified_by": "Administrator",
  "name": "saved_view",
  "owner": "Administrator",
@@ -343,6 +460,15 @@
    "resource_name": "routeDoctype",
    "resource_type": "API Resource",
    "url": "crm.api.doc.resolve_doctype"
+  },
+  {
+   "__unsaved": 1,
+   "method": "GET",
+   "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"type\": \"Quick Entry\"}",
+   "resource_name": "createLayout",
+   "resource_type": "API Resource",
+   "transform": "function transform(tabs) {\n\tconst LAYOUT_BREAKS = [\"Tab Break\", \"Section Break\", \"Column Break\"]\n\t// get_fields_layout carries no child-table meta, so a grid would render column-less.\n\t// Child tables are out of scope for v1's form.\n\tconst CHILD_TABLES = [\"Table\", \"Table MultiSelect\"]\n\n\tfunction toFieldMeta(field) {\n\t\treturn {\n\t\t\tfieldname: field.fieldname,\n\t\t\tfieldtype: field.fieldtype,\n\t\t\tlabel: field.label,\n\t\t\t// Select options are a newline-joined string in meta; CRM hands some layouts\n\t\t\t// back as [{label, value}] instead.\n\t\t\toptions: Array.isArray(field.options)\n\t\t\t\t? field.options.map((option) => (option && option.value !== undefined ? option.value : option)).join(\"\\n\")\n\t\t\t\t: field.options,\n\t\t\treqd: Boolean(field.reqd),\n\t\t\thidden: Boolean(field.hidden),\n\t\t\treadOnly: Boolean(field.read_only) || field.fieldtype === \"Read Only\",\n\t\t\tprecision: field.precision ? Number(field.precision) : undefined,\n\t\t\tdescription: field.description || undefined,\n\t\t\tplaceholder: field.placeholder || undefined,\n\t\t\tdependsOn: field.depends_on || undefined,\n\t\t\tmandatoryDependsOn: field.mandatory_depends_on || undefined,\n\t\t\treadOnlyDependsOn: field.read_only_depends_on || undefined,\n\t\t}\n\t}\n\n\treturn (tabs || []).map(function (tab) {\n\t\treturn {\n\t\t\tname: tab.name,\n\t\t\tlabel: tab.label,\n\t\t\tsections: (tab.sections || []).map(function (section) {\n\t\t\t\treturn {\n\t\t\t\t\tname: section.name,\n\t\t\t\t\tlabel: section.label,\n\t\t\t\t\thideLabel: Boolean(section.hideLabel),\n\t\t\t\t\thideBorder: Boolean(section.hideBorder),\n\t\t\t\t\tcollapsible: Boolean(section.collapsible),\n\t\t\t\t\topened: section.opened !== false,\n\t\t\t\t\tcolumns: (section.columns || []).map(function (column) {\n\t\t\t\t\t\treturn {\n\t\t\t\t\t\t\tname: column.name,\n\t\t\t\t\t\t\tfields: (column.fields || [])\n\t\t\t\t\t\t\t\t// a fieldname the doctype no longer has stays an unexpanded string\n\t\t\t\t\t\t\t\t.filter((field) => field && typeof field === \"object\")\n\t\t\t\t\t\t\t\t.filter((field) => !LAYOUT_BREAKS.includes(field.fieldtype) && !CHILD_TABLES.includes(field.fieldtype))\n\t\t\t\t\t\t\t\t.map(toFieldMeta),\n\t\t\t\t\t\t}\n\t\t\t\t\t}),\n\t\t\t\t}\n\t\t\t}),\n\t\t}\n\t})\n}",
+   "url": "crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout"
   },
   {
    "__unsaved": 1,
@@ -396,6 +522,42 @@
    "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "newViewLabel",
+   "variable_type": "String"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "customizing",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "{\"CRM Lead\": \"Leads\", \"CRM Deal\": \"Deals\", \"Contact\": \"Contacts\", \"CRM Organization\": \"Organizations\", \"CRM Task\": \"Tasks\", \"FCRM Note\": \"Notes\"}",
+   "variable_name": "doctypeLabels",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "createDialog",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "{}",
+   "variable_name": "newDoc",
+   "variable_type": "Object"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "false",
+   "variable_name": "creating",
+   "variable_type": "Boolean"
+  },
+  {
+   "__unsaved": 1,
+   "initial_value": "\"\"",
+   "variable_name": "createError",
    "variable_type": "String"
   }
  ]

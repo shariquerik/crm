@@ -23,75 +23,10 @@ import json
 import blocks
 import config
 import doctype_guard
+import fields_layout
 from components import crm_sidebar
 
 PAGE_NAME = "crm-detail"
-
-# One of Quick Entry | Side Panel | Data Fields | Grid Row | Required Fields.
-# "Data Fields" is the detail screen's fields panel: multi-column, expanded, and the only
-# type that is purely fields (Side Panel mixes in CRM's contacts/lost-reason widgets and
-# leaves unresolvable fieldnames as bare strings).
-FIELDS_LAYOUT_TYPE = "Data Fields"
-
-# Frappe docfield (snake_case, 0/1) -> FieldMeta (camelCase, booleans), keeping CRM's
-# tab/section/column tree as-is. Runs as the layout resource's `transform`.
-FIELDS_LAYOUT_TRANSFORM = """
-function transform(tabs) {
-	const LAYOUT_BREAKS = ["Tab Break", "Section Break", "Column Break"]
-	// get_fields_layout carries no child-table meta, so a grid would render column-less.
-	// Child tables are out of scope for v1's form.
-	const CHILD_TABLES = ["Table", "Table MultiSelect"]
-
-	function toFieldMeta(field) {
-		return {
-			fieldname: field.fieldname,
-			fieldtype: field.fieldtype,
-			label: field.label,
-			// Select options are a newline-joined string in meta; CRM hands some layouts
-			// back as [{label, value}] instead.
-			options: Array.isArray(field.options)
-				? field.options.map((option) => (option && option.value !== undefined ? option.value : option)).join("\\n")
-				: field.options,
-			reqd: Boolean(field.reqd),
-			hidden: Boolean(field.hidden),
-			readOnly: Boolean(field.read_only) || field.fieldtype === "Read Only",
-			precision: field.precision ? Number(field.precision) : undefined,
-			description: field.description || undefined,
-			placeholder: field.placeholder || undefined,
-			dependsOn: field.depends_on || undefined,
-			mandatoryDependsOn: field.mandatory_depends_on || undefined,
-			readOnlyDependsOn: field.read_only_depends_on || undefined,
-		}
-	}
-
-	return (tabs || []).map(function (tab) {
-		return {
-			name: tab.name,
-			label: tab.label,
-			sections: (tab.sections || []).map(function (section) {
-				return {
-					name: section.name,
-					label: section.label,
-					hideLabel: Boolean(section.hideLabel),
-					hideBorder: Boolean(section.hideBorder),
-					collapsible: Boolean(section.collapsible),
-					opened: section.opened !== false,
-					columns: (section.columns || []).map(function (column) {
-						return {
-							name: column.name,
-							fields: (column.fields || [])
-								// a fieldname the doctype no longer has stays an unexpanded string
-								.filter((field) => field && typeof field === "object")
-								.filter((field) => !LAYOUT_BREAKS.includes(field.fieldtype) && !CHILD_TABLES.includes(field.fieldtype))
-								.map(toFieldMeta),
-						}
-					}),
-				}
-			}),
-		}
-	})
-}
-""".strip()
 
 # The two v1 tabs. `value` is what the `activeTab` variable holds.
 TABS = [
@@ -378,20 +313,8 @@ def build() -> dict:
 				),
 				"transform": "",
 			},
-			{
-				"resource_name": "fieldsLayout",
-				"resource_type": "API Resource",
-				"url": "crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout",
-				"method": "GET",
-				"auto": 0,  # fired by the guard
-				"params": json.dumps(
-					{
-						"doctype": "{{ route.params.doctype }}",
-						"type": FIELDS_LAYOUT_TYPE,
-					}
-				),
-				"transform": FIELDS_LAYOUT_TRANSFORM,
-			},
+			# fired by the guard, like every other resource here
+			fields_layout.resource("fieldsLayout", fields_layout.DATA_FIELDS),
 			_child_resource(
 				"notes",
 				"FCRM Note",

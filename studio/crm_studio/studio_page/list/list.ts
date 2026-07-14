@@ -8,7 +8,7 @@
 // block expressions ({{ wireColumns }}), which is how the table repaints the instant
 // ColumnSettings changes, without waiting for the refetch.
 import { computed, getCurrentScope, onScopeDispose, ref, watch } from "vue"
-import { call } from "frappe-ui"
+import { call, toast } from "frappe-ui"
 // The controls ship the wire translation as pure helpers; the page script is compiled
 // into the app bundle by studio's vite, which aliases @framework/ui — so reuse them
 // rather than re-deriving the operator / column tables.
@@ -26,7 +26,8 @@ export default function setup(ctx: any) {
 	const { listData, filters, sort, columns, route, router } = ctx
 	// `views` is not destructured here — the sidebar's snippet below already declares it
 	// (it owns the fetch), and this script shares that one scope.
-	const { viewDialog, newViewLabel } = ctx
+	const { viewDialog, newViewLabel, customizing } = ctx
+	const { createLayout, doctypeLabels, createDialog, newDoc, creating, createError } = ctx
 	// The route carries the doctype name itself ("CRM Lead"), already decoded by vue-router.
 	const doctype = route.params.doctype
 	// Only the saved-view page declares this resource, and only it has a :viewName.
@@ -394,12 +395,55 @@ export default function setup(ctx: any) {
 		return row?.label || currentView?.data?.label || "View"
 	})
 
+	// The picker lists the views AND the one thing you do to a view — save the current state as
+	// a new one. "Save view" belongs here, next to the views it creates, rather than as a fifth
+	// button in the toolbar: the toolbar is for narrowing the list, not for managing views.
+	// Two groups, so "Save view" reads as an action on the list rather than as one more view to
+	// switch to. `options` (not the deprecated `items`) is the current key for a group's rows,
+	// and hideLabel keeps the second group as a plain divided section with no heading.
+	//
+	// A `lucide-*` icon is a CSS class Tailwind only emits where it SCANS the name — and this
+	// script is compiled into the app bundle from the exported .ts, which Studio's tailwind
+	// content DOES cover. (The block JSON is not, which is why the Dropdown's own button icon
+	// below is a Feather name instead.)
 	const viewOptions = computed(() => [
-		{ label: "Default view", onClick: () => router.push(`/${encodeURIComponent(route.params.doctype)}`) },
-		...doctypeViews.value.map((view: any) => ({
-			label: view.label,
-			onClick: () => router.push(`/${encodeURIComponent(route.params.doctype)}/view/${view.name}`),
-		})),
+		{
+			group: "Views",
+			options: [
+				{ label: "Default view", onClick: () => router.push(`/${encodeURIComponent(route.params.doctype)}`) },
+				...doctypeViews.value.map((view: any) => ({
+					label: view.label,
+					onClick: () => router.push(`/${encodeURIComponent(route.params.doctype)}/view/${view.name}`),
+				})),
+			],
+		},
+		{
+			group: "Actions",
+			hideLabel: true,
+			options: [
+				{
+					label: "Save view",
+					icon: "lucide-plus",
+					onClick: () => {
+						viewDialog.value = true
+					},
+				},
+			],
+		},
+	])
+
+	// The toolbar's "..." menu: what you do TO the controls, as opposed to what you do WITH
+	// them. QuickFilter owns its edit mode through a `customizing` v-model it deliberately
+	// leaves to the host — so this is the trigger, and the control itself draws the chip
+	// editor and its Done button in place of the inputs.
+	const controlOptions = computed(() => [
+		{
+			label: "Customize Quick Filter",
+			icon: "lucide-sliders-horizontal",
+			onClick: () => {
+				customizing.value = true
+			},
+		},
 	])
 
 	// "Create view": the current control state, saved. listParams() is already exactly what a
@@ -439,7 +483,80 @@ export default function setup(ctx: any) {
 		},
 	])
 
+	// --- the header ------------------------------------------------------------------
+	// The curated doctypes have a nicer plural ("Leads"); anything else — and any doctype
+	// can be reached by URL — shows as its own name. Same fallback as the detail page.
+	const doctypeLabel = computed(() => doctypeLabels.value[doctype] || doctype)
+
+	// One crumb: the list itself. The VIEW is the second crumb, and it is a Dropdown rather
+	// than a Breadcrumbs item (an item is a link, not a picker) — so the block tree draws it
+	// next to the "/" separator instead. See build_page.
+	const breadcrumbs = computed(() => [
+		{ label: doctypeLabel.value, route: `/${encodeURIComponent(route.params.doctype)}` },
+	])
+
+	// --- create ------------------------------------------------------------------------
+	// "Create" opens a quick-entry dialog: CRM's "Quick Entry" layout for the route's
+	// doctype, handed to the same FormLayout the detail page uses. get_fields_layout
+	// synthesizes a layout for a doctype that has none, so this stays as generic as the
+	// rest of the page — nothing per-doctype is registered anywhere.
+	// The doctype's own name, not the sidebar's plural: "New CRM Lead", never "New Leads".
+	const createTitle = `New ${doctype}`
+
+	function openCreate() {
+		// A fresh blank doc each time: FormLayout edits this object in place, so reusing the
+		// last one would pre-fill the form with an abandoned draft.
+		newDoc.value = {}
+		createError.value = ""
+		// The layout is fetched on the FIRST open, not with the page: a user who only browses
+		// the list never pays for it. Its creation params (the route's doctype) are already
+		// right, so a bare fetch() is correct here.
+		if (!createLayout.data && !createLayout.loading) createLayout.fetch()
+		createDialog.value = true
+	}
+
+	async function createDoc() {
+		if (creating.value) return
+		creating.value = true
+		createError.value = ""
+		try {
+			// The same insert CRM's own frontend does — no CRM-specific endpoint needed. The
+			// server enforces mandatory fields and permissions; a missing one throws, and the
+			// dialog stays open showing why.
+			const doc = await call("frappe.client.insert", { doc: { doctype, ...(newDoc.value || {}) } })
+			createDialog.value = false
+			toast.success(`${doctype} created`)
+			// Straight into the new record, where the full form is.
+			router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(doc.name)}`)
+		} catch (error: any) {
+			createError.value = errorMessage(error)
+		} finally {
+			creating.value = false
+		}
+	}
+
+	const createActions = computed(() => [
+		{ label: "Create", variant: "solid", loading: creating.value, onClick: createDoc },
+	])
+
+	// frappe-ui's `call` rejects with the server messages attached (e.g. "Value missing for
+	// CRM Lead: First Name"); never swallow them.
+	function errorMessage(error: any) {
+		if (error?.messages?.length) return error.messages.join("\n")
+		return error?.message || "Something went wrong"
+	}
+
 	// Exposed to the block expressions. `wireColumns` is the ColumnSettings model in the
 	// table's render shape (see modelColumns) — the control's state, not the response's.
-	return { wireColumns: modelColumns, viewLabel, viewOptions, createViewActions }
+	return {
+		wireColumns: modelColumns,
+		breadcrumbs,
+		viewLabel,
+		viewOptions,
+		controlOptions,
+		createViewActions,
+		createTitle,
+		createActions,
+		openCreate,
+	}
 }
