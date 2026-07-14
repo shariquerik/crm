@@ -7,7 +7,7 @@
 // by name, its variables as refs, and route/router. What it RETURNS is exposed to the
 // block expressions ({{ wireColumns }}), which is how the table repaints the instant
 // ColumnSettings changes, without waiting for the refetch.
-import { computed, onScopeDispose, watch } from "vue"
+import { computed, getCurrentScope, onScopeDispose, ref, watch } from "vue"
 import { call } from "frappe-ui"
 // The controls ship the wire translation as pure helpers; the page script is compiled
 // into the app bundle by studio's vite, which aliases @framework/ui — so reuse them
@@ -15,14 +15,20 @@ import { call } from "frappe-ui"
 import { useDoctypeMeta } from "@framework/ui"
 import { getFilterableFields, parseFilters, serializeFilters } from "@framework/ui/Filter"
 import { parseOrderBy, serializeOrderBy } from "@framework/ui/SortBy"
-import { fetchFields, parseColumns, serializeColumns } from "@framework/ui/ColumnSettings"
+import {
+	fetchFields,
+	getDefaultColumns,
+	parseColumns,
+	serializeColumns,
+} from "@framework/ui/ColumnSettings"
 
 export default function setup(ctx: any) {
-	const { listData, filters, sort, columns, doctypeMap, route, router } = ctx
+	const { listData, filters, sort, columns, route, router } = ctx
 	// `views` is not destructured here — the sidebar's snippet below already declares it
 	// (it owns the fetch), and this script shares that one scope.
 	const { viewDialog, newViewLabel } = ctx
-	const doctype = doctypeMap.value[route.params.doctype]
+	// The route carries the doctype name itself ("CRM Lead"), already decoded by vue-router.
+	const doctype = route.params.doctype
 	// Only the saved-view page declares this resource, and only it has a :viewName.
 	const currentView = ctx.currentView
 	const viewName = route.params.viewName
@@ -45,40 +51,117 @@ export default function setup(ctx: any) {
 	// every script's context) rather than an import, because the pages' scripts share no set
 	// of static imports — the home page imports nothing from frappe-ui.
 	const { views } = ctx
-	const VIEW_SLUGS: Record<string, string> = {"CRM Lead": "crm-lead", "CRM Deal": "crm-deal", "Contact": "contact", "CRM Organization": "crm-organization", "CRM Task": "crm-task", "FCRM Note": "fcrm-note"}
 	ctx.call("crm.api.views.get_views").then((rows: any[]) => {
-		// Grouped by doctype, and carrying the slug: both the sidebar row and the picker
-		// route by slug (`/:doctype/view/:viewName`), and a stored view only knows its `dt`.
+		// Grouped by the doctype they belong to — which is also all a row needs to build its
+		// URL, since the route carries the doctype name itself (`/:doctype/view/:viewName`).
+		// So a view on ANY doctype routes correctly, not just the six the sidebar advertises.
 		const grouped: Record<string, any[]> = {}
 		for (const row of rows || []) {
-			const slug = VIEW_SLUGS[row.dt]
 			// A standard view IS the doctype's default (unsaved) view, not a saved one;
 			// kanban/group_by views have no screen in this app (ADR-0002).
-			if (!slug || row.is_standard || (row.type && row.type !== "list")) continue
-			grouped[row.dt] = [...(grouped[row.dt] || []), { ...row, slug }]
+			if (!row.dt || row.is_standard || (row.type && row.type !== "list")) continue
+			grouped[row.dt] = [...(grouped[row.dt] || []), row]
 		}
 		views.value = grouped
 	})
 
-	// Meta is fetched once per doctype and shared with the controls (same memoised
-	// composable). Two translations need it: Column[] -> wire columns, and the URL's
-	// wire filters -> FilterCondition[] (which carry their field's Meta).
-	const { meta } = useDoctypeMeta(doctype)
-	const metaFields = computed(() => meta.value?.fields ?? [])
+	// Nothing is fetched until the server has resolved the route's doctype: a typo must not
+	// fire a get_data for a doctype that does not exist, and a slug URL is about to be
+	// replaced by its canonical one anyway (which re-runs this whole setup).
+	function guardDoctype(onResolved: () => void, suffix = "") {
+		const { routeDoctype } = ctx
+		let done = false
+		watch(
+			() => routeDoctype.data,
+			(res: any) => {
+				if (done || !res) return
+				// resolved to nothing — the Not Found panel is what renders; do NOT fetch.
+				if (!res.doctype) return
+				if (res.doctype !== route.params.doctype) {
+					// a slug or a different casing: send the browser to the canonical URL.
+					// replace(), not push(), so Back doesn't bounce through the alias.
+					done = true
+					router.replace(`/${encodeURIComponent(res.doctype)}${suffix}`)
+					return
+				}
+				done = true
+				onResolved()
+			},
+			{ immediate: true },
+		)
+	}
 
-	// ColumnSettings speaks Column[] (`fieldname`, label, width?); get_data and the
-	// ListView both speak the wire shape (`key`, label, width, type, align) — hence
-	// serializeColumns, whose `type`/`align` come from Meta and are never stored on a
-	// Column. Empty until the defaults are seeded (below), which is what keeps the
-	// params identical to the resource's creation params until then.
+	// Meta is fetched once per doctype and shared with the controls (same memoised
+	// composable). Three things need it: Column[] -> wire columns, the URL's wire filters ->
+	// FilterCondition[] (which carry their field's Meta), and the DEFAULT columns — which
+	// this page derives from Meta itself rather than taking the server's (see defaultColumns).
+	//
+	// Deferred until the guard confirms the doctype, NOT called here: useDoctypeMeta takes a
+	// plain string and fetches at once, so on a slug or mistyped URL ("crm-lead", "nonsense")
+	// it would fire a getdoctype for a name that doesn't exist and throw into the console —
+	// on a page that is about to redirect or show Not Found anyway. The controls can't do
+	// this: they live inside `body`, which only mounts once the doctype is confirmed.
+	//
+	// scope.run() puts the composable's watchers back inside THIS page's effect scope, so
+	// they are still disposed on navigation — calling it bare from a watch callback would
+	// leak them (the scope is only active during setup's synchronous run).
+	const scope = getCurrentScope()
+	const metaFields = ref<any[]>([])
+	// The doctype's `title_field`, if it declares one: getDefaultColumns leads the default
+	// set with it (Frappe shows the human title in place of the opaque `name`).
+	const titleField = ref<string>("")
+	function loadMeta(dt: string) {
+		const run = () => {
+			const { meta } = useDoctypeMeta(dt)
+			watch(
+				meta,
+				(m: any) => {
+					titleField.value = m?.title_field || ""
+					metaFields.value = m?.fields ?? []
+				},
+				{ immediate: true },
+			)
+		}
+		scope ? scope.run(run) : run()
+	}
+
+	// The doctype's DEFAULT columns, derived from META — deliberately NOT from the
+	// response's `columns`.
+	//
+	// get_data's defaults come from the controller's `default_list_data()`, a CRM
+	// convention: a doctype whose controller lacks it gets a generic Name/Last Modified
+	// pair, and one whose controller returns `{"columns": []}` (FCRM Note does exactly
+	// that — CRM renders notes as cards, never as a list) gets NOTHING, so the table
+	// paints a headerless grid of blank rows over real data. A generic list page cannot
+	// depend on a per-doctype controller hook.
+	//
+	// Meta always has an answer: `in_list_view` is Frappe's own "show this in the list"
+	// flag, and getDefaultColumns maps those fields to Column[] behind the title/name
+	// leading column. A doctype that flags nothing falls back to Name + Last Modified —
+	// the same pair get_data would have used, now guaranteed rather than incidental.
+	const GENERIC_COLUMNS = [
+		{ fieldname: "name", label: "Name" },
+		{ fieldname: "modified", label: "Last Modified" },
+	]
+	function defaultColumns(fields: any[]) {
+		// Copied, not the const itself: this becomes the `columns` variable, which the control
+		// (and a column resize) may mutate in place — the fallback must not be the thing that
+		// gets mutated.
+		if (!fields.some((f: any) => f.in_list_view)) return GENERIC_COLUMNS.map((c) => ({ ...c }))
+		return getDefaultColumns(fields, titleField.value)
+	}
+
+	// ColumnSettings speaks Column[] (`fieldname`, label, width?); get_data and the ListView
+	// both speak the wire shape (`key`, label, width, type, align) — hence serializeColumns,
+	// whose `type`/`align` come from Meta and are never stored on a Column.
+	//
+	// This is BOTH what the table renders and what the query asks for, so a column added or
+	// removed in ColumnSettings repaints at once, ahead of the refetch that fills its cells.
+	// The response's own `columns` are never consulted (they'd be the controller's defaults);
+	// it is empty only before Meta lands, and the first fetch waits for that (see below), so
+	// the table never has rows without columns.
 	const modelColumns = computed(() =>
 		(columns.value || []).length ? serializeColumns(columns.value, metaFields.value) : [],
-	)
-
-	// What the table renders: the control's columns, with the response's own standing in
-	// for the frame before they're seeded, so the table is never column-less.
-	const wireColumns = computed(
-		() => (modelColumns.value.length ? modelColumns.value : listData.data?.columns) || [],
 	)
 
 	// get_data's `filters` is a DICT, so it holds one condition per field: the
@@ -150,28 +233,12 @@ export default function setup(ctx: any) {
 	)
 	onScopeDispose(() => clearTimeout(timer))
 
-	// The ColumnSettings model starts empty and the control holds no defaults (ui
-	// ADR-0006): the HOST owns them, and the doctype's defaults are exactly what the
-	// first (default-view) response came back with. Seed them once, in Column[] shape.
-	// Meta has to be in before seeding: serializeColumns derives `type`/`align` from it,
-	// so seeding earlier would leave `sent` describing meta-less columns, and Meta landing
-	// a moment later would look like a real change and refire the fetch.
-	let seeded = false
-	watch(
-		[() => listData.data?.columns, metaFields],
-		([wire, fields]: [any[], any[]]) => {
-			if (seeded || !wire?.length || !fields.length) return
-			seeded = true
-			// The server just returned these columns, so echoing them back is a no-op
-			// fetch: adopt them into `sent` instead of firing one. Unless something else
-			// (a URL filter) already moved the params — then the pending submit must
-			// still go out, now carrying the columns too, so `sent` is left alone.
-			const unchanged = JSON.stringify(listParams()) === sent
-			columns.value = parseColumns(wire)
-			if (unchanged) sent = JSON.stringify(listParams())
-		},
-		{ immediate: true },
-	)
+	// The ColumnSettings model starts empty and the control holds no defaults (ui ADR-0006):
+	// the HOST owns them. Ours are Meta's, so seeding waits for Meta — which is also what
+	// serializeColumns needs to derive each column's `type`/`align`.
+	function seedColumns(fields: any[]) {
+		columns.value = defaultColumns(fields)
+	}
 
 	// The inverse of toFiltersDict + serializeFilters: wire conditions back into the
 	// FilterCondition[] the controls render. parseFilters drops any field absent from Meta,
@@ -246,13 +313,12 @@ export default function setup(ctx: any) {
 		filters.value = toConditions(fields, wire)
 		sort.value = parseOrderBy(view.order_by || "")
 
+		// The view's columns ARE the defaults on this page — but a view saved without any
+		// (or a standard view the server synthesised) falls back to Meta's, same as the
+		// plain list.
 		const viewColumns = JSON.parse(view.columns || "[]")
-		if (viewColumns.length) {
-			columns.value = parseColumns(viewColumns)
-			// The view's columns ARE the defaults on this page — don't let the response's
-			// columns seed over them.
-			seeded = true
-		}
+		if (viewColumns.length) columns.value = parseColumns(viewColumns)
+		else seedColumns(fields)
 
 		// The list resource is auto=0 on the saved-view page (its creation params can't see
 		// the view: they are evaluated once, against {variables, route, router}), so this is
@@ -278,6 +344,45 @@ export default function setup(ctx: any) {
 		)
 	}
 
+	// Nothing above has fetched anything: both resources are auto=0, and the guard fires the
+	// first one only once the server confirms the route names a real, listable doctype (and
+	// that the URL is already the canonical spelling of it — otherwise it redirects there and
+	// this setup runs again). A typo therefore costs exactly one request, not a failed
+	// get_data for a doctype that doesn't exist.
+	guardDoctype(() => {
+		// safe now: the route names a real doctype, in its canonical spelling
+		loadMeta(doctype)
+		if (currentView) {
+			// The saved-view page: its creation params (doctype + viewName, both from the
+			// route) are correct, so a bare fetch() is right — applyView then fires the list.
+			currentView.fetch()
+			return
+		}
+		// The plain list page waits for Meta before its FIRST fetch, because the default
+		// columns come from Meta: firing earlier would send a column-less request whose
+		// answer we'd throw away the moment Meta seeded the columns, i.e. two round trips
+		// and a frame of blank rows. The debounce watch above sees this same `columns`
+		// write, recomputes the params, finds them identical to `sent`, and skips.
+		//
+		// A flag, not the watcher's own stop handle: useDoctypeMeta is memoised per doctype,
+		// so on a revisit Meta is already in and `immediate` runs this callback SYNCHRONOUSLY,
+		// while `stop` is still in its TDZ. The flag also keeps a later Meta reload from
+		// re-seeding columns the user has since changed.
+		let started = false
+		watch(
+			metaFields,
+			(fields: any[]) => {
+				if (started || !fields.length) return
+				started = true
+				seedColumns(fields)
+				const params = listParams()
+				sent = JSON.stringify(params)
+				listData.submit(params)
+			},
+			{ immediate: true },
+		)
+	}, viewName ? `/view/${viewName}` : "")
+
 	// The picker. Its rows are the `views` variable the sidebar's snippet fetched (grouped by
 	// doctype) — one fetch feeds both the sidebar and this. Switching a view is a plain route
 	// change: Studio re-runs the page's setup on every navigation, so the new view loads itself.
@@ -290,10 +395,10 @@ export default function setup(ctx: any) {
 	})
 
 	const viewOptions = computed(() => [
-		{ label: "Default view", onClick: () => router.push(`/${route.params.doctype}`) },
+		{ label: "Default view", onClick: () => router.push(`/${encodeURIComponent(route.params.doctype)}`) },
 		...doctypeViews.value.map((view: any) => ({
 			label: view.label,
-			onClick: () => router.push(`/${route.params.doctype}/view/${view.name}`),
+			onClick: () => router.push(`/${encodeURIComponent(route.params.doctype)}/view/${view.name}`),
 		})),
 	])
 
@@ -322,7 +427,7 @@ export default function setup(ctx: any) {
 		viewDialog.value = false
 		newViewLabel.value = ""
 		// CRM View Settings is autoincrement, so `name` is an int — the view's URL.
-		router.push(`/${route.params.doctype}/view/${view.name}`)
+		router.push(`/${encodeURIComponent(route.params.doctype)}/view/${view.name}`)
 	}
 
 	const createViewActions = computed(() => [
@@ -334,8 +439,7 @@ export default function setup(ctx: any) {
 		},
 	])
 
-	// Exposed to the block expressions: the table renders `wireColumns`, not the response's
-	// columns, so adding/removing a column repaints immediately (the matching refetch then
-	// fills the new column's cells).
-	return { wireColumns, viewLabel, viewOptions, createViewActions }
+	// Exposed to the block expressions. `wireColumns` is the ColumnSettings model in the
+	// table's render shape (see modelColumns) — the control's state, not the response's.
+	return { wireColumns: modelColumns, viewLabel, viewOptions, createViewActions }
 }

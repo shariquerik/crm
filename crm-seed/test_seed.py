@@ -21,14 +21,13 @@ sys.path.insert(0, HERE)
 BENCH = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
 os.chdir(os.path.join(BENCH, "sites"))
 
-import frappe  # noqa: E402
+import frappe
 
-import config  # noqa: E402
-import pages  # noqa: E402
-import seed as seed_module  # noqa: E402
-import studio_docs  # noqa: E402
-import ui_customization  # noqa: E402
-
+import config
+import pages
+import seed as seed_module
+import studio_docs
+import ui_customization
 
 SITE = os.environ.get("SITE", seed_module.DEFAULT_SITE)
 
@@ -103,17 +102,74 @@ class TestSeedSuite(unittest.TestCase):
 					f"no exported JSON for {page_name}",
 				)
 
-	def test_sidebar_customization_matches_the_doctype_map(self):
+	def test_sidebar_customization_lists_the_curated_doctypes(self):
 		self.assertFalse(ui_customization.upsert(), "sidebar seed is not idempotent")
 
 		layout = json.loads(frappe.db.get_value("CRM UI Customization", "App Sidebar", "json"))
 		seeded = [item["dt"] for section in layout for item in section["items"]]
 		self.assertEqual(seeded, [d["doctype"] for d in config.DOCTYPES])
 
-	def test_slug_map_round_trips(self):
-		for entry in config.DOCTYPES:
-			self.assertEqual(config.doctype_for(entry["slug"]), entry["doctype"])
-			self.assertEqual(config.slug_for(entry["doctype"]), entry["slug"])
+	def test_no_page_carries_a_doctype_lookup_table(self):
+		"""The routes carry the real doctype name (`/CRM Lead`), which is WHY the list and
+		detail pages work for every doctype: a slug would need a reverse lookup, and any
+		table baked into a page would cap the app at the doctypes known at seed time.
+
+		So no page may declare a slug/doctype map — if one comes back, the pages have
+		quietly become closed over a fixed list again.
+		"""
+		for page_name, builder in pages.SEEDERS.items():
+			page = builder()
+			names = [v["variable_name"] for v in page.get("variables", [])]
+			with self.subTest(page=page_name):
+				self.assertNotIn("doctypeMap", names)
+
+			# and the doctype the pages act on comes from the route, not a lookup
+			blob = json.dumps(page)
+			with self.subTest(page=page_name):
+				self.assertNotIn("doctypeMap[", blob)
+
+	def test_doctype_routes_resolve_slug_case_and_typos(self):
+		"""The one endpoint behind all three route behaviours: render / redirect / not found."""
+		from crm.api.doc import resolve_doctype
+
+		# canonical, and the two aliases that redirect to it
+		for segment in ("CRM Lead", "crm-lead", "crm lead"):
+			self.assertEqual(resolve_doctype(segment)["doctype"], "CRM Lead", segment)
+
+		# the acronym: no client-side transform could recover "ToDo" from "todo" — this is
+		# exactly why the resolution has to happen on the server
+		self.assertEqual(resolve_doctype("todo")["doctype"], "ToDo")
+
+		# nothing to show -> the page renders Not Found
+		self.assertIsNone(resolve_doctype("nonsense")["doctype"])
+		self.assertIsNone(resolve_doctype("System Settings")["doctype"])  # Single
+		self.assertIsNone(resolve_doctype("Contact Phone")["doctype"])  # child table
+
+	def test_guarded_pages_fetch_nothing_before_the_doctype_resolves(self):
+		"""Every resource that takes the route's doctype must be auto=0 — an auto fetch would
+		race the guard and query a doctype the URL may not even name."""
+		for page_name in ("crm-list", "crm-view", "crm-detail"):
+			page = pages.SEEDERS[page_name]()
+			resources = {r["resource_name"]: r for r in page["resources"]}
+
+			with self.subTest(page=page_name):
+				self.assertIn("routeDoctype", resources, "page is not guarded")
+				self.assertEqual(resources["routeDoctype"]["auto"], 1)
+
+			for name, resource in resources.items():
+				if name in ("routeDoctype", "sidebarLayout"):
+					continue  # these take no doctype from the route
+				with self.subTest(page=page_name, resource=name):
+					self.assertEqual(resource["auto"], 0, f"{name} would fetch before the guard")
+
+	def test_list_page_reads_its_doctype_from_the_route(self):
+		page = pages.SEEDERS["crm-list"]()
+		blob = json.dumps(page)
+
+		# the four controls, the title and the list resource all bind the route param itself
+		self.assertIn("{{ route.params.doctype }}", blob)
+		# links back out must re-encode it — a doctype name has a space in it
+		self.assertIn("encodeURIComponent(route.params.doctype)", blob)
 
 	def test_build_detection_reports_the_bundle(self):
 		# The bundle was built during ticket 02; if this flips, the route would 404.

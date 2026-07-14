@@ -16,7 +16,7 @@
      "componentId": "crm-sidebar",
      "componentName": "crm-sidebar",
      "componentProps": {
-      "activeSlug": "{{ route.params.doctype }}",
+      "activeDoctype": "{{ route.params.doctype }}",
       "sections": "{{ sidebarLayout.data || [] }}",
       "views": "{{ views }}"
      },
@@ -400,7 +400,71 @@
      ],
      "componentId": "detail-body",
      "componentName": "container",
-     "originalElement": "div"
+     "originalElement": "div",
+     "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
+    },
+    {
+     "baseStyles": {
+      "alignItems": "center",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexGrow": "1",
+      "gap": "8px",
+      "height": "100%",
+      "justifyContent": "center",
+      "padding": "24px",
+      "width": "100%"
+     },
+     "blockName": "detail-not-found",
+     "children": [
+      {
+       "baseStyles": {
+        "fontSize": "20px",
+        "fontWeight": "600"
+       },
+       "blockName": "detail-not-found-title",
+       "componentId": "detail-not-found-title",
+       "componentName": "TextBlock",
+       "componentProps": {
+        "text": "Page not found"
+       }
+      },
+      {
+       "baseStyles": {
+        "color": "#525252",
+        "fontSize": "14px"
+       },
+       "blockName": "detail-not-found-message",
+       "componentId": "detail-not-found-message",
+       "componentName": "TextBlock",
+       "componentProps": {
+        "text": "{{ route.params.doctype + ' is not a doctype you can open here.' }}"
+       }
+      },
+      {
+       "baseStyles": {
+        "marginTop": "8px"
+       },
+       "blockName": "detail-not-found-home",
+       "componentEvents": {
+        "click": {
+         "action": "Run Script",
+         "event": "click",
+         "script": "function handleEvent() { router.push('/') }"
+        }
+       },
+       "componentId": "detail-not-found-home",
+       "componentName": "Button",
+       "componentProps": {
+        "label": "Go to home",
+        "variant": "subtle"
+       }
+      }
+     ],
+     "componentId": "detail-not-found",
+     "componentName": "container",
+     "originalElement": "div",
+     "visibilityCondition": "{{ routeDoctype.data && !routeDoctype.data.doctype }}"
     }
    ],
    "componentId": "root",
@@ -412,7 +476,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-13 17:42:47.524244",
+ "modified": "2026-07-14 14:38:38.197909",
  "modified_by": "Administrator",
  "name": "detail",
  "owner": "Administrator",
@@ -433,16 +497,23 @@
    "__unsaved": 1,
    "auto": 1,
    "method": "GET",
-   "params": "{\"doctype\": \"{{ doctypeMap[route.params.doctype] }}\", \"name\": \"{{ route.params.id }}\"}",
+   "params": "{\"doctype\": \"{{ route.params.doctype }}\"}",
+   "resource_name": "routeDoctype",
+   "resource_type": "API Resource",
+   "url": "crm.api.doc.resolve_doctype"
+  },
+  {
+   "__unsaved": 1,
+   "method": "GET",
+   "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"name\": \"{{ route.params.id }}\"}",
    "resource_name": "record",
    "resource_type": "API Resource",
    "url": "frappe.client.get"
   },
   {
    "__unsaved": 1,
-   "auto": 1,
    "method": "GET",
-   "params": "{\"doctype\": \"{{ doctypeMap[route.params.doctype] }}\", \"type\": \"Data Fields\"}",
+   "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"type\": \"Data Fields\"}",
    "resource_name": "fieldsLayout",
    "resource_type": "API Resource",
    "transform": "function transform(tabs) {\n\tconst LAYOUT_BREAKS = [\"Tab Break\", \"Section Break\", \"Column Break\"]\n\t// get_fields_layout carries no child-table meta, so a grid would render column-less.\n\t// Child tables are out of scope for v1's form.\n\tconst CHILD_TABLES = [\"Table\", \"Table MultiSelect\"]\n\n\tfunction toFieldMeta(field) {\n\t\treturn {\n\t\t\tfieldname: field.fieldname,\n\t\t\tfieldtype: field.fieldtype,\n\t\t\tlabel: field.label,\n\t\t\t// Select options are a newline-joined string in meta; CRM hands some layouts\n\t\t\t// back as [{label, value}] instead.\n\t\t\toptions: Array.isArray(field.options)\n\t\t\t\t? field.options.map((option) => (option && option.value !== undefined ? option.value : option)).join(\"\\n\")\n\t\t\t\t: field.options,\n\t\t\treqd: Boolean(field.reqd),\n\t\t\thidden: Boolean(field.hidden),\n\t\t\treadOnly: Boolean(field.read_only) || field.fieldtype === \"Read Only\",\n\t\t\tprecision: field.precision ? Number(field.precision) : undefined,\n\t\t\tdescription: field.description || undefined,\n\t\t\tplaceholder: field.placeholder || undefined,\n\t\t\tdependsOn: field.depends_on || undefined,\n\t\t\tmandatoryDependsOn: field.mandatory_depends_on || undefined,\n\t\t\treadOnlyDependsOn: field.read_only_depends_on || undefined,\n\t\t}\n\t}\n\n\treturn (tabs || []).map(function (tab) {\n\t\treturn {\n\t\t\tname: tab.name,\n\t\t\tlabel: tab.label,\n\t\t\tsections: (tab.sections || []).map(function (section) {\n\t\t\t\treturn {\n\t\t\t\t\tname: section.name,\n\t\t\t\t\tlabel: section.label,\n\t\t\t\t\thideLabel: Boolean(section.hideLabel),\n\t\t\t\t\thideBorder: Boolean(section.hideBorder),\n\t\t\t\t\tcollapsible: Boolean(section.collapsible),\n\t\t\t\t\topened: section.opened !== false,\n\t\t\t\t\tcolumns: (section.columns || []).map(function (column) {\n\t\t\t\t\t\treturn {\n\t\t\t\t\t\t\tname: column.name,\n\t\t\t\t\t\t\tfields: (column.fields || [])\n\t\t\t\t\t\t\t\t// a fieldname the doctype no longer has stays an unexpanded string\n\t\t\t\t\t\t\t\t.filter((field) => field && typeof field === \"object\")\n\t\t\t\t\t\t\t\t.filter((field) => !LAYOUT_BREAKS.includes(field.fieldtype) && !CHILD_TABLES.includes(field.fieldtype))\n\t\t\t\t\t\t\t\t.map(toFieldMeta),\n\t\t\t\t\t\t}\n\t\t\t\t\t}),\n\t\t\t\t}\n\t\t\t}),\n\t\t}\n\t})\n}",
@@ -450,9 +521,8 @@
   },
   {
    "__unsaved": 1,
-   "auto": 1,
    "method": "POST",
-   "params": "{\"doctype\": \"FCRM Note\", \"fields\": [\"name\", \"title\", \"content\", \"modified\"], \"filters\": \"{{ ({ reference_doctype: doctypeMap[route.params.doctype], reference_docname: route.params.id }) }}\", \"order_by\": \"creation desc\", \"limit_page_length\": 50}",
+   "params": "{\"doctype\": \"FCRM Note\", \"fields\": [\"name\", \"title\", \"content\", \"modified\"], \"filters\": \"{{ ({ reference_doctype: route.params.doctype, reference_docname: route.params.id }) }}\", \"order_by\": \"creation desc\", \"limit_page_length\": 50}",
    "resource_name": "notes",
    "resource_type": "API Resource",
    "transform": "function transform(notes) {\n\treturn (notes || []).map(function (note) {\n\t\tconst text = new DOMParser().parseFromString(note.content || \"\", \"text/html\").body.textContent || \"\"\n\t\treturn { ...note, preview: text.replace(/\\s+/g, \" \").trim() }\n\t})\n}",
@@ -460,9 +530,8 @@
   },
   {
    "__unsaved": 1,
-   "auto": 1,
    "method": "POST",
-   "params": "{\"doctype\": \"CRM Task\", \"fields\": [\"name\", \"title\", \"status\", \"priority\", \"due_date\"], \"filters\": \"{{ ({ reference_doctype: doctypeMap[route.params.doctype], reference_docname: route.params.id }) }}\", \"order_by\": \"creation desc\", \"limit_page_length\": 50}",
+   "params": "{\"doctype\": \"CRM Task\", \"fields\": [\"name\", \"title\", \"status\", \"priority\", \"due_date\"], \"filters\": \"{{ ({ reference_doctype: route.params.doctype, reference_docname: route.params.id }) }}\", \"order_by\": \"creation desc\", \"limit_page_length\": 50}",
    "resource_name": "tasks",
    "resource_type": "API Resource",
    "url": "frappe.client.get_list"
@@ -485,13 +554,7 @@
   },
   {
    "__unsaved": 1,
-   "initial_value": "{\"crm-lead\": \"CRM Lead\", \"crm-deal\": \"CRM Deal\", \"contact\": \"Contact\", \"crm-organization\": \"CRM Organization\", \"crm-task\": \"CRM Task\", \"fcrm-note\": \"FCRM Note\"}",
-   "variable_name": "doctypeMap",
-   "variable_type": "Object"
-  },
-  {
-   "__unsaved": 1,
-   "initial_value": "{\"crm-lead\": \"Leads\", \"crm-deal\": \"Deals\", \"contact\": \"Contacts\", \"crm-organization\": \"Organizations\", \"crm-task\": \"Tasks\", \"fcrm-note\": \"Notes\"}",
+   "initial_value": "{\"CRM Lead\": \"Leads\", \"CRM Deal\": \"Deals\", \"Contact\": \"Contacts\", \"CRM Organization\": \"Organizations\", \"CRM Task\": \"Tasks\", \"FCRM Note\": \"Notes\"}",
    "variable_name": "doctypeLabels",
    "variable_type": "Object"
   },

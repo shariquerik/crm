@@ -6,7 +6,7 @@
     "baseStyles": {
      "display": "flex",
      "flexDirection": "column",
-     "gap": "12px",
+     "gap": "4px",
      "height": "100%",
      "padding": "8px",
      "width": "100%"
@@ -14,25 +14,20 @@
     "blockName": "crm-sidebar-body",
     "children": [
      {
-      "baseStyles": {
-       "fontSize": "14px",
-       "fontWeight": "600",
-       "overflow": "hidden",
-       "paddingLeft": "8px",
-       "whiteSpace": "nowrap"
-      },
       "blockName": "crm-sidebar-title",
       "componentId": "crm-sidebar-title",
-      "componentName": "TextBlock",
+      "componentName": "SidebarHeader",
       "componentProps": {
-       "text": "CRM on Studio"
-      },
-      "visibilityCondition": "{{ !sidebarCollapsed }}"
+       "title": "CRM on Studio"
+      }
      },
      {
       "baseStyles": {
        "flexDirection": "column",
+       "flexGrow": "1",
        "gap": "12px",
+       "overflowX": "hidden",
+       "overflowY": "auto",
        "width": "100%"
       },
       "blockName": "crm-sidebar-sections",
@@ -47,20 +42,23 @@
         "blockName": "crm-sidebar-section",
         "children": [
          {
-          "baseStyles": {
-           "color": "#525252",
-           "fontSize": "11px",
-           "fontWeight": "500",
-           "marginBottom": "2px",
-           "paddingLeft": "8px"
-          },
           "blockName": "crm-sidebar-section-label",
+          "children": [
+           {
+            "blockName": "crm-sidebar-section-label-text",
+            "componentId": "crm-sidebar-section-label-text",
+            "componentName": "TextBlock",
+            "componentProps": {
+             "text": "{{ dataItem.label }}"
+            }
+           }
+          ],
           "componentId": "crm-sidebar-section-label",
-          "componentName": "TextBlock",
+          "componentName": "SidebarLabel",
           "componentProps": {
-           "text": "{{ dataItem.label }}"
+           "divider": true
           },
-          "visibilityCondition": "{{ !sidebarCollapsed }}"
+          "visibilityCondition": "{{ dataItem.label }}"
          },
          {
           "baseStyles": {
@@ -80,63 +78,41 @@
             "blockName": "crm-sidebar-item",
             "children": [
              {
-              "baseStyles": {
-               "alignItems": "center",
-               "backgroundColor": "{{ dataItem.slug === inputs.activeSlug ? '#e5e7eb' : 'transparent' }}",
-               "borderRadius": "6px",
-               "cursor": "pointer",
-               "display": "flex",
-               "flexDirection": "row",
-               "flexShrink": "0",
-               "gap": "8px",
-               "height": "28px",
-               "justifyContent": "{{ sidebarCollapsed ? 'center' : 'flex-start' }}",
-               "paddingLeft": "8px",
-               "paddingRight": "8px",
-               "width": "100%"
-              },
               "blockName": "crm-sidebar-entry",
-              "children": [
-               {
-                "baseStyles": {
-                 "color": "#525252",
-                 "flexShrink": "0",
-                 "height": "16px",
-                 "width": "16px"
-                },
-                "blockName": "crm-sidebar-entry-icon",
-                "componentId": "crm-sidebar-entry-icon",
-                "componentName": "FeatherIcon",
-                "componentProps": {
-                 "name": "{{ dataItem.icon }}"
-                }
-               },
-               {
-                "baseStyles": {
-                 "color": "{{ dataItem.slug === inputs.activeSlug ? '#171717' : '#525252' }}",
-                 "fontSize": "13px",
-                 "overflow": "hidden",
-                 "whiteSpace": "nowrap"
-                },
-                "blockName": "crm-sidebar-entry-label",
-                "componentId": "crm-sidebar-entry-label",
-                "componentName": "TextBlock",
-                "componentProps": {
-                 "text": "{{ dataItem.label }}"
-                },
-                "visibilityCondition": "{{ !sidebarCollapsed }}"
-               }
-              ],
               "componentEvents": {
                "click": {
                 "action": "Run Script",
                 "event": "click",
-                "script": "function handleEvent() { router.push('/' + dataItem.slug) }"
+                "script": "function handleEvent() { router.push('/' + encodeURIComponent(dataItem.dt)) }"
                }
               },
               "componentId": "crm-sidebar-entry",
-              "componentName": "container",
-              "originalElement": "div"
+              "componentName": "SidebarItem",
+              "componentProps": {
+               "active": "{{ dataItem.dt === inputs.activeDoctype }}",
+               "label": "{{ dataItem.label }}"
+              },
+              "componentSlots": {
+               "prefix": {
+                "slotContent": [
+                 {
+                  "baseStyles": {
+                   "color": "#525252",
+                   "flexShrink": "0",
+                   "height": "16px",
+                   "width": "16px"
+                  },
+                  "blockName": "crm-sidebar-entry-icon",
+                  "componentId": "crm-sidebar-entry-icon",
+                  "componentName": "FeatherIcon",
+                  "componentProps": {
+                   "name": "{{ dataItem.icon }}"
+                  }
+                 }
+                ],
+                "slotName": "prefix"
+               }
+              }
              },
              {
               "baseStyles": {
@@ -148,47 +124,22 @@
               "children": [
                {
                 "baseStyles": {
-                 "alignItems": "center",
-                 "backgroundColor": "{{ String(dataItem.name) === route.params.viewName ? '#e5e7eb' : 'transparent' }}",
-                 "borderRadius": "6px",
-                 "cursor": "pointer",
-                 "display": "flex",
-                 "flexDirection": "row",
-                 "flexShrink": "0",
-                 "gap": "8px",
-                 "height": "28px",
-                 "justifyContent": "{{ sidebarCollapsed ? 'center' : 'flex-start' }}",
-                 "paddingLeft": "28px",
-                 "paddingRight": "8px",
-                 "width": "100%"
+                 "paddingLeft": "24px"
                 },
                 "blockName": "crm-sidebar-view",
-                "children": [
-                 {
-                  "baseStyles": {
-                   "color": "{{ String(dataItem.name) === route.params.viewName ? '#171717' : '#525252' }}",
-                   "fontSize": "13px",
-                   "overflow": "hidden",
-                   "whiteSpace": "nowrap"
-                  },
-                  "blockName": "crm-sidebar-view-label",
-                  "componentId": "crm-sidebar-view-label",
-                  "componentName": "TextBlock",
-                  "componentProps": {
-                   "text": "{{ dataItem.label }}"
-                  }
-                 }
-                ],
                 "componentEvents": {
                  "click": {
                   "action": "Run Script",
                   "event": "click",
-                  "script": "function handleEvent() { router.push('/' + dataItem.slug + '/view/' + dataItem.name) }"
+                  "script": "function handleEvent() { router.push('/' + encodeURIComponent(dataItem.dt) + '/view/' + dataItem.name) }"
                  }
                 },
                 "componentId": "crm-sidebar-view",
-                "componentName": "container",
-                "originalElement": "div"
+                "componentName": "SidebarItem",
+                "componentProps": {
+                 "active": "{{ String(dataItem.name) === route.params.viewName }}",
+                 "label": "{{ dataItem.label }}"
+                }
                }
               ],
               "componentId": "crm-sidebar-views",
@@ -210,7 +161,7 @@
           "componentName": "Repeater",
           "componentProps": {
            "data": "{{ dataItem.items || [] }}",
-           "dataKey": "slug",
+           "dataKey": "dt",
            "emptyStateMessage": " "
           }
          }
@@ -230,62 +181,11 @@
      },
      {
       "baseStyles": {
-       "alignItems": "center",
-       "borderRadius": "6px",
-       "cursor": "pointer",
-       "display": "flex",
-       "flexDirection": "row",
-       "flexShrink": "0",
-       "gap": "8px",
-       "height": "28px",
-       "justifyContent": "{{ sidebarCollapsed ? 'center' : 'flex-start' }}",
-       "marginTop": "auto",
-       "paddingLeft": "8px",
-       "paddingRight": "8px",
-       "width": "100%"
+       "marginTop": "auto"
       },
       "blockName": "crm-sidebar-toggle",
-      "children": [
-       {
-        "baseStyles": {
-         "color": "#525252",
-         "flexShrink": "0",
-         "height": "16px",
-         "width": "16px"
-        },
-        "blockName": "crm-sidebar-toggle-icon",
-        "componentId": "crm-sidebar-toggle-icon",
-        "componentName": "FeatherIcon",
-        "componentProps": {
-         "name": "sidebar"
-        }
-       },
-       {
-        "baseStyles": {
-         "color": "#525252",
-         "fontSize": "13px",
-         "overflow": "hidden",
-         "whiteSpace": "nowrap"
-        },
-        "blockName": "crm-sidebar-toggle-label",
-        "componentId": "crm-sidebar-toggle-label",
-        "componentName": "TextBlock",
-        "componentProps": {
-         "text": "Collapse"
-        },
-        "visibilityCondition": "{{ !sidebarCollapsed }}"
-       }
-      ],
-      "componentEvents": {
-       "click": {
-        "action": "Run Script",
-        "event": "click",
-        "script": "function handleEvent() { sidebarCollapsed.value = !sidebarCollapsed.value }"
-       }
-      },
       "componentId": "crm-sidebar-toggle",
-      "componentName": "container",
-      "originalElement": "div"
+      "componentName": "SidebarCollapseToggle"
      }
     ],
     "componentId": "crm-sidebar-body",
@@ -318,8 +218,8 @@
    "type": "Object"
   },
   {
-   "description": "The doctype slug of the current route; its entry is highlighted.",
-   "input_name": "activeSlug",
+   "description": "The doctype of the current route; its entry is highlighted.",
+   "input_name": "activeDoctype",
    "required": 0,
    "type": "String"
   },
@@ -331,7 +231,7 @@
   }
  ],
  "is_disabled": 0,
- "modified": "2026-07-13 17:09:55.459785",
+ "modified": "2026-07-14 14:04:53.340660",
  "modified_by": "Administrator",
  "name": "crm-sidebar",
  "owner": "Administrator"

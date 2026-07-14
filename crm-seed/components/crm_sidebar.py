@@ -27,24 +27,40 @@ declare them itself:
                  splices in.
 
 Sidebar is used through its COMPOSITION api (the shell owns the collapse state, the width
-and the transition; we own the body), not its deprecated `sections` config prop. That is
-forced, not preferred: SidebarItem reads `if (props.active !== undefined) return props.active`,
-but `active` is a Boolean prop, and Vue casts an absent Boolean prop to `false` — so
-`active` is never `undefined`, and `isActive` and the built-in route matching below it are
-both dead code. Every config-driven row renders `data-state="inactive"` (verified in the
-browser). frappe-ui's SidebarItem needs `active: { type: Boolean, default: undefined }`,
-or the guard rewritten as `props.active != null`.
+and the transition; we own the body), not its deprecated `header`/`sections` config props —
+passing default-slot children disables those anyway. The body is built from frappe-ui's own
+SidebarHeader / SidebarLabel / SidebarItem / SidebarCollapseToggle, so the rows get the
+library's chrome (28px rounded rows, the raised active pill, the collapse transitions)
+instead of a hand-rolled imitation.
 
-So the rows are Studio blocks (Repeater + container + FeatherIcon + TextBlock) inside
-Sidebar's default slot. SidebarItem / SidebarLabel / SidebarCollapseToggle aren't
-registered in Studio anyway (only `Sidebar` is), so they could not have been used as
-blocks even without the bug — the collapse toggle at the bottom is ours too.
+Two things that shape how those components are used here:
+
+  * ACTIVE   — every row passes `active` EXPLICITLY. SidebarItem's built-in route matching
+               is dead code: it guards with `if (props.active !== undefined)`, but `active`
+               is a Boolean prop and Vue casts an absent Boolean to `false`, so the guard
+               always wins. Passing `active` ourselves is the supported path and is what we
+               need regardless — every doctype URL resolves to the SAME named route (the
+               Generic List Page), so route matching would light up every row. The page
+               passes the doctype it is showing, and the detail page passes its parent's,
+               so a record keeps its list lit.
+  * ICONS    — the icon rides in SidebarItem's `#prefix` slot as a FeatherIcon, not in its
+               `icon` prop. The prop takes a component or a `lucide-*` CSS class, and those
+               classes are real — but frappe-ui's tailwind lucideIconsPlugin only emits the
+               ones Tailwind can see in the SOURCE at build time (164 of them in this app's
+               bundle; `lucide-building-2` and `lucide-square-pen` are already missing). Our
+               icon names come out of the layout record at RUNTIME, so a `lucide-<name>`
+               class would work for some rows and silently render an empty span for others.
+               FeatherIcon is always in the bundle (studio.constants.DEFAULT_COMPONENTS) and
+               takes a plain string, so the layout record's icon names travel through as data.
+
+Rows navigate from a click handler rather than SidebarItem's `to` prop: `to` renders a
+RouterLink, which resolves its target at render time against whatever router is mounted —
+in the Studio BUILDER that is the builder's own router, which has no `/leads` route.
 """
 
 import json
 
 import blocks
-import config
 
 COMPONENT_ID = "crm-sidebar"  # the Studio Component DOCNAME — pages reference this
 COMPONENT_NAME = "CRMSidebar"
@@ -55,7 +71,7 @@ COLLAPSE_KEY = "crm-studio:sidebar-collapsed"
 VIEWS_VARIABLE = "views"
 
 SECTIONS_INPUT = "sections"
-ACTIVE_SLUG_INPUT = "activeSlug"
+ACTIVE_DOCTYPE_INPUT = "activeDoctype"
 VIEWS_INPUT = "views"
 
 # The sidebar's content is DATA (PR 1524's design), not code: whatever
@@ -97,25 +113,24 @@ PAGE_SETUP = f"""
 	// every script's context) rather than an import, because the pages' scripts share no set
 	// of static imports — the home page imports nothing from frappe-ui.
 	const {{ {VIEWS_VARIABLE} }} = ctx
-	const VIEW_SLUGS: Record<string, string> = {json.dumps(config.DOCTYPE_TO_SLUG)}
 	ctx.call("crm.api.views.get_views").then((rows: any[]) => {{
-		// Grouped by doctype, and carrying the slug: both the sidebar row and the picker
-		// route by slug (`/:doctype/view/:viewName`), and a stored view only knows its `dt`.
+		// Grouped by the doctype they belong to — which is also all a row needs to build its
+		// URL, since the route carries the doctype name itself (`/:doctype/view/:viewName`).
+		// So a view on ANY doctype routes correctly, not just the six the sidebar advertises.
 		const grouped: Record<string, any[]> = {{}}
 		for (const row of rows || []) {{
-			const slug = VIEW_SLUGS[row.dt]
 			// A standard view IS the doctype's default (unsaved) view, not a saved one;
 			// kanban/group_by views have no screen in this app (ADR-0002).
-			if (!slug || row.is_standard || (row.type && row.type !== "list")) continue
-			grouped[row.dt] = [...(grouped[row.dt] || []), {{ ...row, slug }}]
+			if (!row.dt || row.is_standard || (row.type && row.type !== "list")) continue
+			grouped[row.dt] = [...(grouped[row.dt] || []), row]
 		}}
 		{VIEWS_VARIABLE}.value = grouped
 	}})
 """.rstrip()
 
 
-ACTIVE_BG = "#e5e7eb"
-ACTIVE_TEXT = "#171717"
+# SidebarItem paints the row itself (active pill, hover, muted label); the only colour left
+# to us is the FeatherIcon in its #prefix slot, matching SidebarItemIcon's text-ink-gray-6.
 MUTED_TEXT = "#525252"
 
 INPUTS = [
@@ -126,9 +141,9 @@ INPUTS = [
 		"required": 1,
 	},
 	{
-		"input_name": ACTIVE_SLUG_INPUT,
+		"input_name": ACTIVE_DOCTYPE_INPUT,
 		"type": "String",
-		"description": "The doctype slug of the current route; its entry is highlighted.",
+		"description": "The doctype of the current route; its entry is highlighted.",
 		"required": 0,
 	},
 	{
@@ -139,28 +154,13 @@ INPUTS = [
 	},
 ]
 
-# Row height/padding are duplicated between an entry and the collapse toggle, so both read
-# the same shape whichever state the sidebar is in.
-ROW = {
-	"flexDirection": "row",
-	"alignItems": "center",
-	"gap": "8px",
-	"height": "28px",
-	"paddingLeft": "8px",
-	"paddingRight": "8px",
-	"borderRadius": "6px",
-	"cursor": "pointer",
-	"flexShrink": "0",
-	# collapsed, the sidebar is a 3.5rem rail: the icon centres, the label is gone
-	"justifyContent": f"{{{{ {COLLAPSE_VARIABLE} ? 'center' : 'flex-start' }}}}",
-}
-
-LABEL = {"fontSize": "13px", "whiteSpace": "nowrap", "overflow": "hidden"}
+# SidebarItem's own link is `pl-2`, and an entry's label starts one icon (16px) plus one gap
+# (8px) further in. A view row carries no icon, so it needs that 24px as padding to line its
+# label up under its doctype's.
+VIEW_INDENT = "24px"
 
 
 def _icon(component_id: str, name: str) -> dict:
-	# FeatherIcon is always in the bundle (studio.constants.DEFAULT_COMPONENTS) and takes a
-	# plain string, so the layout record's icon names travel straight through as data.
 	return blocks.block(
 		"FeatherIcon",
 		component_id,
@@ -171,66 +171,42 @@ def _icon(component_id: str, name: str) -> dict:
 
 def _entry() -> dict:
 	"""One doctype row. Inside the items Repeater, so `dataItem` is one layout item."""
-	return blocks.container(
+	return blocks.block(
+		"SidebarItem",
 		"crm-sidebar-entry",
-		styles={
-			**ROW,
-			"width": "100%",
-			# The active highlight. It cannot come from the item's route: every doctype URL
-			# resolves to the SAME named route (the Generic List Page), so route matching
-			# would light up every row — the page passes the slug it is showing instead, and
-			# the detail page passes its parent's, so a record keeps its list lit.
-			"backgroundColor": f"{{{{ dataItem.slug === inputs.{ACTIVE_SLUG_INPUT} ? '{ACTIVE_BG}' : 'transparent' }}}}",
+		props={
+			"label": "{{ dataItem.label }}",
+			"active": f"{{{{ dataItem.dt === inputs.{ACTIVE_DOCTYPE_INPUT} }}}}",
 		},
-		# The Generic List Page is `/:doctype`, so an item's slug IS its list route.
-		events={"click": blocks.event("click", "function handleEvent() { router.push('/' + dataItem.slug) }")},
-		children=[
-			_icon("crm-sidebar-entry-icon", "{{ dataItem.icon }}"),
-			blocks.block(
-				"TextBlock",
-				"crm-sidebar-entry-label",
-				props={"text": "{{ dataItem.label }}"},
-				styles={
-					**LABEL,
-					"color": f"{{{{ dataItem.slug === inputs.{ACTIVE_SLUG_INPUT} ? '{ACTIVE_TEXT}' : '{MUTED_TEXT}' }}}}",
-				},
-				visibility=f"{{{{ !{COLLAPSE_VARIABLE} }}}}",
-			),
-		],
+		slots={"prefix": [_icon("crm-sidebar-entry-icon", "{{ dataItem.icon }}")]},
+		# The Generic List Page is `/:doctype` and that param is the doctype NAME, so an
+		# item's `dt` is its list route — encoded, because doctype names contain spaces.
+		events={
+			"click": blocks.event(
+				"click",
+				"function handleEvent() { router.push('/' + encodeURIComponent(dataItem.dt)) }",
+			)
+		},
 	)
 
 
 def _view_row() -> dict:
 	"""One saved view, under its doctype. Inside the views Repeater, so `dataItem` is a view
-	row — `slug` included, which PAGE_SETUP adds because a stored view only knows its `dt`."""
+	row, whose `dt` is the doctype — which is exactly what its URL needs."""
 	# The view page is /:doctype/view/:viewName, and CRM View Settings is autoincrement, so
 	# its `name` is an INT while the route param is a string.
-	is_active = f"String(dataItem.name) === route.params.viewName"
-	return blocks.container(
+	is_active = "String(dataItem.name) === route.params.viewName"
+	return blocks.block(
+		"SidebarItem",
 		"crm-sidebar-view",
-		styles={
-			**ROW,
-			"width": "100%",
-			"paddingLeft": "28px",
-			"backgroundColor": f"{{{{ {is_active} ? '{ACTIVE_BG}' : 'transparent' }}}}",
-		},
+		props={"label": "{{ dataItem.label }}", "active": f"{{{{ {is_active} }}}}"},
+		styles={"paddingLeft": VIEW_INDENT},
 		events={
 			"click": blocks.event(
 				"click",
-				"function handleEvent() { router.push('/' + dataItem.slug + '/view/' + dataItem.name) }",
+				"function handleEvent() { router.push('/' + encodeURIComponent(dataItem.dt) + '/view/' + dataItem.name) }",
 			)
 		},
-		children=[
-			blocks.block(
-				"TextBlock",
-				"crm-sidebar-view-label",
-				props={"text": "{{ dataItem.label }}"},
-				styles={
-					**LABEL,
-					"color": f"{{{{ {is_active} ? '{ACTIVE_TEXT}' : '{MUTED_TEXT}' }}}}",
-				},
-			),
-		],
 	)
 
 
@@ -270,22 +246,21 @@ def _section() -> dict:
 		styles={"gap": "2px", "width": "100%"},
 		children=[
 			blocks.block(
-				"TextBlock",
+				"SidebarLabel",
 				"crm-sidebar-section-label",
-				props={"text": "{{ dataItem.label }}"},
-				styles={
-					"fontSize": "11px",
-					"fontWeight": "500",
-					"color": MUTED_TEXT,
-					"paddingLeft": "8px",
-					"marginBottom": "2px",
-				},
-				visibility=f"{{{{ !{COLLAPSE_VARIABLE} }}}}",
+				# SidebarLabel hides its own text when collapsed and shows a rule instead, so it
+				# needs no visibility of ours — but an UNLABELLED section (the layout allows one)
+				# would still reserve its 28px row, so skip the block entirely when there's no text.
+				props={"divider": True},
+				visibility="{{ dataItem.label }}",
+				children=[
+					blocks.block("TextBlock", "crm-sidebar-section-label-text", props={"text": "{{ dataItem.label }}"})
+				],
 			),
 			blocks.block(
 				"Repeater",
 				"crm-sidebar-entries",
-				props={"data": "{{ dataItem.items || [] }}", "dataKey": "slug", "emptyStateMessage": " "},
+				props={"data": "{{ dataItem.items || [] }}", "dataKey": "dt", "emptyStateMessage": " "},
 				# Repeater's own root is `flex flex-row flex-wrap gap-5`; inline styles win.
 				styles={"flexDirection": "column", "gap": "2px", "width": "100%"},
 				children=[_item()],
@@ -295,29 +270,11 @@ def _section() -> dict:
 
 
 def _toggle() -> dict:
-	"""Our own collapse toggle: SidebarCollapseToggle only renders on Sidebar's deprecated
-	config path, and it isn't registered in Studio either."""
-	return blocks.container(
-		"crm-sidebar-toggle",
-		styles={**ROW, "width": "100%", "marginTop": "auto"},
-		events={
-			"click": blocks.event(
-				"click",
-				# page variables reach an event script as refs (codeStore.scriptContext)
-				f"function handleEvent() {{ {COLLAPSE_VARIABLE}.value = !{COLLAPSE_VARIABLE}.value }}",
-			)
-		},
-		children=[
-			_icon("crm-sidebar-toggle-icon", "sidebar"),
-			blocks.block(
-				"TextBlock",
-				"crm-sidebar-toggle-label",
-				props={"text": "Collapse"},
-				styles={**LABEL, "color": MUTED_TEXT},
-				visibility=f"{{{{ !{COLLAPSE_VARIABLE} }}}}",
-			),
-		],
-	)
+	"""The collapse toggle. No props and no click handler of its own: it reads Sidebar's
+	collapsed state and its toggle through provide/inject, and Sidebar's `toggle()` writes
+	through the `collapsed` defineModel — which is bound to our page variable, so the page
+	script still sees every change and persists it."""
+	return blocks.block("SidebarCollapseToggle", "crm-sidebar-toggle", styles={"marginTop": "auto"})
 
 
 def build() -> dict:
@@ -338,23 +295,15 @@ def build() -> dict:
 				"collapsed": blocks.bind(COLLAPSE_VARIABLE),
 			},
 			children=[
+				# Sidebar's default slot is bare — no padding, and (unlike its legacy config path)
+				# no right border. The body owns both.
 				blocks.container(
 					"crm-sidebar-body",
-					styles={"height": "100%", "padding": "8px", "gap": "12px"},
+					styles={"height": "100%", "padding": "8px", "gap": "4px"},
 					children=[
-						blocks.block(
-							"TextBlock",
-							"crm-sidebar-title",
-							props={"text": "CRM on Studio"},
-							styles={
-								"fontSize": "14px",
-								"fontWeight": "600",
-								"paddingLeft": "8px",
-								"whiteSpace": "nowrap",
-								"overflow": "hidden",
-							},
-							visibility=f"{{{{ !{COLLAPSE_VARIABLE} }}}}",
-						),
+						# `title` is SidebarHeader's only required prop; with no `logo` it renders
+						# the title's first letter in a rounded box, which is the shell we want.
+						blocks.block("SidebarHeader", "crm-sidebar-title", props={"title": "CRM on Studio"}),
 						blocks.block(
 							"Repeater",
 							"crm-sidebar-sections",
@@ -363,7 +312,15 @@ def build() -> dict:
 								"dataKey": "name",
 								"emptyStateMessage": " ",
 							},
-							styles={"flexDirection": "column", "gap": "12px", "width": "100%"},
+							# The rows scroll; the toggle below stays pinned to the bottom.
+							styles={
+								"flexDirection": "column",
+								"gap": "12px",
+								"width": "100%",
+								"flexGrow": "1",
+								"overflowY": "auto",
+								"overflowX": "hidden",
+							},
 							children=[_section()],
 						),
 						_toggle(),
@@ -374,18 +331,18 @@ def build() -> dict:
 	}
 
 
-def instance(active_slug: str = "") -> dict:
+def instance(active_doctype: str = "") -> dict:
 	"""The block a page drops into its root to place the sidebar.
 
-	`active_slug` is a page expression (the list/detail pages have a `:doctype` param;
-	the home page has none).
+	`active_doctype` is a page expression (the list/detail pages have a `:doctype` param,
+	which IS the doctype name; the home page has none).
 	"""
 	return blocks.studio_component(
 		component_id_ref=COMPONENT_ID,
 		instance_id="crm-sidebar",
 		props={
 			SECTIONS_INPUT: f"{{{{ {RESOURCE_NAME}.data || [] }}}}",
-			ACTIVE_SLUG_INPUT: active_slug,
+			ACTIVE_DOCTYPE_INPUT: active_doctype,
 			# no `|| {}` fallback: an expression's `}}` would close the interpolation early.
 			# The variable's initial value is already an empty object.
 			VIEWS_INPUT: f"{{{{ {VIEWS_VARIABLE} }}}}",

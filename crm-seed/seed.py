@@ -26,13 +26,13 @@ BENCH = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
 
 sys.path.insert(0, HERE)
 
-import frappe  # noqa: E402
+import frappe
 
-import components  # noqa: E402
-import config  # noqa: E402
-import pages  # noqa: E402
-import studio_docs  # noqa: E402
-import ui_customization  # noqa: E402
+import components
+import config
+import pages
+import studio_docs
+import ui_customization
 
 DEFAULT_SITE = "studio.localhost"
 
@@ -119,7 +119,9 @@ def main() -> None:
 		print(f"app       : {config.APP_NAME} (route /{config.APP_ROUTE}, exports to apps/{config.FRAPPE_APP})")
 		print(f"pages     : {', '.join(sorted(pages.SEEDERS)) or '(none)'}")
 		print(f"components: {', '.join(sorted(components.SEEDERS)) or '(none)'}")
-		print(f"doctypes  : {', '.join(d['slug'] + ' -> ' + d['doctype'] for d in config.DOCTYPES)}")
+		print(f"sidebar   : {', '.join(d['doctype'] for d in config.DOCTYPES)}")
+		print("            (these are just the doctypes with a nav row — the /:doctype page")
+		print("             serves EVERY non-single, non-child doctype; see config.py)")
 		return
 
 	# Frappe resolves bench paths (logs/, apps/) relative to the sites directory, so

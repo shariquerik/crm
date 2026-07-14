@@ -16,7 +16,7 @@
      "componentId": "crm-sidebar",
      "componentName": "crm-sidebar",
      "componentProps": {
-      "activeSlug": "{{ route.params.doctype }}",
+      "activeDoctype": "{{ route.params.doctype }}",
       "sections": "{{ sidebarLayout.data || [] }}",
       "views": "{{ views }}"
      },
@@ -66,7 +66,7 @@
            "componentId": "list-title",
            "componentName": "TextBlock",
            "componentProps": {
-            "text": "{{ doctypeMap[route.params.doctype] }}"
+            "text": "{{ route.params.doctype }}"
            }
           },
           {
@@ -102,7 +102,7 @@
            "componentId": "list-filter",
            "componentName": "Filter",
            "componentProps": {
-            "doctype": "{{ doctypeMap[route.params.doctype] }}",
+            "doctype": "{{ route.params.doctype }}",
             "modelValue": {
              "$type": "variable",
              "name": "filters"
@@ -114,7 +114,7 @@
            "componentId": "list-sort",
            "componentName": "SortBy",
            "componentProps": {
-            "doctype": "{{ doctypeMap[route.params.doctype] }}",
+            "doctype": "{{ route.params.doctype }}",
             "modelValue": {
              "$type": "variable",
              "name": "sort"
@@ -126,7 +126,7 @@
            "componentId": "list-columns",
            "componentName": "ColumnSettings",
            "componentProps": {
-            "doctype": "{{ doctypeMap[route.params.doctype] }}",
+            "doctype": "{{ route.params.doctype }}",
             "modelValue": {
              "$type": "variable",
              "name": "columns"
@@ -168,7 +168,7 @@
        "componentId": "list-quickfilter",
        "componentName": "QuickFilter",
        "componentProps": {
-        "doctype": "{{ doctypeMap[route.params.doctype] }}",
+        "doctype": "{{ route.params.doctype }}",
         "filters": {
          "$type": "variable",
          "name": "filters"
@@ -191,7 +191,7 @@
           "description": "Nothing to show here yet.",
           "title": "No records"
          },
-         "onRowClick": "(row) => router.push(`/${route.params.doctype}/${row.name}`)",
+         "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
          "selectable": false,
          "showTooltip": true
         },
@@ -234,7 +234,71 @@
      ],
      "componentId": "list-body",
      "componentName": "container",
-     "originalElement": "div"
+     "originalElement": "div",
+     "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
+    },
+    {
+     "baseStyles": {
+      "alignItems": "center",
+      "display": "flex",
+      "flexDirection": "column",
+      "flexGrow": "1",
+      "gap": "8px",
+      "height": "100%",
+      "justifyContent": "center",
+      "padding": "24px",
+      "width": "100%"
+     },
+     "blockName": "list-not-found",
+     "children": [
+      {
+       "baseStyles": {
+        "fontSize": "20px",
+        "fontWeight": "600"
+       },
+       "blockName": "list-not-found-title",
+       "componentId": "list-not-found-title",
+       "componentName": "TextBlock",
+       "componentProps": {
+        "text": "Page not found"
+       }
+      },
+      {
+       "baseStyles": {
+        "color": "#525252",
+        "fontSize": "14px"
+       },
+       "blockName": "list-not-found-message",
+       "componentId": "list-not-found-message",
+       "componentName": "TextBlock",
+       "componentProps": {
+        "text": "{{ route.params.doctype + ' is not a doctype you can open here.' }}"
+       }
+      },
+      {
+       "baseStyles": {
+        "marginTop": "8px"
+       },
+       "blockName": "list-not-found-home",
+       "componentEvents": {
+        "click": {
+         "action": "Run Script",
+         "event": "click",
+         "script": "function handleEvent() { router.push('/') }"
+        }
+       },
+       "componentId": "list-not-found-home",
+       "componentName": "Button",
+       "componentProps": {
+        "label": "Go to home",
+        "variant": "subtle"
+       }
+      }
+     ],
+     "componentId": "list-not-found",
+     "componentName": "container",
+     "originalElement": "div",
+     "visibilityCondition": "{{ routeDoctype.data && !routeDoctype.data.doctype }}"
     }
    ],
    "componentId": "root",
@@ -246,7 +310,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-13 17:42:47.597073",
+ "modified": "2026-07-14 15:20:36.276726",
  "modified_by": "Administrator",
  "name": "saved_view",
  "owner": "Administrator",
@@ -257,7 +321,7 @@
   {
    "__unsaved": 1,
    "method": "POST",
-   "params": "{\"doctype\": \"{{ doctypeMap[route.params.doctype] }}\", \"filters\": {}, \"order_by\": \"modified desc\", \"page_length\": 20, \"page_length_count\": 20}",
+   "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"filters\": {}, \"order_by\": \"modified desc\", \"page_length\": 20, \"page_length_count\": 20}",
    "resource_name": "listData",
    "resource_type": "API Resource",
    "url": "crm.api.doc.get_data"
@@ -275,7 +339,15 @@
    "__unsaved": 1,
    "auto": 1,
    "method": "GET",
-   "params": "{\"doctype\": \"{{ doctypeMap[route.params.doctype] }}\", \"view_name\": \"{{ route.params.viewName }}\"}",
+   "params": "{\"doctype\": \"{{ route.params.doctype }}\"}",
+   "resource_name": "routeDoctype",
+   "resource_type": "API Resource",
+   "url": "crm.api.doc.resolve_doctype"
+  },
+  {
+   "__unsaved": 1,
+   "method": "GET",
+   "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"view_name\": \"{{ route.params.viewName }}\"}",
    "resource_name": "currentView",
    "resource_type": "API Resource",
    "url": "crm.api.views.get_current_view"
@@ -294,12 +366,6 @@
    "__unsaved": 1,
    "initial_value": "{}",
    "variable_name": "views",
-   "variable_type": "Object"
-  },
-  {
-   "__unsaved": 1,
-   "initial_value": "{\"crm-lead\": \"CRM Lead\", \"crm-deal\": \"CRM Deal\", \"contact\": \"Contact\", \"crm-organization\": \"CRM Organization\", \"crm-task\": \"CRM Task\", \"fcrm-note\": \"FCRM Note\"}",
-   "variable_name": "doctypeMap",
    "variable_type": "Object"
   },
   {

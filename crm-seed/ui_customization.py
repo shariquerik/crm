@@ -2,8 +2,10 @@
 
 The sidebar's content is data, not code (PR 1524's design): the CRMSidebar component
 reads it from crm.fcrm.doctype.crm_ui_customization.crm_ui_customization.get_sidebar_layout.
-This seed writes that record from config.DOCTYPES so the sidebar and the slug<->doctype
-map cannot drift apart.
+This seed writes that record from config.DOCTYPES — the doctypes that get a nav row.
+
+An item's `dt` is all a row needs: the list page's route is `/:doctype` and that param is
+the doctype NAME, so the row links straight to it with no slug or lookup in between.
 
 get_sidebar_layout() fetches the doc by the literal name "App Sidebar", which is what
 a record of type "App Sidebar" with no dt/user autonames to.
@@ -28,7 +30,6 @@ def build() -> list[dict]:
 				{
 					"label": d["label"],
 					"dt": d["doctype"],
-					"slug": d["slug"],
 					"icon": d["icon"],
 					"type": "doctype",
 				}

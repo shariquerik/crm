@@ -22,6 +22,7 @@ import json
 
 import blocks
 import config
+import doctype_guard
 from components import crm_sidebar
 
 PAGE_NAME = "crm-detail"
@@ -120,11 +121,26 @@ import { computed, watch } from "vue"
 import { call, toast } from "frappe-ui"
 
 export default function setup(ctx: any) {
-	const { record, doc, saving, saveError, doctypeMap, doctypeLabels, route, router } = ctx
+	const { record, doc, saving, saveError, doctypeLabels, route, router } = ctx
 	const { notes, tasks, noteTitle, noteContent, taskTitle, taskDueDate, addingNote, addingTask } = ctx
-""" + crm_sidebar.PAGE_SETUP + """
+	const { fieldsLayout } = ctx
+""" + crm_sidebar.PAGE_SETUP + doctype_guard.PAGE_SETUP + """
 
-	const doctype = computed(() => doctypeMap.value[route.params.doctype])
+	// Every resource on this page is auto=0: they all take the route's doctype, so none of
+	// them may fire until the server has confirmed the route actually names one (and that the
+	// URL is its canonical spelling — a slug is redirected instead, which re-runs this setup).
+	guardDoctype(() => {
+		record.fetch()
+		fieldsLayout.fetch()
+		notes.fetch()
+		tasks.fetch()
+	}, `/${encodeURIComponent(route.params.id)}`)
+
+	// The route carries the doctype name itself ("CRM Lead"), already decoded by vue-router
+	// — no lookup, so a record of ANY doctype opens here. See config.py.
+	const doctype = computed(() => route.params.doctype)
+	// ...but a LINK back to it has to re-encode the space.
+	const doctypeLink = computed(() => `/${encodeURIComponent(route.params.doctype)}`)
 
 	// Every note/task hangs off the record through this pair — the same one CRM's own
 	// activities API reads, so rows created here show up in CRM's frontend too.
@@ -146,8 +162,10 @@ export default function setup(ctx: any) {
 
 	const breadcrumbs = computed(() => [
 		{
-			label: doctypeLabels.value[route.params.doctype] || doctype.value,
-			route: `/${route.params.doctype}`,
+			// The curated doctypes have a nicer plural ("Leads"); anything else is shown as
+			// its own name.
+			label: doctypeLabels.value[doctype.value] || doctype.value,
+			route: doctypeLink.value,
 		},
 		{ label: doc.value?.name || route.params.id },
 	])
@@ -254,7 +272,7 @@ export default function setup(ctx: any) {
 	}
 
 	function goToList() {
-		router.push(`/${route.params.doctype}`)
+		router.push(doctypeLink.value)
 	}
 
 	return { breadcrumbs, saveDoc, goToList, addNote, addTask }
@@ -323,27 +341,38 @@ def build() -> dict:
 			"minWidth": "0",
 		},
 		children=[header, error, form, tabs],
+		# Renders only once the guard has confirmed the route's doctype; its sibling is the
+		# Not Found panel.
+		visibility=doctype_guard.RESOLVED,
 	)
 
 	return {
 		"page_name": PAGE_NAME,
 		"page_title": "Detail",
 		"route": "/:doctype/:id",
-		# A record keeps its own doctype's entry lit, so the slug is the highlight.
-		"blocks": blocks.root([crm_sidebar.instance("{{ route.params.doctype }}"), body]),
+		# A record keeps its own doctype's entry lit, so that doctype is the highlight.
+		"blocks": blocks.root(
+			[
+				crm_sidebar.instance("{{ route.params.doctype }}"),
+				body,
+				doctype_guard.block("detail-not-found"),
+			]
+		),
 		"resources": [
 			crm_sidebar.RESOURCE,
+			doctype_guard.RESOURCE,
 			{
 				"resource_name": "record",
 				"resource_type": "API Resource",
 				"url": "frappe.client.get",
 				"method": "GET",
-				"auto": 1,
-				# params are evaluated ONCE, against {variables, route, router} — hence the
-				# slug->doctype map as a page variable rather than a lookup in the script.
+				# fired by the guard — see the page script
+				"auto": 0,
+				# params are evaluated ONCE, against {variables, route, router} — which is all
+				# this needs, because the route carries the doctype name itself.
 				"params": json.dumps(
 					{
-						"doctype": "{{ doctypeMap[route.params.doctype] }}",
+						"doctype": "{{ route.params.doctype }}",
 						"name": "{{ route.params.id }}",
 					}
 				),
@@ -354,10 +383,10 @@ def build() -> dict:
 				"resource_type": "API Resource",
 				"url": "crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout",
 				"method": "GET",
-				"auto": 1,
+				"auto": 0,  # fired by the guard
 				"params": json.dumps(
 					{
-						"doctype": "{{ doctypeMap[route.params.doctype] }}",
+						"doctype": "{{ route.params.doctype }}",
 						"type": FIELDS_LAYOUT_TYPE,
 					}
 				),
@@ -377,11 +406,13 @@ def build() -> dict:
 		],
 		"variables": [
 			*crm_sidebar.VARIABLES,
-			{"variable_name": "doctypeMap", "variable_type": "Object", "initial_value": config.SLUG_TO_DOCTYPE},
+			# doctype -> its nicer plural, for the breadcrumb. Only the curated doctypes have
+			# one; a record of any OTHER doctype still opens here (the route carries the name,
+			# so there is nothing to register) and falls back to showing the doctype itself.
 			{
 				"variable_name": "doctypeLabels",
 				"variable_type": "Object",
-				"initial_value": {d["slug"]: d["label"] for d in config.DOCTYPES},
+				"initial_value": config.DOCTYPE_LABELS,
 			},
 			{"variable_name": "doc", "variable_type": "Object", "initial_value": {}},
 			{"variable_name": "saving", "variable_type": "Boolean", "initial_value": False},
@@ -410,7 +441,7 @@ def _child_resource(name: str, doctype: str, fields: list[str], transform: str =
 		"resource_type": "API Resource",
 		"url": "frappe.client.get_list",
 		"method": "POST",  # `filters` is a dict; a GET would send it as "[object Object]"
-		"auto": 1,
+		"auto": 0,  # fired by the guard, like every other resource here
 		"params": json.dumps(
 			{
 				"doctype": doctype,
@@ -418,7 +449,7 @@ def _child_resource(name: str, doctype: str, fields: list[str], transform: str =
 				# Only TOP-LEVEL param values are evaluated (codeStore.getAPIParams does not
 				# walk into them), so the whole filter object has to be one expression.
 				"filters": (
-					"{{ ({ reference_doctype: doctypeMap[route.params.doctype],"
+					"{{ ({ reference_doctype: route.params.doctype,"
 					" reference_docname: route.params.id }) }}"
 				),
 				"order_by": "creation desc",

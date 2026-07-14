@@ -19,17 +19,16 @@ export default function setup(ctx: any) {
 	// every script's context) rather than an import, because the pages' scripts share no set
 	// of static imports — the home page imports nothing from frappe-ui.
 	const { views } = ctx
-	const VIEW_SLUGS: Record<string, string> = {"CRM Lead": "crm-lead", "CRM Deal": "crm-deal", "Contact": "contact", "CRM Organization": "crm-organization", "CRM Task": "crm-task", "FCRM Note": "fcrm-note"}
 	ctx.call("crm.api.views.get_views").then((rows: any[]) => {
-		// Grouped by doctype, and carrying the slug: both the sidebar row and the picker
-		// route by slug (`/:doctype/view/:viewName`), and a stored view only knows its `dt`.
+		// Grouped by the doctype they belong to — which is also all a row needs to build its
+		// URL, since the route carries the doctype name itself (`/:doctype/view/:viewName`).
+		// So a view on ANY doctype routes correctly, not just the six the sidebar advertises.
 		const grouped: Record<string, any[]> = {}
 		for (const row of rows || []) {
-			const slug = VIEW_SLUGS[row.dt]
 			// A standard view IS the doctype's default (unsaved) view, not a saved one;
 			// kanban/group_by views have no screen in this app (ADR-0002).
-			if (!slug || row.is_standard || (row.type && row.type !== "list")) continue
-			grouped[row.dt] = [...(grouped[row.dt] || []), { ...row, slug }]
+			if (!row.dt || row.is_standard || (row.type && row.type !== "list")) continue
+			grouped[row.dt] = [...(grouped[row.dt] || []), row]
 		}
 		views.value = grouped
 	})

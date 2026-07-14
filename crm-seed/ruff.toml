@@ -1,0 +1,21 @@
+# The seed suite is a flat folder of modules, not an installed package: seed.py and
+# test_seed.py put this directory on sys.path (the folder is hyphenated, so it isn't
+# importable, which is also why `bench execute` can't reach it) and the modules then
+# import each other by bare name — `import config`, `import blocks`.
+#
+# Ruff can't infer that, so without this it files them under THIRD-PARTY and interleaves
+# them with frappe: `import config` sorts above `import frappe`, which reads as if config
+# were a library. Naming them here puts them back in their own first-party block.
+extend = "../pyproject.toml"
+
+[lint.isort]
+known-first-party = [
+	"blocks",
+	"components",
+	"config",
+	"doctype_guard",
+	"pages",
+	"seed",
+	"studio_docs",
+	"ui_customization",
+]

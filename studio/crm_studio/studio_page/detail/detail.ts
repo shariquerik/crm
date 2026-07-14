@@ -6,8 +6,9 @@ import { computed, watch } from "vue"
 import { call, toast } from "frappe-ui"
 
 export default function setup(ctx: any) {
-	const { record, doc, saving, saveError, doctypeMap, doctypeLabels, route, router } = ctx
+	const { record, doc, saving, saveError, doctypeLabels, route, router } = ctx
 	const { notes, tasks, noteTitle, noteContent, taskTitle, taskDueDate, addingNote, addingTask } = ctx
+	const { fieldsLayout } = ctx
 
 	// The sidebar's collapsed state has to outlive the page: Studio remounts the page (and
 	// the CRMSidebar component with it) on every navigation, so the `sidebarCollapsed`
@@ -27,22 +28,60 @@ export default function setup(ctx: any) {
 	// every script's context) rather than an import, because the pages' scripts share no set
 	// of static imports — the home page imports nothing from frappe-ui.
 	const { views } = ctx
-	const VIEW_SLUGS: Record<string, string> = {"CRM Lead": "crm-lead", "CRM Deal": "crm-deal", "Contact": "contact", "CRM Organization": "crm-organization", "CRM Task": "crm-task", "FCRM Note": "fcrm-note"}
 	ctx.call("crm.api.views.get_views").then((rows: any[]) => {
-		// Grouped by doctype, and carrying the slug: both the sidebar row and the picker
-		// route by slug (`/:doctype/view/:viewName`), and a stored view only knows its `dt`.
+		// Grouped by the doctype they belong to — which is also all a row needs to build its
+		// URL, since the route carries the doctype name itself (`/:doctype/view/:viewName`).
+		// So a view on ANY doctype routes correctly, not just the six the sidebar advertises.
 		const grouped: Record<string, any[]> = {}
 		for (const row of rows || []) {
-			const slug = VIEW_SLUGS[row.dt]
 			// A standard view IS the doctype's default (unsaved) view, not a saved one;
 			// kanban/group_by views have no screen in this app (ADR-0002).
-			if (!slug || row.is_standard || (row.type && row.type !== "list")) continue
-			grouped[row.dt] = [...(grouped[row.dt] || []), { ...row, slug }]
+			if (!row.dt || row.is_standard || (row.type && row.type !== "list")) continue
+			grouped[row.dt] = [...(grouped[row.dt] || []), row]
 		}
 		views.value = grouped
 	})
+	// Nothing is fetched until the server has resolved the route's doctype: a typo must not
+	// fire a get_data for a doctype that does not exist, and a slug URL is about to be
+	// replaced by its canonical one anyway (which re-runs this whole setup).
+	function guardDoctype(onResolved: () => void, suffix = "") {
+		const { routeDoctype } = ctx
+		let done = false
+		watch(
+			() => routeDoctype.data,
+			(res: any) => {
+				if (done || !res) return
+				// resolved to nothing — the Not Found panel is what renders; do NOT fetch.
+				if (!res.doctype) return
+				if (res.doctype !== route.params.doctype) {
+					// a slug or a different casing: send the browser to the canonical URL.
+					// replace(), not push(), so Back doesn't bounce through the alias.
+					done = true
+					router.replace(`/${encodeURIComponent(res.doctype)}${suffix}`)
+					return
+				}
+				done = true
+				onResolved()
+			},
+			{ immediate: true },
+		)
+	}
 
-	const doctype = computed(() => doctypeMap.value[route.params.doctype])
+	// Every resource on this page is auto=0: they all take the route's doctype, so none of
+	// them may fire until the server has confirmed the route actually names one (and that the
+	// URL is its canonical spelling — a slug is redirected instead, which re-runs this setup).
+	guardDoctype(() => {
+		record.fetch()
+		fieldsLayout.fetch()
+		notes.fetch()
+		tasks.fetch()
+	}, `/${encodeURIComponent(route.params.id)}`)
+
+	// The route carries the doctype name itself ("CRM Lead"), already decoded by vue-router
+	// — no lookup, so a record of ANY doctype opens here. See config.py.
+	const doctype = computed(() => route.params.doctype)
+	// ...but a LINK back to it has to re-encode the space.
+	const doctypeLink = computed(() => `/${encodeURIComponent(route.params.doctype)}`)
 
 	// Every note/task hangs off the record through this pair — the same one CRM's own
 	// activities API reads, so rows created here show up in CRM's frontend too.
@@ -64,8 +103,10 @@ export default function setup(ctx: any) {
 
 	const breadcrumbs = computed(() => [
 		{
-			label: doctypeLabels.value[route.params.doctype] || doctype.value,
-			route: `/${route.params.doctype}`,
+			// The curated doctypes have a nicer plural ("Leads"); anything else is shown as
+			// its own name.
+			label: doctypeLabels.value[doctype.value] || doctype.value,
+			route: doctypeLink.value,
 		},
 		{ label: doc.value?.name || route.params.id },
 	])
@@ -172,7 +213,7 @@ export default function setup(ctx: any) {
 	}
 
 	function goToList() {
-		router.push(`/${route.params.doctype}`)
+		router.push(doctypeLink.value)
 	}
 
 	return { breadcrumbs, saveDoc, goToList, addNote, addTask }
