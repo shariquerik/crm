@@ -1,178 +1,232 @@
 <!--
-  CrmListView — frappe-ui's ListView with the three things a Studio BLOCK cannot reach on it.
+  CrmListView — a CRM table built on frappe-ui's List MOLECULE (`frappe-ui/list`), not the
+  config-driven `ListView`. The molecule is composition-first: it owns geometry (a shared column
+  grid, dividers, hover surfaces, row virtualization) and leaves everything readable — cell
+  contents, selection UX, resize, the footer — to the app. That is exactly the seam this CRM list
+  wants, so the three things the old ListView-based wrapper had to pry open are now just... written
+  here, in the open.
 
-  A block is props + events + slots, over what the component itself exposes. ListView keeps
-  three things to itself, and each one is a feature the CRM list needs:
+  Three pieces are hand-built on top of the molecule's primitives, because the molecule leaves them
+  to the app on purpose:
 
-    1. RESIZE. Its header emits `columnWidthUpdated` (ListHeaderItem -> ListHeader), but
-       ListView renders `<ListHeader />` with no listener and never re-emits — so
-       `options.resizeColumn` alone draws a handle that resizes nothing. The fix frappe-ui
-       documents (ListView/USAGE.md) is to fill ListView's DEFAULT SLOT and catch the event on
-       ListHeader yourself. A block can't: Studio registers `ListView`, not `ListHeader` /
-       `ListRows`. This component fills that slot, so `column-resize` becomes a real event.
+    1. COLUMN RESIZE. The molecule has no resizer — columns are grid tracks in the public
+       `--list-columns` var. So each header cell carries a drag handle that writes a live px width
+       into `widthOverride` (which recomputes `--list-columns` for instant feedback) and, on
+       mouseup, emits `column-resize`. The PAGE is the source of truth: it writes the width back
+       into its column model, so the override is dropped on mouseup and the persisted width takes
+       over — which is what keeps this in sync with ColumnSettings editing the same width.
 
-    2. SELECTION. ListView emits `update:selections` but takes NO `selections` prop (it exposes
-       the Set only on a template ref), so a page can read the selection and never clear it.
-       Here it is a two-way `selection` prop: writing `[]` to it clears the checkboxes, which is
-       what lets a page clear the selection after acting on it.
+    2. SELECTION. The molecule's own `selectable` makes a whole-row click TOGGLE the row (see
+       ListRow.vue) — it never runs the row's own click. A CRM row has to OPEN on click and select
+       via a checkbox, so `selectable` is not used: the checkbox is the first grid cell (its click
+       is stopped so it can't open the row), row click runs `options.onRowClick`, and select-all is
+       computed over the fetched rows.
 
-    3. THE BANNER. ListSelectBanner is rendered INSIDE ListView, so its `actions` slot is out of
-       a block's reach. Rendering the banner here re-opens it: `bulkActions` puts buttons in it.
-
-  Everything else (which columns, which rows, what a row click does, what Delete means) stays in
-  the page — this component adds no CRM knowledge, it only widens the seam.
+    3. THE CONTROL AREA. One footer band, two modes. With no selection it shows the page-size
+       buttons, the "20 of 143" readout and Load More; with a selection it reuses the same band for
+       "N selected" + `bulkActions` + clear — so there is no separate select banner to reach into.
 
   It reaches the app bundle as a block component because it lives under
-  apps/crm/studio/<studio_app>/: `studio.api.get_custom_vue_components` discovers it, and the
-  build registers it with `app.component("CrmListView", ...)`. The block must carry
+  apps/crm/studio/<studio_app>/: `studio.api.get_custom_vue_components` discovers it, and the build
+  registers it with `app.component("CrmListView", ...)`. The block must carry
   `isCustomVueComponent: true` so the builder resolves it. Editing this file changes no Studio
   document, so nothing rebuilds on its own — hit Publish to regenerate the bundle.
 -->
 <template>
-	<ListView
-		ref="listRef"
-		:columns="columns"
-		:rows="rows"
-		:rowKey="rowKey"
-		:options="listOptions"
-		@update:selections="onSelections"
-	>
-		<!-- ListView's default slot: this REPLACES its whole body, so the pieces it would have
-		     rendered are rendered here — the point being that ListHeader is now ours to listen to.
-		     Groups are left out on purpose: this list never groups its rows.
+	<!-- `isolate` (isolation: isolate) is what makes the sticky header's z-10 safe: it opens a local
+	     stacking context here, so z-10 only ranks the header above THIS list's rows and can't rise above
+	     a page-level modal backdrop. Without it, the header stays lit through an open dialog's dim. -->
+	<div class="relative isolate flex min-h-0 flex-1 flex-col">
+		<!-- ONE scroller holding the header and the rows, so a title always stays over its column
+		     when the table is wide enough to scroll sideways. overscroll-y-none on the VIEWPORT stops
+		     the sticky header bouncing: without it, flicking the rows to the top rubber-bands the
+		     scroller (macOS elastic overscroll) and the pinned header rides the bounce. It is scoped
+		     to the y-axis because the bounce is vertical and this scroller also scrolls horizontally,
+		     and it goes in `viewportClass` — the prop ScrollArea puts on the actual scrolling element. -->
+		<ScrollArea orientation="both" viewportClass="overscroll-y-none" class="min-h-0 flex-1">
+			<!-- `--list-columns` is the molecule's public grid hook; binding it inline is what makes the
+			     header and every row share one live template (resize just rewrites it). `--list-row-padding-x`
+			     is the molecule's content inset, flowing to both header and rows so they can't drift (see
+			     the two-insets note below). w-max min-w-full: as wide as the columns need, at least the
+			     viewport, so fixed columns overflow into a horizontal scroll while flex (`fr`) columns fill
+			     any slack. divider="inset" starts the row divider after the checkbox track (grid-column
+			     2/-1) to match the recipe — the checkbox is track 1, so the line begins at the content.
+			     TWO insets, kept separate. `gutter` is the OUTER float: it pads the List horizontally so the
+			     interactive rows (which are `width: 100%` with a rounded hover surface) float free of both
+			     edges instead of filling the container as a flat band — and it's the same value the footer
+			     insets by, so the surface and the page-size buttons share one edge. `--list-row-padding-x`
+			     is the INNER inset from that surface edge to the content — end (right) only; the start (left)
+			     is zeroed in <style> so the checkbox sits at the surface edge. It's set explicitly so the
+			     header picks it up too (its default is 0, which would leave the header flush while padded
+			     rows sit inset). -->
+			<List
+				divider="inset"
+				:rowHeight="rowHeight"
+				:style="{ '--list-columns': listColumns, '--list-row-padding-x': ROW_PADDING_X, paddingInline: gutter }"
+				class="flex w-max min-w-full flex-col"
+			>
+				<!-- `sticky top-0` pins the header while rows scroll under it (the molecule sets rows AND
+				     the header to `position: relative` in a :where() rule, so this `sticky` class wins).
+				     z-10 is REQUIRED, not optional: because the rows are positioned, they paint above a
+				     sticky header that has no stacking rank — that is the header/first-row overlap. A
+				     z-index lifts the header over the positioned rows. The `isolate` on the root keeps this
+				     rank local, so an open dialog's backdrop still dims the header (see the root comment). -->
+				<ListHeader class="sticky top-0 z-10 bg-surface-base">
+					<!-- Select-all sits in the first (checkbox) track. @click.stop so it never reaches a row. -->
+					<div class="flex items-center justify-center">
+						<Checkbox
+							:modelValue="selectAllState === 'all'"
+							:indeterminate="selectAllState === 'some'"
+							@update:modelValue="toggleSelectAll"
+						/>
+					</div>
+					<ListHeaderCell
+						v-for="column in columns"
+						:key="column.key"
+						class="relative"
+						:class="alignClass(column)"
+					>
+						{{ column.label }}
+						<!-- The resize handle lives in #suffix (a shrink-0 span, no truncate) and is absolutely
+						     positioned to the cell's right edge. Drag resizes; double-click resets to auto. -->
+						<template #suffix>
+							<span
+								class="absolute inset-y-0 -right-1 w-2 cursor-col-resize"
+								@mousedown.stop.prevent="startResize(column, $event)"
+								@dblclick.stop.prevent="resetColumn(column)"
+							/>
+						</template>
+					</ListHeaderCell>
+				</ListHeader>
 
-		     THE TABLE SCROLLS IN frappe-ui's ScrollArea, not in ListRows. ScrollArea draws an OVERLAY
-		     scrollbar — a thumb that fades in on hover/scroll and reserves no gutter — where ListRows'
-		     own `overflow-y-auto` gets the browser's native bar, which on a Mac set to "always show
-		     scrollbars" is a permanent grey slab down the edge of the table.
-
-		     ONE scroller, holding BOTH the header and the rows. That is the part that has to be got
-		     right: a scroll box scrolls in both directions, so a header parked outside it would hold
-		     still while the rows slid sideways under it, and the column titles would come away from
-		     their values the moment the table was wide enough to scroll. So the header goes INSIDE,
-		     and `sticky top-0` is what pins it while the rows move vertically — it still travels with
-		     them horizontally, which is exactly what keeps a title over its column.
-
-		     Nested scrollers would fight (the inner one takes the wheel, the outer thumb never moves),
-		     so ListRows is stripped of its own scrolling: `!h-auto` lets it grow to its rows instead
-		     of filling the viewport, `!overflow-visible` hands the overflow up to ScrollArea. It still
-		     renders the rows; it just no longer owns the scroll.
-
-		     `gutter` is the horizontal inset, and it is a MARGIN on the header and on the rows — never
-		     padding on the scroll box. That is what puts the scrollbar in the far corner: the box that
-		     scrolls runs full-bleed to the edge of the page, while the header and rows stop one gutter
-		     short of it. Padding the scroll box instead would carry its scrollbar inward with the
-		     content. (Margin on the header too, not padding: ListHeader spends its own padding on cell
-		     spacing, and overriding that would slide the column titles off the row values.) -->
-		<ScrollArea orientation="both" class="min-h-0 flex-1">
-			<!-- w-max min-w-full: the table is as wide as its columns need, and at least as wide as the
-			     viewport. It is also a plain block, which gives the sticky header a normal containing
-			     block to stick in (ScrollArea's own content wrapper is a `display: table` box). -->
-			<div class="flex w-max min-w-full flex-col">
-				<!-- NO z-index, and that is the whole trick. `sticky` alone already makes the header a
-				     positioned box, which paints above the rows (ordinary in-flow content) without one.
-				     Any z-index at all, even z-[1], is too much: frappe-ui's Dialog draws its dim
-				     backdrop with NO z-index of its own (`fixed inset-0 bg-black-overlay-200`) and
-				     counts on being late in the DOM to cover the page. A numbered header outranks
-				     that, and stays lit up across the open modal while everything around it dims. -->
-				<ListHeader
-					class="sticky top-0"
-					:style="{ marginInline: gutter }"
-					@columnWidthUpdated="onColumnWidthUpdated"
-					@dblclick="onResizerDoubleClick"
-				/>
+				<!-- `virtual` windows the rows against this scroll area — only rows near the viewport mount,
+				     which is what makes a 2500-row page size cheap. It needs the fixed `rowHeight` above. -->
 				<ListRows
 					v-if="rows.length"
-					class="!h-auto !overflow-visible"
-					:style="{ marginInline: gutter }"
-				/>
-				<ListEmptyState v-else />
-			</div>
-		</ScrollArea>
-		<!-- The footer sits BELOW the scroll box and outside it (`shrink-0`), so it stays put while the
-		     rows move — the counterpart of the sticky header. It is the one band here that can take
-		     PADDING for its gutter rather than a margin: nothing about it scrolls, so there is no
-		     scrollbar to drag inward. frappe-ui's ListFooter draws the page-size buttons, "Load More"
-		     (only while rowCount < totalCount) and the "20 of 143" readout; the counts are the
-		     server's, straight off the list response, and the page owns what Load More actually does. -->
-		<ListFooter
-			v-if="rows.length"
-			v-model="pageSize"
-			class="shrink-0 border-t border-outline-gray-1 py-2"
-			:style="{ paddingInline: gutter }"
-			:options="{ rowCount, totalCount, pageLengthOptions }"
-			@loadMore="emit('load-more')"
-		>
-			<!-- The page-size buttons, replacing the ones ListFooter would draw itself, for the sake of
-			     the click below. They are a RADIO GROUP, and a radio group only speaks up when the
-			     selection CHANGES: after three Load Mores at a page size of 20 you are looking at 60
-			     rows with "20" still lit, and clicking that lit "20" — the obvious way to ask for the
-			     first 20 back — emits nothing at all. A DOM click fires either way, so that is what is
-			     listened to, and every click reports a size, changed or not. `page-size` is therefore
-			     the ONLY way a size reaches the page (the v-model above just keeps a button lit).
-
-			     .capture, and it has to be: the radio item stops the click from propagating, so a plain
-			     (bubble-phase) listener out here never hears it — verified in the browser, where a
-			     capture listener on document sees the click and a bubble listener sees nothing.
-			     Capture runs on the way DOWN, before the radio can swallow it. -->
-			<template #left>
-				<div @click.capture="onPageSizeClick">
-					<TabButtons
-						v-model="pageSize"
-						:options="pageLengthOptions.map((size) => ({ label: String(size), value: size }))"
-					/>
+					:items="rows"
+					:rowKey="rowKey"
+					virtual
+					v-slot="{ item, value }"
+				>
+					<ListRow :value="value" :onClick="() => props.options.onRowClick?.(item)">
+						<!-- Checkbox cell: a div (not a nested button/input) whose click is stopped so it
+						     toggles selection instead of opening the row. The Checkbox is pointer-events-none,
+						     so every click resolves to this wrapper. -->
+						<div class="flex items-center justify-center" @click.stop.prevent="toggle(value)">
+							<Checkbox
+								:modelValue="selection.includes(value)"
+								class="pointer-events-none"
+								tabindex="-1"
+								aria-hidden="true"
+							/>
+						</div>
+						<ListCell v-for="column in columns" :key="column.key" :class="alignClass(column)">
+							<Tooltip :text="props.options.showTooltip ? cellLabel(column, item) : ''">
+								<div class="truncate text-base text-ink-gray-8">{{ cellLabel(column, item) }}</div>
+							</Tooltip>
+						</ListCell>
+					</ListRow>
+				</ListRows>
+				<!-- Empty state: the molecule leaves this to the app, so it is drawn here from
+				     `options.emptyState` ({ title, description }). -->
+				<div v-else class="flex flex-col items-center gap-1 py-16 text-center">
+					<span class="text-base font-medium text-ink-gray-7">
+						{{ props.options.emptyState?.title ?? "No records" }}
+					</span>
+					<span v-if="props.options.emptyState?.description" class="text-sm text-ink-gray-5">
+						{{ props.options.emptyState.description }}
+					</span>
 				</div>
-			</template>
-		</ListFooter>
-		<ListSelectBanner>
-			<template #actions="{ selections }">
-				<Button
-					v-for="action in bulkActions"
-					:key="action.label"
-					:label="action.label"
-					:theme="action.theme"
-					variant="ghost"
-					@click="action.onClick(Array.from(selections))"
+			</List>
+		</ScrollArea>
+
+		<!-- The footer sits below the scroller (`shrink-0`) so it stays put while rows move: the page-size
+		     buttons, the "20 of 143" readout, and Load More (only while more rows exist). -->
+		<div
+			v-if="rows.length"
+			class="flex shrink-0 items-center justify-between gap-2 border-t border-outline-gray-1 py-2"
+			:style="{ paddingInline: gutter }"
+		>
+			<!-- The page-size buttons are a RADIO GROUP, and a radio group speaks up only when the
+			     selection CHANGES: after Load More at size 20 you see 60 rows with "20" still lit, and
+			     clicking that lit "20" — how you ask for the first 20 back — emits nothing. A DOM click
+			     fires either way, so `page-size` is emitted from the capture-phase click (the radio item
+			     stops propagation, so a bubble listener out here would never hear it). -->
+			<div @click.capture="onPageSizeClick">
+				<TabButtons
+					v-model="pageSize"
+					:options="pageLengthOptions.map((size) => ({ label: String(size), value: size }))"
 				/>
-			</template>
-		</ListSelectBanner>
-	</ListView>
+			</div>
+			<div class="flex items-center gap-2">
+				<span class="text-sm text-ink-gray-5">{{ rowCount }} of {{ totalCount }}</span>
+				<Button
+					v-if="rowCount < totalCount"
+					variant="subtle"
+					label="Load More"
+					@click="emit('load-more')"
+				/>
+			</div>
+		</div>
+
+		<!-- Selection banner: a floating pill over the list while rows are ticked. Its buttons are the
+		     page's `bulkActions`; the X clears the selection (writing [] to the two-way `selection`). -->
+		<Transition
+			enter-active-class="duration-200 ease-out"
+			enter-from-class="translate-y-2 opacity-0"
+			leave-active-class="duration-200 ease-in"
+			leave-to-class="translate-y-2 opacity-0"
+		>
+			<div v-if="selection.length" class="absolute inset-x-0 bottom-16 mx-auto w-max">
+				<div
+					class="flex items-center gap-3 rounded-lg bg-surface-base px-4 py-2 text-base shadow-2xl"
+				>
+					<Checkbox :modelValue="true" :disabled="true" />
+					<span class="text-ink-gray-9">{{ selection.length }} selected</span>
+					<div class="flex items-center gap-1 border-l border-outline-gray-2 ps-3">
+						<Button
+							v-for="action in bulkActions"
+							:key="action.label"
+							:label="action.label"
+							:theme="action.theme"
+							variant="ghost"
+							@click="action.onClick(selection)"
+						/>
+						<Button variant="ghost" icon="lucide-x" @click="selection = []" />
+					</div>
+				</div>
+			</div>
+		</Transition>
+	</div>
 </template>
 
 <script setup lang="ts">
-import {
-	Button,
-	ListEmptyState,
-	ListFooter,
-	ListHeader,
-	ListRows,
-	ListSelectBanner,
-	ListView,
-	ScrollArea,
-	TabButtons,
-} from "frappe-ui"
-import { computed, ref, watch } from "vue"
+import { Button, Checkbox, ScrollArea, TabButtons, Tooltip } from "frappe-ui"
+import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from "frappe-ui/list"
+import { computed, reactive } from "vue"
 
 const props = withDefaults(
 	defineProps<{
+		/** Wire columns: `{ key, label, width, type, align }`. `width` is a fixed CSS size (string)
+		 *  or a flexing `fr` factor (number); `align` is "left" | "right". */
 		columns?: any[]
 		rows?: any[]
 		rowKey?: string
 		options?: Record<string, any>
-		/** Buttons for the selection banner: `{ label, theme?, onClick(names) }`. */
+		/** Buttons shown in the control area while rows are selected: `{ label, theme?, onClick(names) }`. */
 		bulkActions?: { label: string; theme?: string; onClick: (selection: string[]) => void }[]
-		/**
-		 * How far the header and rows sit in from the edge, as a CSS length ("20px").
-		 * The page passes its own gutter here rather than padding the block around this
-		 * component, so that the scroll container stays full-bleed and its scrollbar keeps
-		 * to the far edge. See the template.
-		 */
+		/** The outer float inset (a CSS length): the List's horizontal padding, so the rows' rounded
+		 *  hover surface floats free of the container edges, and the footer insets by the same value so
+		 *  its buttons line up with that surface. The content's own inset from the surface edge is a
+		 *  separate, smaller `ROW_PADDING_X`. */
 		gutter?: string
-		/** Rows fetched so far, and rows the filter matches in all — the footer's "20 of 143". */
+		/** Rows fetched so far, and rows the filter matches in all — the control area's "20 of 143". */
 		rowCount?: number
 		totalCount?: number
-		/** The page sizes the footer offers. */
+		/** The page sizes the control area offers. */
 		pageLengthOptions?: number[]
+		/** Fixed row height (px). Required by the molecule's row virtualization. */
+		rowHeight?: number
 	}>(),
 	{
 		columns: () => [],
@@ -183,37 +237,137 @@ const props = withDefaults(
 		gutter: "0px",
 		rowCount: 0,
 		totalCount: 0,
-		pageLengthOptions: () => [20, 50, 100],
+		pageLengthOptions: () => [20, 100, 500, 2500],
+		rowHeight: 40,
 	},
 )
 
 /** The selected row keys. Two-way: the page reads the selection here, and CLEARS it by writing []. */
 const selection = defineModel<string[]>("selection", { default: () => [] })
 
-/**
- * The page size the footer's buttons are set to. Two-way, and only the CHOICE — this component
- * never fetches anything, so what a new page size (or a Load More) means for the query is the
- * page's to decide.
- */
+/** The page size the control area is set to. Two-way, and only the CHOICE — this component never
+ *  fetches, so what a new size (or a Load More) means for the query is the page's to decide. */
 const pageSize = defineModel<number>("pageSize", { default: 20 })
 
 const emit = defineEmits<{
 	/** A column was dragged. `width` is a fixed px string. */
 	(e: "column-resize", payload: { key: string; width: string }): void
-	/** A column's resizer was double-clicked: drop its fixed width so it flexes again. */
+	/** A column's handle was double-clicked: drop its fixed width so it flexes again. */
 	(e: "column-reset", payload: { key: string }): void
 	/** "Load More" was clicked. The page decides how many more rows that is. */
 	(e: "load-more"): void
-	/**
-	 * A page size was CLICKED — fired even when it was already the selected one, which is the
-	 * whole point: that click is how you ask for the first N rows back after loading more.
-	 */
+	/** A page size was CLICKED — fired even when already selected, which is how you ask for the
+	 *  first N rows back after loading more. */
 	(e: "page-size", size: number): void
 }>()
 
+// --- The grid template -------------------------------------------------------------------------
+
+// A fixed leading track for the checkbox column (the molecule's own checkbox is padding, but this
+// list rolls its own — see the header note above — so it needs a real track).
+const CHECKBOX_TRACK = "2rem"
+const MIN_COLUMN_WIDTH = 60
+
+// Inner END (right) inset from the row's rounded hover surface to its content, so the right-aligned
+// last column doesn't jam the surface corner. The START (left) is flush — zeroed in <style> below, so
+// the checkbox sits at the surface edge. The OUTER float — surface edge to container — is `gutter`.
+const ROW_PADDING_X = "0.75rem"
+
+// One track per column, prefixed by the checkbox track, written to `--list-columns`. A live drag
+// width in `widthOverride` wins; otherwise the column's own width (string = fixed, number = `fr`).
+const listColumns = computed(() =>
+	[CHECKBOX_TRACK, ...props.columns.map(trackFor)].join(" "),
+)
+
+function trackFor(column: any) {
+	const width = widthOverride[column.key] ?? column.width
+	if (width == null) return "minmax(0, 1fr)"
+	return typeof width === "number" ? `${width}fr` : String(width)
+}
+
+// --- Column resize -----------------------------------------------------------------------------
+
+// Live px widths during a drag. Cleared on mouseup so the page's persisted width takes over — which
+// keeps this in sync when the width also changes from ColumnSettings (both drive the same model).
+const widthOverride = reactive<Record<string, string>>({})
+let drag: { key: string; startX: number; startWidth: number } | null = null
+
+function startResize(column: any, event: MouseEvent) {
+	const cell = (event.currentTarget as HTMLElement).closest<HTMLElement>(
+		"[data-slot='list-header-cell']",
+	)
+	if (!cell) return
+	drag = { key: column.key, startX: event.clientX, startWidth: cell.getBoundingClientRect().width }
+	window.addEventListener("mousemove", onDrag)
+	window.addEventListener("mouseup", endDrag)
+}
+
+function onDrag(event: MouseEvent) {
+	if (!drag) return
+	const width = Math.max(MIN_COLUMN_WIDTH, drag.startWidth + (event.clientX - drag.startX))
+	widthOverride[drag.key] = `${Math.round(width)}px`
+}
+
+function endDrag() {
+	window.removeEventListener("mousemove", onDrag)
+	window.removeEventListener("mouseup", endDrag)
+	if (!drag) return
+	const { key } = drag
+	const width = widthOverride[key]
+	delete widthOverride[key]
+	drag = null
+	if (width) emit("column-resize", { key, width })
+}
+
+function resetColumn(column: any) {
+	delete widthOverride[column.key]
+	emit("column-reset", { key: column.key })
+}
+
+// --- Selection ---------------------------------------------------------------------------------
+
+// The full set of selectable row keys (the fetched rows), for select-all and its mixed state.
+const allKeys = computed(() => props.rows.map((row) => String(row[props.rowKey])))
+
+const selectAllState = computed<"none" | "some" | "all">(() => {
+	const selected = allKeys.value.filter((key) => selection.value.includes(key)).length
+	if (!selected) return "none"
+	return selected === allKeys.value.length ? "all" : "some"
+})
+
+function toggle(value: string) {
+	selection.value = selection.value.includes(value)
+		? selection.value.filter((key) => key !== value)
+		: [...selection.value, value]
+}
+
+function toggleSelectAll() {
+	if (selectAllState.value === "all") {
+		const universe = new Set(allKeys.value)
+		selection.value = selection.value.filter((key) => !universe.has(key))
+	} else {
+		selection.value = [...new Set([...selection.value, ...allKeys.value])]
+	}
+}
+
+// --- Cells -------------------------------------------------------------------------------------
+
+// A cell's text: the row's value at the column key, or its `.label` when the value is an object.
+function cellLabel(column: any, row: any) {
+	const value = row[column.key]
+	if (value && typeof value === "object") return value.label ?? ""
+	return value ?? ""
+}
+
+function alignClass(column: any) {
+	return column.align === "right" ? "justify-end" : ""
+}
+
+// --- Page size ---------------------------------------------------------------------------------
+
 // The click can land on the radio or on anything inside it, so walk up to the radio that owns it.
-// Its label IS the size (that is what `options` above puts there), so the text is the value —
-// guarded anyway, since a click on the strip's padding hits no radio at all.
+// Its label IS the size, so the text is the value — guarded, since a click on the strip's padding
+// hits no radio at all.
 function onPageSizeClick(event: MouseEvent) {
 	const item = (event.target as HTMLElement).closest("[role='radio']")
 	if (!item) return
@@ -221,39 +375,25 @@ function onPageSizeClick(event: MouseEvent) {
 	if (!Number.isFinite(size) || size <= 0) return
 	emit("page-size", size)
 }
-
-const listRef = ref<any>(null)
-
-// Both are non-negotiable for what this component adds: without `selectable` there are no
-// checkboxes to select with, and without `resizeColumn` frappe-ui draws no drag handle to
-// listen to. Everything else (emptyState, onRowClick, showTooltip) is the page's to pass.
-const listOptions = computed(() => ({ ...props.options, selectable: true, resizeColumn: true }))
-
-function onSelections(selections: Set<string>) {
-	selection.value = Array.from(selections)
-}
-
-// The page clears the selection by writing [] — ListView owns the Set, so the only way to move
-// it is the toggleAllRows it exposes. Guarded on size, or clearing on an already-empty
-// selection would re-emit and loop.
-watch(selection, (value) => {
-	if (!value.length && listRef.value?.selections?.size) listRef.value.toggleAllRows(false)
-})
-
-function onColumnWidthUpdated(event: { key: string; width: string }) {
-	emit("column-resize", event)
-}
-
-// frappe-ui binds the drag to the resizer's `mousedown` and exposes no dblclick on it, so the
-// reset gesture is delegated on the header grid: find the double-clicked resizer, map its
-// position to a column (the header draws one resizer per column, in order), and let the page
-// return that column to auto width. This mirrors @framework/ui's own ListView story.
-function onResizerDoubleClick(event: MouseEvent) {
-	const resizer = (event.target as HTMLElement).closest(".cursor-col-resize")
-	const header = resizer?.closest(".grid")
-	if (!resizer || !header) return
-	const index = Array.from(header.querySelectorAll(".cursor-col-resize")).indexOf(resizer)
-	const column = props.columns[index]
-	if (column) emit("column-reset", { key: column.key })
-}
 </script>
+
+<style scoped>
+/* The molecule draws the header's bottom border as a grid child spanning ALL tracks
+   (grid-column: 1 / -1 in its own :where() rule), so it runs full-bleed under the
+   checkbox track too. The row dividers are divider="inset" (2 / -1), starting after the
+   checkbox track at the content. Inset the header border to the same 2 / -1 so the two
+   lines share one edge — the recipe's header divider is not full. :deep reaches the
+   border inside <ListHeader>, and scoped specificity beats the molecule's :where(). */
+:deep([data-slot="list-header-border"]) {
+	grid-column: 2 / -1;
+}
+
+/* The molecule derives BOTH the start and end content padding from the single --list-row-padding-x
+   hook (ROW_PADDING_X). We want the start (left) flush so the checkbox sits at the rounded surface's
+   edge, while keeping the end (right) inset — so override just padding-inline-start to 0 on the header
+   and every row. :deep reaches the molecule elements; scoped specificity beats its own rules. */
+:deep([data-slot="list-row"]),
+:deep([data-slot="list-header"]) {
+	padding-inline-start: 0;
+}
+</style>
