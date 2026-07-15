@@ -1,16 +1,4 @@
-import { watch } from "vue"
-
 export default function setup(ctx: any) {
-	// The sidebar's collapsed state has to outlive the page: Studio remounts the page (and
-	// the CRMSidebar component with it) on every navigation, so the `sidebarCollapsed`
-	// variable backing Sidebar's `collapsed` v-model resets. localStorage is the only place
-	// it can survive — rehydrate it here, persist it on every toggle.
-	const { sidebarCollapsed } = ctx
-	sidebarCollapsed.value = localStorage.getItem("crm-studio:sidebar-collapsed") === "true"
-	watch(sidebarCollapsed, (collapsed: boolean) => {
-		localStorage.setItem("crm-studio:sidebar-collapsed", collapsed ? "true" : "false")
-	})
-
 	// Saved views hang under their doctype in the sidebar, so EVERY page needs them — but a
 	// Studio Component cannot declare a resource of its own, so the fetch lives here, in the
 	// snippet every page splices into its setup(), and lands in the `views` variable the

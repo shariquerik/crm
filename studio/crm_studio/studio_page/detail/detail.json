@@ -3,468 +3,486 @@
   {
    "baseStyles": {
     "display": "flex",
-    "flexDirection": "row",
-    "flexShrink": 0,
+    "flexDirection": "column",
     "height": "100%",
-    "overflowX": "hidden",
     "width": "inherit"
    },
    "blockName": "body",
    "children": [
     {
-     "blockName": "crm-sidebar",
-     "componentId": "crm-sidebar",
-     "componentName": "crm-sidebar",
-     "componentProps": {
-      "activeDoctype": "{{ route.params.doctype }}",
-      "sections": "{{ sidebarLayout.data || [] }}",
-      "views": "{{ views }}"
-     },
-     "isStudioComponent": true
-    },
-    {
      "baseStyles": {
-      "display": "flex",
-      "flexDirection": "column",
-      "flexGrow": "1",
-      "gap": "16px",
+      "height": "100%",
+      "minHeight": "0",
       "minWidth": "0",
-      "overflowY": "auto",
-      "padding": "24px",
       "width": "100%"
      },
-     "blockName": "detail-body",
+     "blockName": "crm-app-shell",
      "children": [
-      {
-       "baseStyles": {
-        "alignItems": "center",
-        "display": "flex",
-        "flexDirection": "row",
-        "gap": "12px",
-        "justifyContent": "space-between",
-        "width": "100%"
-       },
-       "blockName": "detail-header",
-       "children": [
-        {
-         "blockName": "detail-breadcrumbs",
-         "componentId": "detail-breadcrumbs",
-         "componentName": "Breadcrumbs",
-         "componentProps": {
-          "items": "{{ breadcrumbs }}"
-         }
-        },
-        {
-         "blockName": "detail-save",
-         "componentEvents": {
-          "click": {
-           "action": "Run Script",
-           "event": "click",
-           "script": "function handleEvent() { saveDoc() }"
-          }
-         },
-         "componentId": "detail-save",
-         "componentName": "Button",
-         "componentProps": {
-          "label": "Save",
-          "loading": "{{ saving }}",
-          "variant": "solid"
-         }
-        }
-       ],
-       "componentId": "detail-header",
-       "componentName": "container",
-       "originalElement": "div"
-      },
-      {
-       "blockName": "detail-error",
-       "componentId": "detail-error",
-       "componentName": "ErrorMessage",
-       "componentProps": {
-        "message": "{{ saveError }}"
-       },
-       "visibilityCondition": "{{ saveError }}"
-      },
-      {
-       "blockName": "detail-form",
-       "componentId": "detail-form",
-       "componentName": "FormLayout",
-       "componentProps": {
-        "doc": {
-         "$type": "variable",
-         "name": "doc"
-        },
-        "layout": "{{ fieldsLayout.data || [] }}"
-       },
-       "visibilityCondition": "{{ fieldsLayout.data?.length }}"
-      },
       {
        "baseStyles": {
         "display": "flex",
         "flexDirection": "column",
-        "gap": "12px",
-        "marginTop": "8px",
+        "flexGrow": "1",
+        "gap": "16px",
+        "minHeight": "0",
+        "minWidth": "0",
+        "overflowY": "auto",
+        "padding": "24px",
         "width": "100%"
        },
-       "blockName": "detail-tabs",
+       "blockName": "detail-content",
        "children": [
         {
-         "blockName": "detail-tab-buttons",
-         "componentId": "detail-tab-buttons",
-         "componentName": "TabButtons",
+         "blockName": "detail-error",
+         "componentId": "detail-error",
+         "componentName": "ErrorMessage",
          "componentProps": {
-          "modelValue": {
+          "message": "{{ saveError }}"
+         },
+         "visibilityCondition": "{{ saveError }}"
+        },
+        {
+         "blockName": "detail-form",
+         "componentId": "detail-form",
+         "componentName": "FormLayout",
+         "componentProps": {
+          "doc": {
            "$type": "variable",
-           "name": "activeTab"
+           "name": "doc"
           },
-          "options": [
-           {
-            "label": "Notes",
-            "value": "notes"
-           },
-           {
-            "label": "Tasks",
-            "value": "tasks"
-           }
-          ]
-         }
+          "layout": "{{ fieldsLayout.data || [] }}"
+         },
+         "visibilityCondition": "{{ fieldsLayout.data?.length }}"
         },
         {
          "baseStyles": {
           "display": "flex",
           "flexDirection": "column",
           "gap": "12px",
+          "marginTop": "8px",
           "width": "100%"
          },
-         "blockName": "detail-notes-panel",
+         "blockName": "detail-tabs",
          "children": [
+          {
+           "blockName": "detail-tab-buttons",
+           "componentId": "detail-tab-buttons",
+           "componentName": "TabButtons",
+           "componentProps": {
+            "modelValue": {
+             "$type": "variable",
+             "name": "activeTab"
+            },
+            "options": [
+             {
+              "label": "Notes",
+              "value": "notes"
+             },
+             {
+              "label": "Tasks",
+              "value": "tasks"
+             }
+            ]
+           }
+          },
           {
            "baseStyles": {
             "display": "flex",
             "flexDirection": "column",
-            "gap": "8px",
+            "gap": "12px",
             "width": "100%"
            },
-           "blockName": "detail-notes-composer",
+           "blockName": "detail-notes-panel",
            "children": [
             {
              "baseStyles": {
-              "flexGrow": "1",
-              "minWidth": "0"
-             },
-             "blockName": "note-title",
-             "componentId": "note-title",
-             "componentName": "FormControl",
-             "componentProps": {
-              "label": "Title",
-              "modelValue": {
-               "$type": "variable",
-               "name": "noteTitle"
-              },
-              "placeholder": "Note title",
-              "type": "text"
-             }
-            },
-            {
-             "baseStyles": {
-              "flexGrow": "1",
-              "minWidth": "0"
-             },
-             "blockName": "note-content",
-             "componentId": "note-content",
-             "componentName": "FormControl",
-             "componentProps": {
-              "label": "Note",
-              "modelValue": {
-               "$type": "variable",
-               "name": "noteContent"
-              },
-              "placeholder": "Write a note\u2026",
-              "rows": 3,
-              "type": "textarea"
-             }
-            },
-            {
-             "baseStyles": {
               "display": "flex",
-              "flexDirection": "row",
-              "justifyContent": "flex-end",
+              "flexDirection": "column",
+              "gap": "8px",
               "width": "100%"
              },
-             "blockName": "detail-note-actions",
+             "blockName": "detail-notes-composer",
              "children": [
               {
-               "blockName": "note-add",
+               "baseStyles": {
+                "flexGrow": "1",
+                "minWidth": "0"
+               },
+               "blockName": "note-title",
+               "componentId": "note-title",
+               "componentName": "FormControl",
+               "componentProps": {
+                "label": "Title",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "noteTitle"
+                },
+                "placeholder": "Note title",
+                "type": "text"
+               }
+              },
+              {
+               "baseStyles": {
+                "flexGrow": "1",
+                "minWidth": "0"
+               },
+               "blockName": "note-content",
+               "componentId": "note-content",
+               "componentName": "FormControl",
+               "componentProps": {
+                "label": "Note",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "noteContent"
+                },
+                "placeholder": "Write a note\u2026",
+                "rows": 3,
+                "type": "textarea"
+               }
+              },
+              {
+               "baseStyles": {
+                "display": "flex",
+                "flexDirection": "row",
+                "justifyContent": "flex-end",
+                "width": "100%"
+               },
+               "blockName": "detail-note-actions",
+               "children": [
+                {
+                 "blockName": "note-add",
+                 "componentEvents": {
+                  "click": {
+                   "action": "Run Script",
+                   "event": "click",
+                   "script": "function handleEvent() { addNote() }"
+                  }
+                 },
+                 "componentId": "note-add",
+                 "componentName": "Button",
+                 "componentProps": {
+                  "label": "Add note",
+                  "loading": "{{ addingNote }}",
+                  "variant": "solid"
+                 }
+                }
+               ],
+               "componentId": "detail-note-actions",
+               "componentName": "container",
+               "originalElement": "div"
+              }
+             ],
+             "componentId": "detail-notes-composer",
+             "componentName": "container",
+             "originalElement": "div"
+            },
+            {
+             "baseStyles": {
+              "minHeight": "180px",
+              "width": "100%"
+             },
+             "blockName": "detail-notes-rows",
+             "componentId": "detail-notes-rows",
+             "componentName": "ListView",
+             "componentProps": {
+              "columns": [
+               {
+                "key": "title",
+                "label": "Title",
+                "width": "16rem"
+               },
+               {
+                "key": "preview",
+                "label": "Note",
+                "width": "28rem"
+               },
+               {
+                "key": "modified",
+                "label": "Last Modified",
+                "width": "12rem"
+               }
+              ],
+              "options": {
+               "emptyState": {
+                "description": "Notes you add here also show up on this record in CRM.",
+                "title": "No notes yet"
+               },
+               "selectable": false,
+               "showTooltip": true
+              },
+              "rowKey": "name",
+              "rows": "{{ notes.data || [] }}"
+             }
+            }
+           ],
+           "componentId": "detail-notes-panel",
+           "componentName": "container",
+           "originalElement": "div",
+           "visibilityCondition": "{{ activeTab === 'notes' }}"
+          },
+          {
+           "baseStyles": {
+            "display": "flex",
+            "flexDirection": "column",
+            "gap": "12px",
+            "width": "100%"
+           },
+           "blockName": "detail-tasks-panel",
+           "children": [
+            {
+             "baseStyles": {
+              "alignItems": "flex-end",
+              "display": "flex",
+              "flexDirection": "row",
+              "gap": "8px",
+              "width": "100%"
+             },
+             "blockName": "detail-tasks-composer",
+             "children": [
+              {
+               "baseStyles": {
+                "flexGrow": "1",
+                "minWidth": "0"
+               },
+               "blockName": "task-title",
+               "componentId": "task-title",
+               "componentName": "FormControl",
+               "componentProps": {
+                "label": "Title",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "taskTitle"
+                },
+                "placeholder": "Task title",
+                "type": "text"
+               }
+              },
+              {
+               "baseStyles": {
+                "flexGrow": "0",
+                "flexShrink": "0",
+                "minWidth": "0",
+                "width": "16rem"
+               },
+               "blockName": "task-due-date",
+               "componentId": "task-due-date",
+               "componentName": "FormControl",
+               "componentProps": {
+                "label": "Due date",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "taskDueDate"
+                },
+                "placeholder": "Optional",
+                "type": "datetime"
+               }
+              },
+              {
+               "blockName": "task-add",
                "componentEvents": {
                 "click": {
                  "action": "Run Script",
                  "event": "click",
-                 "script": "function handleEvent() { addNote() }"
+                 "script": "function handleEvent() { addTask() }"
                 }
                },
-               "componentId": "note-add",
+               "componentId": "task-add",
                "componentName": "Button",
                "componentProps": {
-                "label": "Add note",
-                "loading": "{{ addingNote }}",
+                "label": "Add task",
+                "loading": "{{ addingTask }}",
                 "variant": "solid"
                }
               }
              ],
-             "componentId": "detail-note-actions",
+             "componentId": "detail-tasks-composer",
              "componentName": "container",
              "originalElement": "div"
+            },
+            {
+             "baseStyles": {
+              "minHeight": "180px",
+              "width": "100%"
+             },
+             "blockName": "detail-tasks-rows",
+             "componentId": "detail-tasks-rows",
+             "componentName": "ListView",
+             "componentProps": {
+              "columns": [
+               {
+                "key": "title",
+                "label": "Title",
+                "width": "20rem"
+               },
+               {
+                "key": "status",
+                "label": "Status",
+                "width": "10rem"
+               },
+               {
+                "key": "priority",
+                "label": "Priority",
+                "width": "10rem"
+               },
+               {
+                "key": "due_date",
+                "label": "Due Date",
+                "width": "14rem"
+               }
+              ],
+              "options": {
+               "emptyState": {
+                "description": "Tasks you add here also show up on this record in CRM.",
+                "title": "No tasks yet"
+               },
+               "selectable": false,
+               "showTooltip": true
+              },
+              "rowKey": "name",
+              "rows": "{{ tasks.data || [] }}"
+             }
             }
            ],
-           "componentId": "detail-notes-composer",
+           "componentId": "detail-tasks-panel",
            "componentName": "container",
-           "originalElement": "div"
-          },
-          {
-           "baseStyles": {
-            "minHeight": "180px",
-            "width": "100%"
-           },
-           "blockName": "detail-notes-rows",
-           "componentId": "detail-notes-rows",
-           "componentName": "ListView",
-           "componentProps": {
-            "columns": [
-             {
-              "key": "title",
-              "label": "Title",
-              "width": "16rem"
-             },
-             {
-              "key": "preview",
-              "label": "Note",
-              "width": "28rem"
-             },
-             {
-              "key": "modified",
-              "label": "Last Modified",
-              "width": "12rem"
-             }
-            ],
-            "options": {
-             "emptyState": {
-              "description": "Notes you add here also show up on this record in CRM.",
-              "title": "No notes yet"
-             },
-             "selectable": false,
-             "showTooltip": true
-            },
-            "rowKey": "name",
-            "rows": "{{ notes.data || [] }}"
-           }
+           "originalElement": "div",
+           "visibilityCondition": "{{ activeTab === 'tasks' }}"
           }
          ],
-         "componentId": "detail-notes-panel",
+         "componentId": "detail-tabs",
          "componentName": "container",
-         "originalElement": "div",
-         "visibilityCondition": "{{ activeTab === 'notes' }}"
+         "originalElement": "div"
+        }
+       ],
+       "componentId": "detail-content",
+       "componentName": "container",
+       "originalElement": "div",
+       "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
+      },
+      {
+       "baseStyles": {
+        "alignItems": "center",
+        "display": "flex",
+        "flexDirection": "column",
+        "flexGrow": "1",
+        "gap": "8px",
+        "height": "100%",
+        "justifyContent": "center",
+        "padding": "24px",
+        "width": "100%"
+       },
+       "blockName": "detail-not-found",
+       "children": [
+        {
+         "baseStyles": {
+          "fontSize": "20px",
+          "fontWeight": "600"
+         },
+         "blockName": "detail-not-found-title",
+         "componentId": "detail-not-found-title",
+         "componentName": "TextBlock",
+         "componentProps": {
+          "text": "Page not found"
+         }
         },
         {
          "baseStyles": {
+          "color": "#525252",
+          "fontSize": "14px"
+         },
+         "blockName": "detail-not-found-message",
+         "componentId": "detail-not-found-message",
+         "componentName": "TextBlock",
+         "componentProps": {
+          "text": "{{ route.params.doctype + ' is not a doctype you can open here.' }}"
+         }
+        },
+        {
+         "baseStyles": {
+          "marginTop": "8px"
+         },
+         "blockName": "detail-not-found-home",
+         "componentEvents": {
+          "click": {
+           "action": "Run Script",
+           "event": "click",
+           "script": "function handleEvent() { router.push('/') }"
+          }
+         },
+         "componentId": "detail-not-found-home",
+         "componentName": "Button",
+         "componentProps": {
+          "label": "Go to home",
+          "variant": "subtle"
+         }
+        }
+       ],
+       "componentId": "detail-not-found",
+       "componentName": "container",
+       "originalElement": "div",
+       "visibilityCondition": "{{ routeDoctype.data && !routeDoctype.data.doctype }}"
+      }
+     ],
+     "componentId": "crm-app-shell",
+     "componentName": "CrmAppShell",
+     "componentProps": {
+      "activeDoctype": "{{ route.params.doctype }}",
+      "heading": "{{ doctypeLabels[route.params.doctype] || route.params.doctype }}",
+      "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}",
+      "views": "{{ views[route.params.doctype] || [] }}"
+     },
+     "componentSlots": {
+      "header": {
+       "slotContent": [
+        {
+         "baseStyles": {
+          "alignItems": "center",
           "display": "flex",
-          "flexDirection": "column",
+          "flexDirection": "row",
           "gap": "12px",
+          "justifyContent": "space-between",
+          "paddingBottom": "6px",
+          "paddingTop": "6px",
           "width": "100%"
          },
-         "blockName": "detail-tasks-panel",
+         "blockName": "detail-header",
          "children": [
           {
-           "baseStyles": {
-            "alignItems": "flex-end",
-            "display": "flex",
-            "flexDirection": "row",
-            "gap": "8px",
-            "width": "100%"
-           },
-           "blockName": "detail-tasks-composer",
-           "children": [
-            {
-             "baseStyles": {
-              "flexGrow": "1",
-              "minWidth": "0"
-             },
-             "blockName": "task-title",
-             "componentId": "task-title",
-             "componentName": "FormControl",
-             "componentProps": {
-              "label": "Title",
-              "modelValue": {
-               "$type": "variable",
-               "name": "taskTitle"
-              },
-              "placeholder": "Task title",
-              "type": "text"
-             }
-            },
-            {
-             "baseStyles": {
-              "flexGrow": "0",
-              "flexShrink": "0",
-              "minWidth": "0",
-              "width": "16rem"
-             },
-             "blockName": "task-due-date",
-             "componentId": "task-due-date",
-             "componentName": "FormControl",
-             "componentProps": {
-              "label": "Due date",
-              "modelValue": {
-               "$type": "variable",
-               "name": "taskDueDate"
-              },
-              "placeholder": "Optional",
-              "type": "datetime"
-             }
-            },
-            {
-             "blockName": "task-add",
-             "componentEvents": {
-              "click": {
-               "action": "Run Script",
-               "event": "click",
-               "script": "function handleEvent() { addTask() }"
-              }
-             },
-             "componentId": "task-add",
-             "componentName": "Button",
-             "componentProps": {
-              "label": "Add task",
-              "loading": "{{ addingTask }}",
-              "variant": "solid"
-             }
-            }
-           ],
-           "componentId": "detail-tasks-composer",
-           "componentName": "container",
-           "originalElement": "div"
+           "blockName": "detail-breadcrumbs",
+           "componentId": "detail-breadcrumbs",
+           "componentName": "Breadcrumbs",
+           "componentProps": {
+            "items": "{{ breadcrumbs }}"
+           }
           },
           {
-           "baseStyles": {
-            "minHeight": "180px",
-            "width": "100%"
+           "blockName": "detail-save",
+           "componentEvents": {
+            "click": {
+             "action": "Run Script",
+             "event": "click",
+             "script": "function handleEvent() { saveDoc() }"
+            }
            },
-           "blockName": "detail-tasks-rows",
-           "componentId": "detail-tasks-rows",
-           "componentName": "ListView",
+           "componentId": "detail-save",
+           "componentName": "Button",
            "componentProps": {
-            "columns": [
-             {
-              "key": "title",
-              "label": "Title",
-              "width": "20rem"
-             },
-             {
-              "key": "status",
-              "label": "Status",
-              "width": "10rem"
-             },
-             {
-              "key": "priority",
-              "label": "Priority",
-              "width": "10rem"
-             },
-             {
-              "key": "due_date",
-              "label": "Due Date",
-              "width": "14rem"
-             }
-            ],
-            "options": {
-             "emptyState": {
-              "description": "Tasks you add here also show up on this record in CRM.",
-              "title": "No tasks yet"
-             },
-             "selectable": false,
-             "showTooltip": true
-            },
-            "rowKey": "name",
-            "rows": "{{ tasks.data || [] }}"
+            "label": "Save",
+            "loading": "{{ saving }}",
+            "variant": "solid"
            }
           }
          ],
-         "componentId": "detail-tasks-panel",
+         "componentId": "detail-header",
          "componentName": "container",
          "originalElement": "div",
-         "visibilityCondition": "{{ activeTab === 'tasks' }}"
+         "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
         }
        ],
-       "componentId": "detail-tabs",
-       "componentName": "container",
-       "originalElement": "div"
+       "slotName": "header"
       }
-     ],
-     "componentId": "detail-body",
-     "componentName": "container",
-     "originalElement": "div",
-     "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
-    },
-    {
-     "baseStyles": {
-      "alignItems": "center",
-      "display": "flex",
-      "flexDirection": "column",
-      "flexGrow": "1",
-      "gap": "8px",
-      "height": "100%",
-      "justifyContent": "center",
-      "padding": "24px",
-      "width": "100%"
      },
-     "blockName": "detail-not-found",
-     "children": [
-      {
-       "baseStyles": {
-        "fontSize": "20px",
-        "fontWeight": "600"
-       },
-       "blockName": "detail-not-found-title",
-       "componentId": "detail-not-found-title",
-       "componentName": "TextBlock",
-       "componentProps": {
-        "text": "Page not found"
-       }
-      },
-      {
-       "baseStyles": {
-        "color": "#525252",
-        "fontSize": "14px"
-       },
-       "blockName": "detail-not-found-message",
-       "componentId": "detail-not-found-message",
-       "componentName": "TextBlock",
-       "componentProps": {
-        "text": "{{ route.params.doctype + ' is not a doctype you can open here.' }}"
-       }
-      },
-      {
-       "baseStyles": {
-        "marginTop": "8px"
-       },
-       "blockName": "detail-not-found-home",
-       "componentEvents": {
-        "click": {
-         "action": "Run Script",
-         "event": "click",
-         "script": "function handleEvent() { router.push('/') }"
-        }
-       },
-       "componentId": "detail-not-found-home",
-       "componentName": "Button",
-       "componentProps": {
-        "label": "Go to home",
-        "variant": "subtle"
-       }
-      }
-     ],
-     "componentId": "detail-not-found",
-     "componentName": "container",
-     "originalElement": "div",
-     "visibilityCondition": "{{ routeDoctype.data && !routeDoctype.data.doctype }}"
+     "isCustomVueComponent": true
     }
    ],
    "componentId": "root",
@@ -476,7 +494,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-14 18:16:54.326400",
+ "modified": "2026-07-15 16:02:26.402982",
  "modified_by": "Administrator",
  "name": "detail",
  "owner": "Administrator",
@@ -485,7 +503,6 @@
  "published": 1,
  "resources": [
   {
-   "__unsaved": 1,
    "auto": 1,
    "method": "GET",
    "params": "{}",
@@ -494,7 +511,6 @@
    "url": "crm.fcrm.doctype.crm_ui_customization.crm_ui_customization.get_sidebar_layout"
   },
   {
-   "__unsaved": 1,
    "auto": 1,
    "method": "GET",
    "params": "{\"doctype\": \"{{ route.params.doctype }}\"}",
@@ -503,7 +519,6 @@
    "url": "crm.api.doc.resolve_doctype"
   },
   {
-   "__unsaved": 1,
    "method": "GET",
    "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"name\": \"{{ route.params.id }}\"}",
    "resource_name": "record",
@@ -511,7 +526,6 @@
    "url": "frappe.client.get"
   },
   {
-   "__unsaved": 1,
    "method": "GET",
    "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"type\": \"Data Fields\"}",
    "resource_name": "fieldsLayout",
@@ -520,7 +534,6 @@
    "url": "crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout"
   },
   {
-   "__unsaved": 1,
    "method": "POST",
    "params": "{\"doctype\": \"FCRM Note\", \"fields\": [\"name\", \"title\", \"content\", \"modified\"], \"filters\": \"{{ ({ reference_doctype: route.params.doctype, reference_docname: route.params.id }) }}\", \"order_by\": \"creation desc\", \"limit_page_length\": 50}",
    "resource_name": "notes",
@@ -529,7 +542,6 @@
    "url": "frappe.client.get_list"
   },
   {
-   "__unsaved": 1,
    "method": "POST",
    "params": "{\"doctype\": \"CRM Task\", \"fields\": [\"name\", \"title\", \"status\", \"priority\", \"due_date\"], \"filters\": \"{{ ({ reference_doctype: route.params.doctype, reference_docname: route.params.id }) }}\", \"order_by\": \"creation desc\", \"limit_page_length\": 50}",
    "resource_name": "tasks",
@@ -541,79 +553,61 @@
  "studio_app": "crm-studio",
  "variables": [
   {
-   "__unsaved": 1,
-   "initial_value": "false",
-   "variable_name": "sidebarCollapsed",
-   "variable_type": "Boolean"
-  },
-  {
-   "__unsaved": 1,
    "initial_value": "{}",
    "variable_name": "views",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "{\"CRM Lead\": \"Leads\", \"CRM Deal\": \"Deals\", \"Contact\": \"Contacts\", \"CRM Organization\": \"Organizations\", \"CRM Task\": \"Tasks\", \"FCRM Note\": \"Notes\"}",
    "variable_name": "doctypeLabels",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "{}",
    "variable_name": "doc",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "false",
    "variable_name": "saving",
    "variable_type": "Boolean"
   },
   {
-   "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "saveError",
    "variable_type": "String"
   },
   {
-   "__unsaved": 1,
    "initial_value": "\"notes\"",
    "variable_name": "activeTab",
    "variable_type": "String"
   },
   {
-   "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "noteTitle",
    "variable_type": "String"
   },
   {
-   "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "noteContent",
    "variable_type": "String"
   },
   {
-   "__unsaved": 1,
    "initial_value": "false",
    "variable_name": "addingNote",
    "variable_type": "Boolean"
   },
   {
-   "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "taskTitle",
    "variable_type": "String"
   },
   {
-   "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "taskDueDate",
    "variable_type": "String"
   },
   {
-   "__unsaved": 1,
    "initial_value": "false",
    "variable_name": "addingTask",
    "variable_type": "Boolean"
