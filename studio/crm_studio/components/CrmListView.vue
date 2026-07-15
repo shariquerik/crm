@@ -234,7 +234,7 @@ const props = withDefaults(
 		rowKey: "name",
 		options: () => ({}),
 		bulkActions: () => [],
-		gutter: "0px",
+		gutter: "12px",
 		rowCount: 0,
 		totalCount: 0,
 		pageLengthOptions: () => [20, 100, 500, 2500],
@@ -271,7 +271,7 @@ const MIN_COLUMN_WIDTH = 60
 // Inner END (right) inset from the row's rounded hover surface to its content, so the right-aligned
 // last column doesn't jam the surface corner. The START (left) is flush — zeroed in <style> below, so
 // the checkbox sits at the surface edge. The OUTER float — surface edge to container — is `gutter`.
-const ROW_PADDING_X = "0.75rem"
+const ROW_PADDING_X = "0.5rem"
 
 // One track per column, prefixed by the checkbox track, written to `--list-columns`. A live drag
 // width in `widthOverride` wins; otherwise the column's own width (string = fixed, number = `fr`).

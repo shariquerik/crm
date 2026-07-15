@@ -55,7 +55,7 @@
            "componentProps": {
             "bulkActions": "{{ bulkActions }}",
             "columns": "{{ wireColumns }}",
-            "gutter": "20px",
+            "gutter": "12px",
             "onColumnReset": "(event) => resetColumnWidth(event.key)",
             "onColumnResize": "(event) => resizeColumn(event.key, event.width)",
             "onLoadMore": "() => loadMore()",
@@ -68,11 +68,18 @@
              "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
              "showTooltip": true
             },
+            "pageLengthOptions": [
+             20,
+             100,
+             500,
+             2500
+            ],
             "pageSize": {
              "$type": "variable",
              "name": "pageSize"
             },
             "rowCount": "{{ listData.data.row_count }}",
+            "rowHeight": 40,
             "rowKey": "name",
             "rows": "{{ listData.data.data }}",
             "selection": {
@@ -661,7 +668,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-15 16:02:26.348930",
+ "modified": "2026-07-15 16:35:29.701393",
  "modified_by": "Administrator",
  "name": "list",
  "owner": "Administrator",
