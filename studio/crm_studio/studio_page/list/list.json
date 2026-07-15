@@ -3,238 +3,21 @@
   {
    "baseStyles": {
     "display": "flex",
-    "flexDirection": "row",
-    "flexShrink": 0,
+    "flexDirection": "column",
     "height": "100%",
-    "overflowX": "hidden",
     "width": "inherit"
    },
    "blockName": "body",
    "children": [
     {
-     "blockName": "crm-sidebar",
-     "componentId": "crm-sidebar",
-     "componentName": "crm-sidebar",
-     "componentProps": {
-      "activeDoctype": "{{ route.params.doctype }}",
-      "sections": "{{ sidebarLayout.data || [] }}",
-      "views": "{{ views }}"
-     },
-     "isStudioComponent": true
-    },
-    {
      "baseStyles": {
-      "display": "flex",
-      "flexDirection": "column",
-      "flexGrow": "1",
       "height": "100%",
       "minHeight": "0",
       "minWidth": "0",
       "width": "100%"
      },
-     "blockName": "list-body",
+     "blockName": "crm-app-shell",
      "children": [
-      {
-       "baseStyles": {
-        "alignItems": "center",
-        "borderBottom": "1px solid var(--outline-gray-1)",
-        "display": "flex",
-        "flexDirection": "row",
-        "flexShrink": "0",
-        "gap": "8px",
-        "justifyContent": "space-between",
-        "minHeight": "48px",
-        "padding": "0 20px",
-        "width": "100%"
-       },
-       "blockName": "list-header",
-       "children": [
-        {
-         "baseStyles": {
-          "alignItems": "center",
-          "display": "flex",
-          "flexDirection": "row",
-          "gap": "2px",
-          "minWidth": "0",
-          "width": "auto"
-         },
-         "blockName": "list-crumbs",
-         "children": [
-          {
-           "blockName": "list-breadcrumbs",
-           "componentId": "list-breadcrumbs",
-           "componentName": "Breadcrumbs",
-           "componentProps": {
-            "items": "{{ breadcrumbs }}"
-           }
-          },
-          {
-           "baseStyles": {
-            "color": "var(--ink-gray-4)",
-            "flexShrink": "0"
-           },
-           "blockName": "list-crumb-separator",
-           "componentId": "list-crumb-separator",
-           "componentName": "TextBlock",
-           "componentProps": {
-            "text": "/"
-           }
-          },
-          {
-           "blockName": "list-view-picker",
-           "componentId": "list-view-picker",
-           "componentName": "Dropdown",
-           "componentProps": {
-            "button": {
-             "iconRight": "chevron-down",
-             "label": "{{ viewLabel }}",
-             "variant": "ghost"
-            },
-            "options": "{{ viewOptions }}"
-           }
-          }
-         ],
-         "componentId": "list-crumbs",
-         "componentName": "container",
-         "originalElement": "div"
-        },
-        {
-         "blockName": "list-create",
-         "componentEvents": {
-          "click": {
-           "action": "Run Script",
-           "event": "click",
-           "script": "function handleEvent() { openCreate() }"
-          }
-         },
-         "componentId": "list-create",
-         "componentName": "Button",
-         "componentProps": {
-          "iconLeft": "plus",
-          "label": "Create",
-          "variant": "solid"
-         }
-        }
-       ],
-       "componentId": "list-header",
-       "componentName": "container",
-       "originalElement": "div"
-      },
-      {
-       "baseStyles": {
-        "alignItems": "flex-start",
-        "display": "flex",
-        "flexDirection": "row",
-        "flexShrink": "0",
-        "gap": "8px",
-        "justifyContent": "space-between",
-        "padding": "8px 20px",
-        "width": "100%"
-       },
-       "blockName": "list-controls",
-       "children": [
-        {
-         "baseStyles": {
-          "display": "flex",
-          "flexDirection": "column",
-          "flexGrow": "1",
-          "minWidth": "0",
-          "width": "auto"
-         },
-         "blockName": "list-quickfilter-wrap",
-         "children": [
-          {
-           "blockName": "list-quickfilter",
-           "componentId": "list-quickfilter",
-           "componentName": "QuickFilter",
-           "componentProps": {
-            "customizing": {
-             "$type": "variable",
-             "name": "customizing"
-            },
-            "doctype": "{{ route.params.doctype }}",
-            "filters": {
-             "$type": "variable",
-             "name": "filters"
-            }
-           }
-          }
-         ],
-         "componentId": "list-quickfilter-wrap",
-         "componentName": "container",
-         "originalElement": "div"
-        },
-        {
-         "baseStyles": {
-          "alignItems": "center",
-          "display": "flex",
-          "flexDirection": "row",
-          "flexShrink": "0",
-          "gap": "8px",
-          "width": "auto"
-         },
-         "blockName": "list-control-buttons",
-         "children": [
-          {
-           "blockName": "list-filter",
-           "componentId": "list-filter",
-           "componentName": "Filter",
-           "componentProps": {
-            "doctype": "{{ route.params.doctype }}",
-            "modelValue": {
-             "$type": "variable",
-             "name": "filters"
-            }
-           }
-          },
-          {
-           "blockName": "list-sort",
-           "componentId": "list-sort",
-           "componentName": "SortBy",
-           "componentProps": {
-            "doctype": "{{ route.params.doctype }}",
-            "modelValue": {
-             "$type": "variable",
-             "name": "sort"
-            }
-           }
-          },
-          {
-           "blockName": "list-columns",
-           "componentId": "list-columns",
-           "componentName": "ColumnSettings",
-           "componentProps": {
-            "doctype": "{{ route.params.doctype }}",
-            "modelValue": {
-             "$type": "variable",
-             "name": "columns"
-            }
-           }
-          },
-          {
-           "blockName": "list-control-menu",
-           "componentId": "list-control-menu",
-           "componentName": "Dropdown",
-           "componentProps": {
-            "button": {
-             "icon": "more-horizontal",
-             "variant": "subtle"
-            },
-            "options": "{{ controlOptions }}",
-            "placement": "right"
-           }
-          }
-         ],
-         "componentId": "list-control-buttons",
-         "componentName": "container",
-         "originalElement": "div",
-         "visibilityCondition": "{{ !customizing }}"
-        }
-       ],
-       "componentId": "list-controls",
-       "componentName": "container",
-       "originalElement": "div"
-      },
       {
        "baseStyles": {
         "display": "flex",
@@ -242,233 +25,476 @@
         "flexGrow": "1",
         "minHeight": "0",
         "minWidth": "0",
-        "padding": "8px 0 0 0",
         "width": "100%"
        },
-       "blockName": "list-table",
+       "blockName": "list-island",
        "children": [
         {
          "baseStyles": {
+          "display": "flex",
+          "flexDirection": "column",
           "flexGrow": "1",
           "minHeight": "0",
+          "minWidth": "0",
+          "padding": "8px 0 0 0",
           "width": "100%"
          },
-         "blockName": "list-rows",
-         "componentId": "list-rows",
-         "componentName": "CrmListView",
-         "componentProps": {
-          "bulkActions": "{{ bulkActions }}",
-          "columns": "{{ wireColumns }}",
-          "gutter": "20px",
-          "onColumnReset": "(event) => resetColumnWidth(event.key)",
-          "onColumnResize": "(event) => resizeColumn(event.key, event.width)",
-          "onLoadMore": "() => loadMore()",
-          "onPageSize": "(size) => setPageSize(size)",
-          "options": {
-           "emptyState": {
-            "description": "Nothing to show here yet.",
-            "title": "No records"
+         "blockName": "list-table",
+         "children": [
+          {
+           "baseStyles": {
+            "flexGrow": "1",
+            "minHeight": "0",
+            "width": "100%"
            },
-           "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
-           "showTooltip": true
-          },
-          "pageSize": {
-           "$type": "variable",
-           "name": "pageSize"
-          },
-          "rowCount": "{{ listData.data.row_count }}",
-          "rowKey": "name",
-          "rows": "{{ listData.data.data }}",
-          "selection": {
-           "$type": "variable",
-           "name": "selection"
-          },
-          "totalCount": "{{ listData.data.total_count }}"
-         },
-         "isCustomVueComponent": true
-        }
-       ],
-       "componentId": "list-table",
-       "componentName": "container",
-       "originalElement": "div"
-      },
-      {
-       "blockName": "list-view-dialog",
-       "children": [
+           "blockName": "list-rows",
+           "componentId": "list-rows",
+           "componentName": "CrmListView",
+           "componentProps": {
+            "bulkActions": "{{ bulkActions }}",
+            "columns": "{{ wireColumns }}",
+            "gutter": "20px",
+            "onColumnReset": "(event) => resetColumnWidth(event.key)",
+            "onColumnResize": "(event) => resizeColumn(event.key, event.width)",
+            "onLoadMore": "() => loadMore()",
+            "onPageSize": "(size) => setPageSize(size)",
+            "options": {
+             "emptyState": {
+              "description": "Nothing to show here yet.",
+              "title": "No records"
+             },
+             "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
+             "showTooltip": true
+            },
+            "pageSize": {
+             "$type": "variable",
+             "name": "pageSize"
+            },
+            "rowCount": "{{ listData.data.row_count }}",
+            "rowKey": "name",
+            "rows": "{{ listData.data.data }}",
+            "selection": {
+             "$type": "variable",
+             "name": "selection"
+            },
+            "totalCount": "{{ listData.data.total_count }}"
+           },
+           "isCustomVueComponent": true
+          }
+         ],
+         "componentId": "list-table",
+         "componentName": "container",
+         "originalElement": "div"
+        },
         {
-         "baseStyles": {
-          "width": "100%"
-         },
-         "blockName": "list-view-name",
-         "componentId": "list-view-name",
-         "componentName": "TextInput",
+         "blockName": "list-view-dialog",
+         "children": [
+          {
+           "baseStyles": {
+            "width": "100%"
+           },
+           "blockName": "list-view-name",
+           "componentId": "list-view-name",
+           "componentName": "TextInput",
+           "componentProps": {
+            "modelValue": {
+             "$type": "variable",
+             "name": "newViewLabel"
+            },
+            "placeholder": "e.g. Qualified leads",
+            "size": "md"
+           }
+          }
+         ],
+         "componentId": "list-view-dialog",
+         "componentName": "Dialog",
          "componentProps": {
+          "actions": "{{ createViewActions }}",
           "modelValue": {
            "$type": "variable",
-           "name": "newViewLabel"
+           "name": "viewDialog"
           },
-          "placeholder": "e.g. Qualified leads",
-          "size": "md"
+          "size": "sm",
+          "title": "Create view"
+         }
+        },
+        {
+         "blockName": "list-create-dialog",
+         "children": [
+          {
+           "baseStyles": {
+            "width": "100%"
+           },
+           "blockName": "list-create-form",
+           "componentId": "list-create-form",
+           "componentName": "FormLayout",
+           "componentProps": {
+            "doc": {
+             "$type": "variable",
+             "name": "newDoc"
+            },
+            "layout": "{{ createLayout.data || [] }}"
+           },
+           "visibilityCondition": "{{ createLayout.data?.length }}"
+          },
+          {
+           "blockName": "list-create-error",
+           "componentId": "list-create-error",
+           "componentName": "ErrorMessage",
+           "componentProps": {
+            "message": "{{ createError }}"
+           },
+           "visibilityCondition": "{{ createError }}"
+          }
+         ],
+         "componentId": "list-create-dialog",
+         "componentName": "Dialog",
+         "componentProps": {
+          "actions": "{{ createActions }}",
+          "modelValue": {
+           "$type": "variable",
+           "name": "createDialog"
+          },
+          "size": "xl",
+          "title": "{{ createTitle }}"
+         }
+        },
+        {
+         "blockName": "list-delete-dialog",
+         "children": [
+          {
+           "baseStyles": {
+            "color": "#525252",
+            "fontSize": "14px"
+           },
+           "blockName": "list-delete-message",
+           "componentId": "list-delete-message",
+           "componentName": "TextBlock",
+           "componentProps": {
+            "text": "This cannot be undone."
+           }
+          },
+          {
+           "blockName": "list-delete-error",
+           "componentId": "list-delete-error",
+           "componentName": "ErrorMessage",
+           "componentProps": {
+            "message": "{{ deleteError }}"
+           },
+           "visibilityCondition": "{{ deleteError }}"
+          }
+         ],
+         "componentId": "list-delete-dialog",
+         "componentName": "Dialog",
+         "componentProps": {
+          "actions": "{{ deleteActions }}",
+          "modelValue": {
+           "$type": "variable",
+           "name": "deleteDialog"
+          },
+          "title": "{{ deleteTitle }}"
          }
         }
        ],
-       "componentId": "list-view-dialog",
-       "componentName": "Dialog",
-       "componentProps": {
-        "actions": "{{ createViewActions }}",
-        "modelValue": {
-         "$type": "variable",
-         "name": "viewDialog"
-        },
-        "size": "sm",
-        "title": "Create view"
-       }
+       "componentId": "list-island",
+       "componentName": "container",
+       "originalElement": "div",
+       "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
       },
       {
-       "blockName": "list-create-dialog",
+       "baseStyles": {
+        "alignItems": "center",
+        "display": "flex",
+        "flexDirection": "column",
+        "flexGrow": "1",
+        "gap": "8px",
+        "height": "100%",
+        "justifyContent": "center",
+        "padding": "24px",
+        "width": "100%"
+       },
+       "blockName": "list-not-found",
        "children": [
         {
          "baseStyles": {
-          "width": "100%"
+          "fontSize": "20px",
+          "fontWeight": "600"
          },
-         "blockName": "list-create-form",
-         "componentId": "list-create-form",
-         "componentName": "FormLayout",
+         "blockName": "list-not-found-title",
+         "componentId": "list-not-found-title",
+         "componentName": "TextBlock",
          "componentProps": {
-          "doc": {
-           "$type": "variable",
-           "name": "newDoc"
-          },
-          "layout": "{{ createLayout.data || [] }}"
-         },
-         "visibilityCondition": "{{ createLayout.data?.length }}"
+          "text": "Page not found"
+         }
         },
-        {
-         "blockName": "list-create-error",
-         "componentId": "list-create-error",
-         "componentName": "ErrorMessage",
-         "componentProps": {
-          "message": "{{ createError }}"
-         },
-         "visibilityCondition": "{{ createError }}"
-        }
-       ],
-       "componentId": "list-create-dialog",
-       "componentName": "Dialog",
-       "componentProps": {
-        "actions": "{{ createActions }}",
-        "modelValue": {
-         "$type": "variable",
-         "name": "createDialog"
-        },
-        "size": "xl",
-        "title": "{{ createTitle }}"
-       }
-      },
-      {
-       "blockName": "list-delete-dialog",
-       "children": [
         {
          "baseStyles": {
           "color": "#525252",
           "fontSize": "14px"
          },
-         "blockName": "list-delete-message",
-         "componentId": "list-delete-message",
+         "blockName": "list-not-found-message",
+         "componentId": "list-not-found-message",
          "componentName": "TextBlock",
          "componentProps": {
-          "text": "This cannot be undone."
+          "text": "{{ route.params.doctype + ' is not a doctype you can open here.' }}"
          }
         },
         {
-         "blockName": "list-delete-error",
-         "componentId": "list-delete-error",
-         "componentName": "ErrorMessage",
-         "componentProps": {
-          "message": "{{ deleteError }}"
+         "baseStyles": {
+          "marginTop": "8px"
          },
-         "visibilityCondition": "{{ deleteError }}"
+         "blockName": "list-not-found-home",
+         "componentEvents": {
+          "click": {
+           "action": "Run Script",
+           "event": "click",
+           "script": "function handleEvent() { router.push('/') }"
+          }
+         },
+         "componentId": "list-not-found-home",
+         "componentName": "Button",
+         "componentProps": {
+          "label": "Go to home",
+          "variant": "subtle"
+         }
         }
        ],
-       "componentId": "list-delete-dialog",
-       "componentName": "Dialog",
-       "componentProps": {
-        "actions": "{{ deleteActions }}",
-        "modelValue": {
-         "$type": "variable",
-         "name": "deleteDialog"
-        },
-        "title": "{{ deleteTitle }}"
-       }
+       "componentId": "list-not-found",
+       "componentName": "container",
+       "originalElement": "div",
+       "visibilityCondition": "{{ routeDoctype.data && !routeDoctype.data.doctype }}"
       }
      ],
-     "componentId": "list-body",
-     "componentName": "container",
-     "originalElement": "div",
-     "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
-    },
-    {
-     "baseStyles": {
-      "alignItems": "center",
-      "display": "flex",
-      "flexDirection": "column",
-      "flexGrow": "1",
-      "gap": "8px",
-      "height": "100%",
-      "justifyContent": "center",
-      "padding": "24px",
-      "width": "100%"
+     "componentId": "crm-app-shell",
+     "componentName": "CrmAppShell",
+     "componentProps": {
+      "activeDoctype": "{{ route.params.doctype }}",
+      "heading": "{{ doctypeLabels[route.params.doctype] || route.params.doctype }}",
+      "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}",
+      "views": "{{ views[route.params.doctype] || [] }}"
      },
-     "blockName": "list-not-found",
-     "children": [
-      {
-       "baseStyles": {
-        "fontSize": "20px",
-        "fontWeight": "600"
-       },
-       "blockName": "list-not-found-title",
-       "componentId": "list-not-found-title",
-       "componentName": "TextBlock",
-       "componentProps": {
-        "text": "Page not found"
-       }
-      },
-      {
-       "baseStyles": {
-        "color": "#525252",
-        "fontSize": "14px"
-       },
-       "blockName": "list-not-found-message",
-       "componentId": "list-not-found-message",
-       "componentName": "TextBlock",
-       "componentProps": {
-        "text": "{{ route.params.doctype + ' is not a doctype you can open here.' }}"
-       }
-      },
-      {
-       "baseStyles": {
-        "marginTop": "8px"
-       },
-       "blockName": "list-not-found-home",
-       "componentEvents": {
-        "click": {
-         "action": "Run Script",
-         "event": "click",
-         "script": "function handleEvent() { router.push('/') }"
+     "componentSlots": {
+      "header": {
+       "slotContent": [
+        {
+         "baseStyles": {
+          "display": "flex",
+          "flexDirection": "column",
+          "gap": "8px",
+          "paddingBottom": "6px",
+          "paddingTop": "6px",
+          "width": "100%"
+         },
+         "blockName": "list-toolbar",
+         "children": [
+          {
+           "baseStyles": {
+            "alignItems": "center",
+            "display": "flex",
+            "flexDirection": "row",
+            "flexShrink": "0",
+            "gap": "8px",
+            "justifyContent": "space-between",
+            "width": "100%"
+           },
+           "blockName": "list-header",
+           "children": [
+            {
+             "baseStyles": {
+              "alignItems": "center",
+              "display": "flex",
+              "flexDirection": "row",
+              "gap": "2px",
+              "minWidth": "0",
+              "width": "auto"
+             },
+             "blockName": "list-crumbs",
+             "children": [
+              {
+               "blockName": "list-breadcrumbs",
+               "componentId": "list-breadcrumbs",
+               "componentName": "Breadcrumbs",
+               "componentProps": {
+                "items": "{{ breadcrumbs }}"
+               }
+              },
+              {
+               "baseStyles": {
+                "color": "var(--ink-gray-4)",
+                "flexShrink": "0"
+               },
+               "blockName": "list-crumb-separator",
+               "componentId": "list-crumb-separator",
+               "componentName": "TextBlock",
+               "componentProps": {
+                "text": "/"
+               }
+              },
+              {
+               "blockName": "list-view-picker",
+               "componentId": "list-view-picker",
+               "componentName": "Dropdown",
+               "componentProps": {
+                "button": {
+                 "iconRight": "chevron-down",
+                 "label": "{{ viewLabel }}",
+                 "variant": "ghost"
+                },
+                "options": "{{ viewOptions }}"
+               }
+              }
+             ],
+             "componentId": "list-crumbs",
+             "componentName": "container",
+             "originalElement": "div"
+            },
+            {
+             "blockName": "list-create",
+             "componentEvents": {
+              "click": {
+               "action": "Run Script",
+               "event": "click",
+               "script": "function handleEvent() { openCreate() }"
+              }
+             },
+             "componentId": "list-create",
+             "componentName": "Button",
+             "componentProps": {
+              "iconLeft": "plus",
+              "label": "Create",
+              "variant": "solid"
+             }
+            }
+           ],
+           "componentId": "list-header",
+           "componentName": "container",
+           "originalElement": "div"
+          },
+          {
+           "baseStyles": {
+            "alignItems": "flex-start",
+            "display": "flex",
+            "flexDirection": "row",
+            "flexShrink": "0",
+            "gap": "8px",
+            "justifyContent": "space-between",
+            "width": "100%"
+           },
+           "blockName": "list-controls",
+           "children": [
+            {
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexGrow": "1",
+              "minWidth": "0",
+              "width": "auto"
+             },
+             "blockName": "list-quickfilter-wrap",
+             "children": [
+              {
+               "blockName": "list-quickfilter",
+               "componentId": "list-quickfilter",
+               "componentName": "QuickFilter",
+               "componentProps": {
+                "customizing": {
+                 "$type": "variable",
+                 "name": "customizing"
+                },
+                "doctype": "{{ route.params.doctype }}",
+                "filters": {
+                 "$type": "variable",
+                 "name": "filters"
+                }
+               }
+              }
+             ],
+             "componentId": "list-quickfilter-wrap",
+             "componentName": "container",
+             "originalElement": "div"
+            },
+            {
+             "baseStyles": {
+              "alignItems": "center",
+              "display": "flex",
+              "flexDirection": "row",
+              "flexShrink": "0",
+              "gap": "8px",
+              "width": "auto"
+             },
+             "blockName": "list-control-buttons",
+             "children": [
+              {
+               "blockName": "list-filter",
+               "componentId": "list-filter",
+               "componentName": "Filter",
+               "componentProps": {
+                "doctype": "{{ route.params.doctype }}",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "filters"
+                }
+               }
+              },
+              {
+               "blockName": "list-sort",
+               "componentId": "list-sort",
+               "componentName": "SortBy",
+               "componentProps": {
+                "doctype": "{{ route.params.doctype }}",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "sort"
+                }
+               }
+              },
+              {
+               "blockName": "list-columns",
+               "componentId": "list-columns",
+               "componentName": "ColumnSettings",
+               "componentProps": {
+                "doctype": "{{ route.params.doctype }}",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "columns"
+                }
+               }
+              },
+              {
+               "blockName": "list-control-menu",
+               "componentId": "list-control-menu",
+               "componentName": "Dropdown",
+               "componentProps": {
+                "button": {
+                 "icon": "more-horizontal",
+                 "variant": "subtle"
+                },
+                "options": "{{ controlOptions }}",
+                "placement": "right"
+               }
+              }
+             ],
+             "componentId": "list-control-buttons",
+             "componentName": "container",
+             "originalElement": "div",
+             "visibilityCondition": "{{ !customizing }}"
+            }
+           ],
+           "componentId": "list-controls",
+           "componentName": "container",
+           "originalElement": "div"
+          }
+         ],
+         "componentId": "list-toolbar",
+         "componentName": "container",
+         "originalElement": "div",
+         "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
         }
-       },
-       "componentId": "list-not-found-home",
-       "componentName": "Button",
-       "componentProps": {
-        "label": "Go to home",
-        "variant": "subtle"
-       }
+       ],
+       "slotName": "header"
       }
-     ],
-     "componentId": "list-not-found",
-     "componentName": "container",
-     "originalElement": "div",
-     "visibilityCondition": "{{ routeDoctype.data && !routeDoctype.data.doctype }}"
+     },
+     "isCustomVueComponent": true
     }
    ],
    "componentId": "root",
@@ -476,11 +502,669 @@
    "originalElement": "body"
   }
  ],
- "creation": "2026-07-13 15:48:28.695184",
+ "creation": "2026-07-15 15:23:53.844286",
  "doctype": "Studio Page",
+ "draft_blocks": [
+  {
+   "baseStyles": {
+    "display": "flex",
+    "flexDirection": "column",
+    "height": "100%",
+    "width": "inherit"
+   },
+   "blockName": "body",
+   "children": [
+    {
+     "baseStyles": {
+      "height": "100%",
+      "minHeight": "0",
+      "minWidth": "0",
+      "width": "100%"
+     },
+     "blockName": "crm-app-shell",
+     "children": [
+      {
+       "baseStyles": {
+        "display": "flex",
+        "flexDirection": "column",
+        "flexGrow": "1",
+        "minHeight": "0",
+        "minWidth": "0",
+        "width": "100%"
+       },
+       "blockName": "list-island",
+       "children": [
+        {
+         "baseStyles": {
+          "display": "flex",
+          "flexDirection": "column",
+          "flexGrow": "1",
+          "minHeight": "0",
+          "minWidth": "0",
+          "padding": "8px 0 0 0",
+          "width": "100%"
+         },
+         "blockName": "list-table",
+         "children": [
+          {
+           "baseStyles": {
+            "flexGrow": "1",
+            "minHeight": "0",
+            "width": "100%"
+           },
+           "blockName": "list-rows",
+           "children": [],
+           "classes": [],
+           "componentId": "list-rows",
+           "componentName": "CrmListView",
+           "componentProps": {
+            "bulkActions": "{{ bulkActions }}",
+            "columns": "{{ wireColumns }}",
+            "gutter": "20px",
+            "onColumnReset": "(event) => resetColumnWidth(event.key)",
+            "onColumnResize": "(event) => resizeColumn(event.key, event.width)",
+            "onLoadMore": "() => loadMore()",
+            "onPageSize": "(size) => setPageSize(size)",
+            "options": {
+             "emptyState": {
+              "description": "Nothing to show here yet.",
+              "title": "No records"
+             },
+             "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
+             "showTooltip": true
+            },
+            "pageSize": {
+             "$type": "variable",
+             "name": "pageSize"
+            },
+            "rowCount": "{{ listData.data.row_count }}",
+            "rowKey": "name",
+            "rows": "{{ listData.data.data }}",
+            "selection": {
+             "$type": "variable",
+             "name": "selection"
+            },
+            "totalCount": "{{ listData.data.total_count }}"
+           },
+           "isCustomVueComponent": true
+          }
+         ],
+         "classes": [],
+         "componentId": "list-table",
+         "componentName": "container",
+         "originalElement": "div"
+        },
+        {
+         "blockName": "list-view-dialog",
+         "children": [
+          {
+           "baseStyles": {
+            "width": "100%"
+           },
+           "blockName": "list-view-name",
+           "children": [],
+           "classes": [],
+           "componentId": "list-view-name",
+           "componentName": "TextInput",
+           "componentProps": {
+            "modelValue": {
+             "$type": "variable",
+             "name": "newViewLabel"
+            },
+            "placeholder": "e.g. Qualified leads",
+            "size": "md"
+           }
+          }
+         ],
+         "classes": [],
+         "componentId": "list-view-dialog",
+         "componentName": "Dialog",
+         "componentProps": {
+          "actions": "{{ createViewActions }}",
+          "modelValue": {
+           "$type": "variable",
+           "name": "viewDialog"
+          },
+          "size": "sm",
+          "title": "Create view"
+         }
+        },
+        {
+         "blockName": "list-create-dialog",
+         "children": [
+          {
+           "baseStyles": {
+            "width": "100%"
+           },
+           "blockName": "list-create-form",
+           "children": [],
+           "classes": [],
+           "componentId": "list-create-form",
+           "componentName": "FormLayout",
+           "componentProps": {
+            "doc": {
+             "$type": "variable",
+             "name": "newDoc"
+            },
+            "layout": "{{ createLayout.data || [] }}"
+           },
+           "visibilityCondition": "{{ createLayout.data?.length }}"
+          },
+          {
+           "blockName": "list-create-error",
+           "children": [],
+           "classes": [],
+           "componentId": "list-create-error",
+           "componentName": "ErrorMessage",
+           "componentProps": {
+            "message": "{{ createError }}"
+           },
+           "visibilityCondition": "{{ createError }}"
+          }
+         ],
+         "classes": [],
+         "componentId": "list-create-dialog",
+         "componentName": "Dialog",
+         "componentProps": {
+          "actions": "{{ createActions }}",
+          "modelValue": {
+           "$type": "variable",
+           "name": "createDialog"
+          },
+          "size": "xl",
+          "title": "{{ createTitle }}"
+         }
+        },
+        {
+         "blockName": "list-delete-dialog",
+         "children": [
+          {
+           "baseStyles": {
+            "color": "#525252",
+            "fontSize": "14px"
+           },
+           "blockName": "list-delete-message",
+           "children": [],
+           "classes": [],
+           "componentId": "list-delete-message",
+           "componentName": "TextBlock",
+           "componentProps": {
+            "text": "This cannot be undone."
+           }
+          },
+          {
+           "blockName": "list-delete-error",
+           "children": [],
+           "classes": [],
+           "componentId": "list-delete-error",
+           "componentName": "ErrorMessage",
+           "componentProps": {
+            "message": "{{ deleteError }}"
+           },
+           "visibilityCondition": "{{ deleteError }}"
+          }
+         ],
+         "classes": [],
+         "componentId": "list-delete-dialog",
+         "componentName": "Dialog",
+         "componentProps": {
+          "actions": "{{ deleteActions }}",
+          "modelValue": {
+           "$type": "variable",
+           "name": "deleteDialog"
+          },
+          "title": "{{ deleteTitle }}"
+         }
+        }
+       ],
+       "classes": [],
+       "componentId": "list-island",
+       "componentName": "container",
+       "originalElement": "div",
+       "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
+      },
+      {
+       "baseStyles": {
+        "alignItems": "center",
+        "display": "flex",
+        "flexDirection": "column",
+        "flexGrow": "1",
+        "gap": "8px",
+        "height": "100%",
+        "justifyContent": "center",
+        "padding": "24px",
+        "width": "100%"
+       },
+       "blockName": "list-not-found",
+       "children": [
+        {
+         "baseStyles": {
+          "fontSize": "20px",
+          "fontWeight": "600"
+         },
+         "blockName": "list-not-found-title",
+         "children": [],
+         "classes": [],
+         "componentId": "list-not-found-title",
+         "componentName": "TextBlock",
+         "componentProps": {
+          "text": "Page not found"
+         }
+        },
+        {
+         "baseStyles": {
+          "color": "#525252",
+          "fontSize": "14px"
+         },
+         "blockName": "list-not-found-message",
+         "children": [],
+         "classes": [],
+         "componentId": "list-not-found-message",
+         "componentName": "TextBlock",
+         "componentProps": {
+          "text": "{{ route.params.doctype + ' is not a doctype you can open here.' }}"
+         }
+        },
+        {
+         "baseStyles": {
+          "marginTop": "8px"
+         },
+         "blockName": "list-not-found-home",
+         "children": [],
+         "classes": [],
+         "componentEvents": {
+          "click": {
+           "action": "Run Script",
+           "event": "click",
+           "script": "function handleEvent() { router.push('/') }"
+          }
+         },
+         "componentId": "list-not-found-home",
+         "componentName": "Button",
+         "componentProps": {
+          "label": "Go to home",
+          "variant": "subtle"
+         }
+        }
+       ],
+       "classes": [],
+       "componentId": "list-not-found",
+       "componentName": "container",
+       "originalElement": "div",
+       "visibilityCondition": "{{ routeDoctype.data && !routeDoctype.data.doctype }}"
+      }
+     ],
+     "classes": [],
+     "componentId": "crm-app-shell",
+     "componentName": "CrmAppShell",
+     "componentProps": {
+      "activeDoctype": "{{ route.params.doctype }}",
+      "heading": "{{ doctypeLabels[route.params.doctype] || route.params.doctype }}",
+      "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}",
+      "views": "{{ views[route.params.doctype] || [] }}"
+     },
+     "componentSlots": {
+      "header": {
+       "parentBlockId": "crm-app-shell",
+       "slotContent": [
+        {
+         "attributes": {},
+         "baseStyles": {
+          "display": "flex",
+          "flexDirection": "column",
+          "gap": "8px",
+          "paddingBottom": "6px",
+          "paddingTop": "6px",
+          "width": "100%"
+         },
+         "blockName": "list-toolbar",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "alignItems": "center",
+            "display": "flex",
+            "flexDirection": "row",
+            "flexShrink": "0",
+            "gap": "8px",
+            "justifyContent": "space-between",
+            "width": "100%"
+           },
+           "blockName": "list-header",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "alignItems": "center",
+              "display": "flex",
+              "flexDirection": "row",
+              "gap": "2px",
+              "minWidth": "0",
+              "width": "auto"
+             },
+             "blockName": "list-crumbs",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {},
+               "blockName": "list-breadcrumbs",
+               "children": [],
+               "classes": [],
+               "componentEvents": {},
+               "componentId": "list-breadcrumbs",
+               "componentName": "Breadcrumbs",
+               "componentProps": {
+                "items": "{{ breadcrumbs }}"
+               },
+               "componentSlots": {},
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {
+                "color": "var(--ink-gray-4)",
+                "flexShrink": "0"
+               },
+               "blockName": "list-crumb-separator",
+               "children": [],
+               "classes": [],
+               "componentEvents": {},
+               "componentId": "list-crumb-separator",
+               "componentName": "TextBlock",
+               "componentProps": {
+                "text": "/"
+               },
+               "componentSlots": {},
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {},
+               "blockName": "list-view-picker",
+               "children": [],
+               "classes": [],
+               "componentEvents": {},
+               "componentId": "list-view-picker",
+               "componentName": "Dropdown",
+               "componentProps": {
+                "button": {
+                 "iconRight": "chevron-down",
+                 "label": "{{ viewLabel }}",
+                 "variant": "ghost"
+                },
+                "options": "{{ viewOptions }}"
+               },
+               "componentSlots": {},
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "componentEvents": {},
+             "componentId": "list-crumbs",
+             "componentName": "container",
+             "componentProps": {},
+             "componentSlots": {},
+             "mobileStyles": {},
+             "originalElement": "div",
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockName": "list-create",
+             "children": [],
+             "classes": [],
+             "componentEvents": {
+              "click": {
+               "action": "Run Script",
+               "event": "click",
+               "script": "function handleEvent() { openCreate() }"
+              }
+             },
+             "componentId": "list-create",
+             "componentName": "Button",
+             "componentProps": {
+              "iconLeft": "plus",
+              "label": "Create",
+              "variant": "solid"
+             },
+             "componentSlots": {},
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "componentEvents": {},
+           "componentId": "list-header",
+           "componentName": "container",
+           "componentProps": {},
+           "componentSlots": {},
+           "mobileStyles": {},
+           "originalElement": "div",
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "alignItems": "flex-start",
+            "display": "flex",
+            "flexDirection": "row",
+            "flexShrink": "0",
+            "gap": "8px",
+            "justifyContent": "space-between",
+            "width": "100%"
+           },
+           "blockName": "list-controls",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {
+              "display": "flex",
+              "flexDirection": "column",
+              "flexGrow": "1",
+              "minWidth": "0",
+              "width": "auto"
+             },
+             "blockName": "list-quickfilter-wrap",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {},
+               "blockName": "list-quickfilter",
+               "children": [],
+               "classes": [],
+               "componentEvents": {},
+               "componentId": "list-quickfilter",
+               "componentName": "QuickFilter",
+               "componentProps": {
+                "customizing": {
+                 "$type": "variable",
+                 "name": "customizing"
+                },
+                "doctype": "{{ route.params.doctype }}",
+                "filters": {
+                 "$type": "variable",
+                 "name": "filters"
+                }
+               },
+               "componentSlots": {},
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "componentEvents": {},
+             "componentId": "list-quickfilter-wrap",
+             "componentName": "container",
+             "componentProps": {},
+             "componentSlots": {},
+             "mobileStyles": {},
+             "originalElement": "div",
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "alignItems": "center",
+              "display": "flex",
+              "flexDirection": "row",
+              "flexShrink": "0",
+              "gap": "8px",
+              "width": "auto"
+             },
+             "blockName": "list-control-buttons",
+             "children": [
+              {
+               "attributes": {},
+               "baseStyles": {},
+               "blockName": "list-filter",
+               "children": [],
+               "classes": [],
+               "componentEvents": {},
+               "componentId": "list-filter",
+               "componentName": "Filter",
+               "componentProps": {
+                "doctype": "{{ route.params.doctype }}",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "filters"
+                }
+               },
+               "componentSlots": {},
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {},
+               "blockName": "list-sort",
+               "children": [],
+               "classes": [],
+               "componentEvents": {},
+               "componentId": "list-sort",
+               "componentName": "SortBy",
+               "componentProps": {
+                "doctype": "{{ route.params.doctype }}",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "sort"
+                }
+               },
+               "componentSlots": {},
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {},
+               "blockName": "list-columns",
+               "children": [],
+               "classes": [],
+               "componentEvents": {},
+               "componentId": "list-columns",
+               "componentName": "ColumnSettings",
+               "componentProps": {
+                "doctype": "{{ route.params.doctype }}",
+                "modelValue": {
+                 "$type": "variable",
+                 "name": "columns"
+                }
+               },
+               "componentSlots": {},
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              },
+              {
+               "attributes": {},
+               "baseStyles": {},
+               "blockName": "list-control-menu",
+               "children": [],
+               "classes": [],
+               "componentEvents": {},
+               "componentId": "list-control-menu",
+               "componentName": "Dropdown",
+               "componentProps": {
+                "button": {
+                 "icon": "more-horizontal",
+                 "variant": "subtle"
+                },
+                "options": "{{ controlOptions }}",
+                "placement": "right"
+               },
+               "componentSlots": {},
+               "mobileStyles": {},
+               "rawStyles": {},
+               "tabletStyles": {}
+              }
+             ],
+             "classes": [],
+             "componentEvents": {},
+             "componentId": "list-control-buttons",
+             "componentName": "container",
+             "componentProps": {},
+             "componentSlots": {},
+             "mobileStyles": {},
+             "originalElement": "div",
+             "rawStyles": {},
+             "tabletStyles": {},
+             "visibilityCondition": "{{ !customizing }}"
+            }
+           ],
+           "classes": [],
+           "componentEvents": {},
+           "componentId": "list-controls",
+           "componentName": "container",
+           "componentProps": {},
+           "componentSlots": {},
+           "mobileStyles": {},
+           "originalElement": "div",
+           "rawStyles": {},
+           "tabletStyles": {}
+          }
+         ],
+         "classes": [],
+         "componentEvents": {},
+         "componentId": "list-toolbar",
+         "componentName": "container",
+         "componentProps": {},
+         "componentSlots": {},
+         "mobileStyles": {},
+         "originalElement": "div",
+         "rawStyles": {},
+         "tabletStyles": {},
+         "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
+        }
+       ],
+       "slotId": "crm-app-shell:header",
+       "slotName": "header"
+      }
+     },
+     "isCustomVueComponent": true
+    }
+   ],
+   "classes": [],
+   "componentId": "root",
+   "componentName": "div",
+   "originalElement": "body"
+  }
+ ],
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-14 18:29:07.908652",
+ "modified": "2026-07-15 15:36:22.935660",
  "modified_by": "Administrator",
  "name": "list",
  "owner": "Administrator",
@@ -489,7 +1173,6 @@
  "published": 1,
  "resources": [
   {
-   "__unsaved": 1,
    "method": "POST",
    "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"filters\": {}, \"order_by\": \"modified desc\", \"page_length\": 20, \"page_length_count\": 20}",
    "resource_name": "listData",
@@ -497,7 +1180,6 @@
    "url": "crm.api.doc.get_data"
   },
   {
-   "__unsaved": 1,
    "auto": 1,
    "method": "GET",
    "params": "{}",
@@ -506,7 +1188,6 @@
    "url": "crm.fcrm.doctype.crm_ui_customization.crm_ui_customization.get_sidebar_layout"
   },
   {
-   "__unsaved": 1,
    "auto": 1,
    "method": "GET",
    "params": "{\"doctype\": \"{{ route.params.doctype }}\"}",
@@ -515,7 +1196,6 @@
    "url": "crm.api.doc.resolve_doctype"
   },
   {
-   "__unsaved": 1,
    "method": "GET",
    "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"type\": \"Quick Entry\"}",
    "resource_name": "createLayout",
@@ -528,115 +1208,91 @@
  "studio_app": "crm-studio",
  "variables": [
   {
-   "__unsaved": 1,
-   "initial_value": "false",
-   "variable_name": "sidebarCollapsed",
-   "variable_type": "Boolean"
-  },
-  {
-   "__unsaved": 1,
    "initial_value": "{}",
    "variable_name": "views",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "[]",
    "variable_name": "filters",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "[{\"fieldname\": \"modified\", \"direction\": \"desc\"}]",
    "variable_name": "sort",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "[]",
    "variable_name": "columns",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "false",
    "variable_name": "viewDialog",
    "variable_type": "Boolean"
   },
   {
-   "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "newViewLabel",
    "variable_type": "String"
   },
   {
-   "__unsaved": 1,
    "initial_value": "false",
    "variable_name": "customizing",
    "variable_type": "Boolean"
   },
   {
-   "__unsaved": 1,
    "initial_value": "{\"CRM Lead\": \"Leads\", \"CRM Deal\": \"Deals\", \"Contact\": \"Contacts\", \"CRM Organization\": \"Organizations\", \"CRM Task\": \"Tasks\", \"FCRM Note\": \"Notes\"}",
    "variable_name": "doctypeLabels",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "false",
    "variable_name": "createDialog",
    "variable_type": "Boolean"
   },
   {
-   "__unsaved": 1,
    "initial_value": "{}",
    "variable_name": "newDoc",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "false",
    "variable_name": "creating",
    "variable_type": "Boolean"
   },
   {
-   "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "createError",
    "variable_type": "String"
   },
   {
-   "__unsaved": 1,
    "initial_value": "[]",
    "variable_name": "selection",
    "variable_type": "Object"
   },
   {
-   "__unsaved": 1,
    "initial_value": "20",
    "variable_name": "pageSize",
    "variable_type": "Number"
   },
   {
-   "__unsaved": 1,
    "initial_value": "20",
    "variable_name": "pageLength",
    "variable_type": "Number"
   },
   {
-   "__unsaved": 1,
    "initial_value": "false",
    "variable_name": "deleteDialog",
    "variable_type": "Boolean"
   },
   {
-   "__unsaved": 1,
    "initial_value": "false",
    "variable_name": "deleting",
    "variable_type": "Boolean"
   },
   {
-   "__unsaved": 1,
    "initial_value": "\"\"",
    "variable_name": "deleteError",
    "variable_type": "String"
