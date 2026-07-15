@@ -9,6 +9,7 @@ node_modules
 crm/public/frontend
 crm/www/crm.html
 crm/public/app_builds/crm-studio
+crm/public/app_builds/crm_studio
 build
 frontend/coverage
 
