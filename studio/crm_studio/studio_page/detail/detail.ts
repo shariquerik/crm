@@ -19,8 +19,8 @@ export default function setup(ctx: any) {
 	const taskDueDate = ref("")
 	const addingTask = ref(false)
 
-	// Every resource here is auto=0: they all take the route's doctype, so none may fire
-	// until the server has confirmed the route actually names one.
+	// Every resource here is auto=0: they all take the route's doctype, so none may fire until the
+	// server has confirmed the route actually names one.
 	guardDoctype(
 		ctx,
 		() => {
@@ -32,20 +32,17 @@ export default function setup(ctx: any) {
 		`/${encodeURIComponent(route.params.id)}`,
 	)
 
-	// The route carries the doctype name itself, already decoded by vue-router — no lookup,
-	// so a record of ANY doctype opens here. A link back to it has to re-encode the space.
 	const doctype = computed(() => route.params.doctype)
 	const doctypeLink = computed(() => `/${encodeURIComponent(route.params.doctype)}`)
 
-	// Every note/task hangs off the record through this pair — the same one CRM's own
-	// activities API reads, so rows created here show up in CRM's frontend too.
+	// The pair every note/task hangs off — the same one CRM's own activities API reads, so rows
+	// created here show up in CRM's frontend too.
 	const reference = computed(() => ({
 		reference_doctype: doctype.value,
 		reference_docname: route.params.id,
 	}))
 
-	// `doc` is FormLayout's model: the user edits it in place, and every (re)fetch overwrites
-	// it with what the server actually stored.
+	// `doc` is FormLayout's model: the user edits it in place, and every (re)fetch overwrites it.
 	watch(
 		() => record.data,
 		(data) => {
@@ -60,8 +57,8 @@ export default function setup(ctx: any) {
 		{ label: doc.value?.name || route.params.id },
 	])
 
-	// Only what the user touched. Writing the whole doc back would clobber fields the read
-	// never returned (frappe.client.get strips nulls and perm-level-restricted fields).
+	// Only what the user touched: writing the whole doc back would clobber fields the read never
+	// returned (frappe.client.get strips nulls and perm-level-restricted fields).
 	function changedFields() {
 		const stored = record.data || {}
 		const changes: Record<string, any> = {}
@@ -82,8 +79,8 @@ export default function setup(ctx: any) {
 		saving.value = true
 		saveError.value = ""
 		try {
-			// set_value runs the full save (mandatory, permissions, hooks) on the stored doc
-			// and ignores framework fields in the payload; a cleared mandatory field throws.
+			// set_value runs the full save (mandatory, permissions, hooks) on the stored doc and
+			// ignores framework fields in the payload.
 			await call("frappe.client.set_value", {
 				doctype: doctype.value,
 				name: route.params.id,
@@ -134,9 +131,6 @@ export default function setup(ctx: any) {
 		}
 	}
 
-	// The tabs' resources were built once with this record baked into their params, so a
-	// plain reload re-runs the same query — which is how a new row shows up without a page
-	// reload.
 	async function insertRow(pending: any, resource: any, row: Record<string, any>) {
 		if (pending.value) return
 		pending.value = true
@@ -157,8 +151,6 @@ export default function setup(ctx: any) {
 		router.push(doctypeLink.value)
 	}
 
-	// The page's whole surface. Refs are returned AS refs — a `{{ }}` read unwraps them, and
-	// a two-way `$type: variable` prop needs the ref itself to write through.
 	return {
 		doc,
 		activeTab,

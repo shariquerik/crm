@@ -11,15 +11,12 @@ export function useCreateDoc(options: { createLayout: any; doctype: string; rout
 	const creating = ref(false)
 	const createError = ref("")
 
-	// The doctype's own name, not the sidebar's plural: "New CRM Lead", never "New Leads".
 	const createTitle = `New ${doctype}`
 
 	function openCreate() {
-		// a fresh blank doc each time: FormLayout edits this object in place, so reusing the
-		// last one would pre-fill the form with an abandoned draft
+		// FormLayout edits this object in place, so a reused one would carry an abandoned draft
 		newDoc.value = {}
 		createError.value = ""
-		// fetched on the FIRST open, not with the page: a user who only browses never pays
 		if (!createLayout.data && !createLayout.loading) createLayout.fetch()
 		createDialog.value = true
 	}
@@ -29,8 +26,6 @@ export function useCreateDoc(options: { createLayout: any; doctype: string; rout
 		creating.value = true
 		createError.value = ""
 		try {
-			// the same insert CRM's own frontend does — the server enforces mandatory fields
-			// and permissions, and a missing one throws with the dialog left open showing why
 			const doc = await call("frappe.client.insert", { doc: { doctype, ...(newDoc.value || {}) } })
 			createDialog.value = false
 			toast.success(`${doctype} created`)

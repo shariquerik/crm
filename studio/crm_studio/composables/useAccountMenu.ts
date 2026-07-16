@@ -1,13 +1,12 @@
+// The account menu behind the rail's avatar: the current user, a theme submenu and "Log out".
+//
+// The `lucide-*` icons are literal strings on purpose — the JIT-safelist constraint
+// `data/doctypes.ts` documents.
 import { useTheme } from "frappe-ui"
 import { computed } from "vue"
 
 import { currentUser, loadCurrentUser, logout, userLabel } from "@app/data/session"
 
-// The account menu behind the avatar at the foot of the rail: the current user, a theme
-// submenu and "Log out".
-//
-// The `lucide-*` icons are literal strings on purpose — the JIT-safelist constraint
-// `data/doctypes.ts` documents.
 export function useAccountMenu() {
 	const { currentTheme, setTheme } = useTheme()
 

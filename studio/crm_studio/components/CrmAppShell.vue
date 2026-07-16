@@ -1,12 +1,10 @@
 <!--
-  CrmAppShell — the app chrome for a CRM page, built on frappe-ui's DesktopShell / Rail /
-  Sidebar / PageHeader primitives. Studio registers none of them as blocks, so laying a page
-  out with them needs a custom Vue SFC — the same escape hatch CrmListView uses. Discovered by
-  `studio.api.get_custom_vue_components`; a block must carry `isCustomVueComponent: true`.
+  CrmAppShell — the app chrome for a CRM page: the rail, the sidebar and the pinned header,
+  which the page fills via props and the `header`/default slots.
 
-  The shell owns the rail, the sidebar and the pinned header; the page fills them via props
-  and the `header`/default slots. Editing this file changes no Studio document, so nothing
-  rebuilds on its own — Publish to regenerate the bundle.
+  Discovered by `studio.api.get_custom_vue_components`; a block must carry
+  `isCustomVueComponent: true`. Editing this file changes no Studio document, so nothing rebuilds
+  on its own — Publish to regenerate the bundle.
 -->
 <template>
 	<!-- `relative` here, not on the sidebar column: the collapse toggle needs an ancestor as its
@@ -17,8 +15,6 @@
 			     group only flows down to descendants, and `:has()` on the root would fire on the
 			     island too. -->
 			<Rail @mouseenter="railHovered = true" @mouseleave="railHovered = false">
-				<!-- The app mark. Goes to the first module — there is no home screen — and so carries
-				     no active treatment: wherever it lands, that module's own RailItem lights up. -->
 				<div class="mb-3 flex shrink-0 items-center justify-center">
 					<button
 						type="button"
@@ -34,9 +30,6 @@
 					</button>
 				</div>
 
-				<!-- The doctype switcher. The gap lives on this wrapper, not on Rail, which is a bare
-				     flex column that leaves item spacing to the consumer. flex-1 drops the avatar to
-				     the rail's foot. -->
 				<div class="flex w-full flex-1 flex-col items-center gap-3">
 					<RailItem
 						v-for="item in railItems"
@@ -48,8 +41,6 @@
 					/>
 				</div>
 
-				<!-- Utility icons. `ghost`, not the switcher's `tile`: these are actions, not
-				     destinations, and tiles would read as two more doctypes. -->
 				<div class="flex w-full shrink-0 flex-col items-center gap-1">
 					<RailItem
 						label="Search"
@@ -78,8 +69,8 @@
 					/>
 				</div>
 
-				<!-- A bespoke avatar button, not a RailItem: RailItem's root is a <Tooltip>, which
-				     can't forward reka's as-child trigger ref. -->
+				<!-- Not a RailItem: its root is a <Tooltip>, which can't forward reka's as-child
+				     trigger ref. -->
 				<div class="mt-2 flex shrink-0 justify-center">
 					<Dropdown :options="userMenuOptions" side="top" align="start">
 						<template #default="{ open }">
@@ -109,15 +100,13 @@
 		</template>
 
 		<template #sidebar>
-			<!-- The toggle's hover group, so it must wrap what you hover. Deliberately NOT
-			     `relative`: that would make this column a positioned element, painting it over the
-			     island and covering the shadow bleeding off the island's left edge. -->
+			<!-- The toggle's hover group, so it must wrap what you hover. NOT `relative`: that would
+			     make this column a positioned element, painting it over the island and covering the
+			     shadow bleeding off the island's left edge. -->
 			<div class="group/sidebar flex h-full shrink-0">
-				<!-- Collapses to ZERO width, not to an icon strip — the rail already is the icon-only
-				     view of this nav. The border-l is the rail↔sidebar divider, hung on the sidebar so
-				     it collapses with it rather than being left dividing nothing. Transparent rather
-				     than dropped when collapsed: a border-box element can't shrink a border below 1px,
-				     so at width:0 the line would still paint. -->
+				<!-- The border-l is the rail↔sidebar divider, hung on the sidebar so it collapses with
+				     it. Transparent rather than dropped when collapsed: a border-box element can't
+				     shrink a border below 1px, so at width:0 the line would still paint. -->
 				<Sidebar
 					v-model:collapsed="collapsed"
 					:width="SIDEBAR_WIDTH"
@@ -150,8 +139,8 @@
 					>
 						<span class="truncate">{{ heading }}</span>
 					</div>
-					<!-- Padding the VIEWPORT, not the ScrollArea, is what gives the active row's
-					     rounded shadow room — the root's overflow-hidden would clip it flat. -->
+					<!-- Padding the VIEWPORT, not the ScrollArea: the root's overflow-hidden would
+					     clip the active row's rounded shadow flat. -->
 					<ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pt-0.5 pb-10">
 						<SidebarLabel>Views</SidebarLabel>
 						<SidebarItem
@@ -167,10 +156,9 @@
 					</ScrollArea>
 				</Sidebar>
 
-				<!-- An invisible hit-strip on the seam, so the whole edge toggles rather than just the
-				     24px circle. aria-hidden and unfocusable: it is a redundant pointer shortcut to the
-				     button beside it, which stays the real labelled control. The cursor points where
-				     the edge will go — single-headed, so it doesn't promise a drag-to-resize. -->
+				<!-- An invisible hit-strip on the seam, so the whole edge toggles. aria-hidden and
+				     unfocusable: a redundant pointer shortcut to the button beside it, which stays the
+				     real labelled control. -->
 				<div
 					class="absolute inset-y-0 z-10 w-2 -translate-x-1/2 transition-[left] duration-300 ease-in-out"
 					:class="collapsed ? 'cursor-e-resize' : 'cursor-w-resize'"
@@ -179,12 +167,10 @@
 					@click="collapsed = !collapsed"
 				/>
 
-				<!-- The collapse toggle, straddling the seam. Not frappe-ui's SidebarCollapseToggle:
-				     that is a SidebarItem, which has nowhere to live once the sidebar is 0px wide.
-				     `bottom-1/3` anchors it to the viewport rather than the rail's contents, which
-				     drift with the (server-driven) icon count. Collapsed, the sidebar column is a 1px
-				     sliver, so `railHovered` takes over as the reveal trigger. Opacity, not v-if, so
-				     it stays keyboard-reachable. -->
+				<!-- Not frappe-ui's SidebarCollapseToggle: that is a SidebarItem, which has nowhere to
+				     live once the sidebar is 0px wide. Collapsed, this column is a 1px sliver, so
+				     `railHovered` takes over as the reveal trigger. Opacity, not v-if, to stay
+				     keyboard-reachable. -->
 				<button
 					type="button"
 					class="absolute bottom-1/3 z-20 flex size-6 -translate-x-1/2 translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-outline-gray-2 bg-surface-base text-ink-gray-5 shadow-sm transition-[left,opacity,background-color] duration-300 ease-in-out hover:bg-surface-gray-2 focus-visible:opacity-100 focus-visible:focus-ring"
@@ -276,9 +262,8 @@ function go(path: string) {
 	router.push(path)
 }
 
-// Reads `railItems` rather than hard-coding a doctype, so a reordered sidebar moves it with no
-// change here. That resource is [] until it lands; "/" is the redirector that picks the same
-// first module once it does, so both paths end in one place.
+// `railItems` is [] until the resource lands; "/" is the redirector that picks the same first
+// module once it does, so both paths end in one place.
 function goToFirstModule() {
 	const first = props.railItems[0]
 	go(first ? `/${encodeSegment(first.dt)}` : "/")
@@ -306,8 +291,7 @@ function openDocs() {
 // STUB. No command palette exists to open yet.
 function openSearch() {}
 
-// STUB. Hardcoded so the dot renders — nothing counts notifications yet. CRM's own sidebar gets
-// this from a store Studio's bundle can't reach; this wants a resource of its own.
+// STUB. Hardcoded so the dot renders — nothing counts notifications yet.
 const unreadCount = ref(3)
 
 const { currentUser, userLabel, userMenuOptions, loadCurrentUser } = useAccountMenu()
@@ -316,15 +300,8 @@ onMounted(loadCurrentUser)
 </script>
 
 <style scoped>
-/* DesktopShell renders its content slot flush edge-to-edge and documents styling
-   data-slot="desktop-shell-content" as opt-in theming, so this is the intended seam, not a hack.
-   The gutter (my-1 mr-1, no left) sits the card flush against the sidebar; its rounded edge IS
-   the sidebar↔content divider.
-
-   Surfaces: the chrome (rail + sidebar + gutter) is elevation-1 and the island is surface-base,
-   so in dark the island reads as #171717 recessed into the lighter #1f1f1f around it — the
-   reverse of light, where the white island lifts off the gray frame with a shadow. Dark drops
-   the shadow (shadows don't read on dark) for a hairline border. */
+/* DesktopShell documents styling data-slot="desktop-shell-content" as opt-in theming, so this is
+   the intended seam. Dark drops the shadow (shadows don't read on dark) for a hairline border. */
 .crm-desktop-shell :deep([data-slot="desktop-shell-content"]) {
 	@apply my-1 mr-1 rounded-lg bg-surface-base shadow-sm dark:border dark:border-outline-gray-1 dark:shadow-none;
 }
@@ -335,10 +312,9 @@ onMounted(loadCurrentUser)
 	@apply bg-surface-sidebar dark:bg-surface-elevation-1;
 }
 
-/* RailItem's tile variant hardcodes a surface-gray-3 fill with no glyph ink — in dark that is a
-   heavy light box whose active state is barely distinct. Repainted here against the #1f1f1f
-   chrome via RailItem's stable data-* hooks. The [data-state="active"] rule carries one more
-   attribute than the base, so it wins without !important. Light mode is untouched. */
+/* RailItem's tile variant hardcodes a surface-gray-3 fill with no glyph ink, which in dark is a
+   heavy light box. Repainted via RailItem's stable data-* hooks; the [data-state="active"] rule
+   carries one more attribute than the base, so it wins without !important. */
 .crm-desktop-shell :deep([data-slot="rail-item"][data-variant="tile"]) {
 	@apply dark:bg-surface-gray-2 dark:text-ink-gray-6;
 }

@@ -14,9 +14,8 @@ export function useBulkDelete(options: { listData: any; doctype: string; submit:
 	const deleting = ref(false)
 	const deleteError = ref("")
 
-	// A refetch replaces the rows under a selection the component would otherwise keep:
-	// filter something out while it's ticked and it stays selected but invisible, and Delete
-	// would then hit records the user cannot see.
+	// A refetch replaces the rows under a selection the component would otherwise keep: filter
+	// something out while it's ticked and Delete would hit records the user cannot see.
 	watch(() => listData.data, () => (selection.value = []))
 
 	async function deleteSelected() {
@@ -27,8 +26,6 @@ export function useBulkDelete(options: { listData: any; doctype: string; submit:
 		try {
 			await call("crm.api.doc.delete_bulk_docs", { doctype, items })
 			deleteDialog.value = false
-			// the enqueued rows are still there on the next fetch — say so, rather than showing
-			// a list that looks like the delete silently failed
 			toast.success(
 				items.length > BACKGROUND_DELETE_THRESHOLD
 					? `Deleting ${items.length} records in the background`
@@ -37,8 +34,6 @@ export function useBulkDelete(options: { listData: any; doctype: string; submit:
 			selection.value = []
 			submit()
 		} catch (error: any) {
-			// the dialog stays open holding the reason — a delete blocked by a link or by
-			// permission is exactly what to show
 			deleteError.value = errorMessage(error)
 		} finally {
 			deleting.value = false

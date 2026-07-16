@@ -1,11 +1,7 @@
 // The list screen, shared by the plain list page (/:doctype) and the saved-view page
-// (/:doctype/view/:viewName). The two differ only by ctx.currentView: when it is present
-// the narrowing comes from the stored view rather than from the URL.
-//
-// The toolbar's four controls hold the narrowing, the ordering and the shown columns in
-// @framework/ui's own shapes (FilterCondition[] / Sort[] / Column[]) — the controls never
-// fetch. This wires them to the pieces that do: useListQuery is the only thing that
-// refetches, useUrlFilters mirrors the narrowing to the address bar.
+// (/:doctype/view/:viewName). The two differ only by ctx.currentView: when it is present the
+// narrowing comes from the stored view rather than from the URL. useListQuery is the only thing
+// that refetches; useUrlFilters mirrors the narrowing to the address bar.
 import { computed, getCurrentScope, ref, watch } from "vue"
 import { useDoctypeMeta } from "@framework/ui"
 import { applyColumnWidth, clearColumnWidth, getDefaultColumns } from "@framework/ui/ColumnSettings"
@@ -38,11 +34,10 @@ export function useListPage(ctx: any) {
 
 	const { metaFields, titleField, loadMeta } = useMeta()
 
-	// Defaults come from Meta, deliberately not from the response's `columns`: those are the
-	// controller's `default_list_data()`, and a doctype that returns `{"columns": []}` (FCRM
-	// Note does — CRM renders notes as cards) would paint a headerless grid over real rows.
+	// Defaults come from Meta, not the response's `columns`: those are the controller's
+	// `default_list_data()`, and a doctype that returns `{"columns": []}` (FCRM Note does) would
+	// paint a headerless grid over real rows.
 	function seedColumns(fields: any[]) {
-		// copied, because this becomes `columns`, which a resize mutates in place
 		if (!fields.some((f: any) => f.in_list_view)) {
 			columns.value = GENERIC_COLUMNS.map((column) => ({ ...column }))
 			return
@@ -50,8 +45,6 @@ export function useListPage(ctx: any) {
 		columns.value = getDefaultColumns(fields, titleField.value)
 	}
 
-	// A width IS the column model: frappe-ui's getGridTemplateColumns turns it into the
-	// grid's track, and it is what a saved view stores.
 	function resizeColumn(key: string, width: string) {
 		columns.value = applyColumnWidth(columns.value || [], key, width)
 	}
@@ -79,16 +72,12 @@ export function useListPage(ctx: any) {
 		submit: query.submit,
 	})
 
-	// Nothing above has fetched: both resources are auto=0, and the guard fires the first
-	// only once the server confirms the route names a real, listable doctype. A typo
-	// therefore costs exactly one request.
+	// Nothing above has fetched: both resources are auto=0, so a typo costs exactly one request.
 	guardDoctype(
 		ctx,
 		() => {
 			loadMeta(doctype)
 			if (currentView) {
-				// its creation params (doctype + viewName) come from the route, so a bare
-				// fetch() is right — applyView then fires the list
 				currentView.fetch()
 				return
 			}
@@ -97,13 +86,9 @@ export function useListPage(ctx: any) {
 		viewName ? `/view/${viewName}` : "",
 	)
 
-	// The plain list waits for Meta before its FIRST fetch, because the default columns come
-	// from Meta: firing earlier would send a column-less request whose answer we'd throw away
-	// the moment Meta seeded the columns.
-	//
-	// A flag, not the watcher's stop handle: useDoctypeMeta is memoised per doctype, so on a
-	// revisit `immediate` runs this synchronously while `stop` is still in its TDZ. It also
-	// keeps a later Meta reload from re-seeding changed columns.
+	// The plain list waits for Meta before its FIRST fetch, because the default columns come from
+	// Meta. A flag, not the watcher's stop handle: useDoctypeMeta is memoised per doctype, so on a
+	// revisit `immediate` runs this synchronously while `stop` is still in its TDZ.
 	function startPlainList() {
 		let started = false
 		watch(
@@ -121,8 +106,7 @@ export function useListPage(ctx: any) {
 	const createDoc = useCreateDoc({ createLayout, doctype, route, router })
 	const bulkDelete = useBulkDelete({ listData, doctype, submit: query.submit })
 
-	// QuickFilter owns its edit mode through a `customizing` v-model it leaves to the host,
-	// so this is the trigger; the control draws the chip editor in place of the inputs.
+	// QuickFilter owns its edit mode through a `customizing` v-model it leaves to the host.
 	const controlOptions = computed(() => [
 		{
 			label: "Customize Quick Filter",
@@ -133,9 +117,6 @@ export function useListPage(ctx: any) {
 		},
 	])
 
-	// One crumb: the list itself. The VIEW is the second, and it is a Dropdown rather than a
-	// Breadcrumbs item (an item is a link, not a picker), so the block tree draws it next to
-	// the "/" separator instead.
 	const breadcrumbs = computed(() => [
 		{
 			label: doctypeLabels[doctype] || doctype,
@@ -143,8 +124,6 @@ export function useListPage(ctx: any) {
 		},
 	])
 
-	// The page's whole surface. Refs are returned AS refs — a `{{ }}` read unwraps them, and
-	// a two-way `$type: variable` prop needs the ref itself to write through.
 	return {
 		filters,
 		sort,
@@ -168,8 +147,8 @@ export function useListPage(ctx: any) {
 }
 
 // scope.run() keeps the watcher inside THIS page's effect scope, so it is still disposed on
-// navigation — calling useDoctypeMeta bare from a watch callback would leak it, since the
-// scope is only active during setup's synchronous run.
+// navigation — calling useDoctypeMeta bare from a watch callback would leak it, since the scope is
+// only active during setup's synchronous run.
 function useMeta() {
 	const scope = getCurrentScope()
 	const metaFields = ref<any[]>([])

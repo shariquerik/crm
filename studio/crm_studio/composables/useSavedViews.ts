@@ -1,5 +1,5 @@
-// The saved views a list offers: the picker in the header, applying the one the route names,
-// and saving the current state as a new one.
+// The saved views a list offers: the picker in the header, applying the one the route names, and
+// saving the current state as a new one.
 import { computed, ref, watch, type Ref } from "vue"
 import { call } from "frappe-ui"
 import { parseColumns } from "@framework/ui/ColumnSettings"
@@ -41,15 +41,14 @@ export function useSavedViews(options: {
 		)
 	}
 
-	// get_data does NOT expand a view — passing a view name only affects is_default — so a
-	// view is applied client-side, exactly as CRM's own ViewControls does. Parsing it back
-	// into the controls' native shapes is what makes a view VISIBLE in the toolbar rather
-	// than merely applied to the query.
+	// get_data does NOT expand a view — passing a view name only affects is_default — so a view is
+	// applied client-side, and parsing it back into the controls' native shapes is what makes it
+	// visible in the toolbar rather than merely applied to the query.
 	function applyView(view: any, fields: any[]) {
 		const wire: [string, string, unknown][] = []
 		for (const [fieldname, condition] of Object.entries(JSON.parse(view.filters || "{}"))) {
-			// what we store is {fieldname: [operator, value]}; CRM's own frontend also writes
-			// a bare {fieldname: value}, which means equals
+			// we store {fieldname: [operator, value]}; CRM's frontend also writes a bare
+			// {fieldname: value}, which means equals
 			if (Array.isArray(condition) && condition.length === 2) {
 				wire.push([fieldname, condition[0] as string, condition[1]])
 			} else {
@@ -63,8 +62,6 @@ export function useSavedViews(options: {
 		if (viewColumns.length) columns.value = parseColumns(viewColumns)
 		else seedColumns(fields)
 
-		// The list resource is auto=0 on the saved-view page, so this is the FIRST fetch, not
-		// a refetch — the debounce watch then sees the same params and skips.
 		submit()
 	}
 
@@ -102,13 +99,12 @@ export function useSavedViews(options: {
 		},
 	])
 
-	// listParams() is already exactly what a view row stores, so the state travels as-is.
 	async function createView() {
 		const label = (newViewLabel.value || "").trim()
 		if (!label) return
 		const params = listParams() as any
-		// create_or_update_view takes the view's doctype as `doctype` (not `dt`), and its
-		// JSON fields as strings. With no `name` and no `is_standard` it routes to create().
+		// create_or_update_view takes the view's doctype as `doctype` (not `dt`), and its JSON
+		// fields as strings. With no `name` and no `is_standard` it routes to create().
 		const view = await call(
 			"crm.fcrm.doctype.crm_view_settings.crm_view_settings.create_or_update_view",
 			{
@@ -125,7 +121,6 @@ export function useSavedViews(options: {
 		)
 		viewDialog.value = false
 		newViewLabel.value = ""
-		// CRM View Settings is autoincrement, so `name` is an int — the view's URL
 		router.push(`/${encodeURIComponent(route.params.doctype)}/view/${view.name}`)
 	}
 

@@ -1,10 +1,9 @@
-// The CRM doctypes this app routes over: their display names and rail icons, the route
-// guard every page fetches behind, and the saved views the sidebar renders.
+// The CRM doctypes this app routes over, the route guard every page fetches behind, and the
+// saved views the sidebar renders.
 import { ref, watch } from "vue"
 
-// A `lucide-*` icon is a CSS class Tailwind only emits where it SCANS the name — frappe-ui
-// registers lucide through a matchComponents pack, so a name built at runtime compiles to no
-// rule and renders blank. Studio's tailwind content covers this file
+// A `lucide-*` icon is a CSS class Tailwind only emits where it SCANS the name, so a name built
+// at runtime compiles to no rule and renders blank. Studio's tailwind content covers this file
 // (`../../*/studio/**/*.ts`), which makes the table both the icon choice and the JIT safelist.
 const DOCTYPES: Record<string, { label: string; icon: string }> = {
 	"CRM Lead": { label: "Leads", icon: "lucide-users" },
@@ -15,8 +14,7 @@ const DOCTYPES: Record<string, { label: string; icon: string }> = {
 	"FCRM Note": { label: "Notes", icon: "lucide-notebook-pen" },
 }
 
-// A map rather than a lookup function, because page block JSON indexes it directly:
-// `{{ doctypeLabels[route.params.doctype] || route.params.doctype }}`.
+// A map, not a lookup function: page block JSON indexes it directly.
 export const doctypeLabels: Record<string, string> = Object.fromEntries(
 	Object.entries(DOCTYPES).map(([doctype, { label }]) => [doctype, label]),
 )
@@ -25,9 +23,8 @@ export function doctypeIcon(doctype: string) {
 	return DOCTYPES[doctype]?.icon ?? "lucide-file"
 }
 
-// Defers `onResolved` until the server confirms the route names a real doctype, so a typo
-// never fires a query for a doctype that does not exist. A slug or a different casing is
-// redirected to the canonical URL instead, which re-runs the page's setup.
+// Defers `onResolved` until the server confirms the route names a real doctype, so a typo never
+// fires a query. A slug or a different casing is redirected to the canonical URL instead.
 export function guardDoctype(ctx: any, onResolved: () => void, suffix = "") {
 	const { routeDoctype, route, router } = ctx
 	let done = false
@@ -35,7 +32,6 @@ export function guardDoctype(ctx: any, onResolved: () => void, suffix = "") {
 		() => routeDoctype.data,
 		(res: any) => {
 			if (done || !res) return
-			// resolved to nothing — the Not Found panel renders; do NOT fetch
 			if (!res.doctype) return
 			if (res.doctype !== route.params.doctype) {
 				done = true
@@ -50,9 +46,8 @@ export function guardDoctype(ctx: any, onResolved: () => void, suffix = "") {
 	)
 }
 
-// The saved views the sidebar renders, grouped by doctype. A Studio Component cannot
-// declare a resource of its own, so every page fetches these and hands them to the shell.
-// Goes through ctx.call rather than an import because the pages share no static imports.
+// A Studio Component cannot declare a resource of its own, so every page fetches these and hands
+// them to the shell — through ctx.call, because the pages share no static imports.
 export function fetchViews(ctx: any) {
 	const views = ref<Record<string, any[]>>({})
 	ctx.call("crm.api.views.get_views").then((rows: any[]) => {

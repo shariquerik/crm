@@ -1,9 +1,7 @@
-// The logged-in user and logout — the session data the app chrome needs.
+// The logged-in user and logout, for the app chrome.
 //
-// This code is bundled by Studio, not the CRM frontend, so CRM's pinia stores aren't
-// reachable here: the email comes off the `user_id` cookie (the same trick CRM's session
-// store uses), enriched with the display name + image over one RPC. The refs live at module
-// scope, so every importer shares one `currentUser`.
+// Studio bundles this, not the CRM frontend, so CRM's pinia stores are not reachable here: the
+// email comes off the `user_id` cookie, enriched with name + image over one RPC.
 import { call } from "frappe-ui"
 import { computed, ref } from "vue"
 
@@ -21,8 +19,6 @@ export const userLabel = computed(() => currentUser.value.full_name || currentUs
 
 let loaded = false
 
-// Runs its RPC at most once; a failure clears the guard so a later mount can retry, and the
-// email-initials fallback holds meanwhile.
 export async function loadCurrentUser(): Promise<void> {
 	if (loaded) return
 	loaded = true
@@ -40,8 +36,7 @@ export async function loadCurrentUser(): Promise<void> {
 	}
 }
 
-// Mirrors CRM's session store: hit `logout`, then hard-navigate to the login page — a full
-// reload is what clears the in-memory session state.
+// A hard navigation, not a route push: only a full reload clears the in-memory session state.
 export async function logout(): Promise<void> {
 	try {
 		await call("logout")

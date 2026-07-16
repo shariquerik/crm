@@ -1,11 +1,10 @@
 <!--
   CrmListView — a CRM table built on frappe-ui's List MOLECULE (`frappe-ui/list`), not the
-  config-driven ListView. The molecule owns geometry (the shared column grid, dividers, hover
-  surfaces, virtualization) and leaves cell contents, selection, resize and the footer to the
-  app — so those three are hand-built below.
+  config-driven ListView. The molecule owns geometry and leaves cell contents, selection, resize
+  and the footer to the app, so those are hand-built below.
 
-  Selection is not the molecule's `selectable`: that makes a whole-row click toggle the row,
-  and a CRM row has to OPEN on click and select via its checkbox instead.
+  Selection is not the molecule's `selectable`: that makes a whole-row click toggle the row, and a
+  CRM row has to OPEN on click and select via its checkbox instead.
 
   Discovered by `studio.api.get_custom_vue_components`; a block must carry
   `isCustomVueComponent: true`. Editing this file changes no Studio document — Publish to
@@ -16,14 +15,12 @@
 	     so z-10 ranks the header above THIS list's rows and cannot rise above a modal backdrop. -->
 	<div class="relative isolate flex min-h-0 flex-1 flex-col">
 		<!-- One scroller holds the header and the rows, so a title stays over its column when the
-		     table scrolls sideways. overscroll-y-none stops the sticky header riding macOS's
-		     elastic bounce; it belongs on the viewport, the element that actually scrolls. -->
+		     table scrolls sideways. overscroll-y-none stops the sticky header riding macOS's elastic
+		     bounce; it belongs on the viewport, the element that actually scrolls. -->
 		<ScrollArea orientation="both" viewportClass="overscroll-y-none" class="min-h-0 flex-1">
-			<!-- Two insets, kept separate. `gutter` is the OUTER float, padding the List so the rows'
-			     rounded hover surface clears both edges — the footer insets by the same value, so the
-			     surface and the page-size buttons share one edge. `--list-row-padding-x` is the INNER
-			     inset from that surface to the content, set explicitly so the header picks it up too
-			     (its default is 0, which would leave it flush while padded rows sit inset). -->
+			<!-- Two insets, kept separate. `gutter` is the OUTER float; `--list-row-padding-x` is the
+			     INNER inset from the hover surface to the content, set explicitly so the header picks
+			     it up too (its default is 0, which would leave it flush while rows sit inset). -->
 			<List
 				divider="inset"
 				:rowHeight="rowHeight"
@@ -48,9 +45,6 @@
 						:class="alignClass(column)"
 					>
 						{{ column.label }}
-						<!-- The grab area is 8px but the line it draws is 1px, centered: a forgiving
-						     target with quiet chrome. It stays lit through a drag, because the pointer
-						     leaves the header the moment you drag down into the rows. -->
 						<template #suffix>
 							<span
 								class="absolute inset-y-0 -right-1 flex w-2 cursor-col-resize justify-center"
@@ -76,8 +70,8 @@
 					v-slot="{ item, value }"
 				>
 					<ListRow :value="value" :onClick="() => props.options.onRowClick?.(item)">
-						<!-- The click is stopped so it toggles selection instead of opening the row, and
-						     the Checkbox is pointer-events-none so every click resolves to this wrapper. -->
+						<!-- The Checkbox is pointer-events-none so every click resolves to this wrapper,
+						     which stops it from reaching the row's own open-on-click. -->
 						<div class="flex items-center justify-center" @click.stop.prevent="toggle(value)">
 							<Checkbox
 								:modelValue="selection.includes(value)"
@@ -109,11 +103,10 @@
 			class="flex shrink-0 items-center justify-between gap-2 border-t border-outline-gray-1 py-2"
 			:style="{ paddingInline: gutter }"
 		>
-			<!-- The page-size buttons are a radio group, and a radio group speaks up only when the
-			     selection CHANGES: after Load More at size 20 you see 60 rows with "20" still lit, and
-			     clicking that lit "20" — how you ask for the first 20 back — emits nothing. A DOM click
-			     fires either way, and it is taken on the capture phase because the radio item stops
-			     propagation before it could bubble out here. -->
+			<!-- A radio group speaks up only when the selection CHANGES, so clicking the already-lit
+			     "20" — how you ask for the first 20 back after Load More — emits nothing. A DOM click
+			     fires either way, taken on the capture phase because the radio item stops propagation
+			     before it could bubble out here. -->
 			<div @click.capture="onPageSizeClick">
 				<TabButtons
 					v-model="pageSize"
@@ -181,7 +174,6 @@ const props = withDefaults(
 		bulkActions?: { label: string; theme?: string; onClick: (selection: string[]) => void }[]
 		/** The outer float inset (a CSS length) — see the List's two-insets note. */
 		gutter?: string
-		/** Rows fetched so far, and rows the filter matches in all — the footer's "20 of 143". */
 		rowCount?: number
 		totalCount?: number
 		pageLengthOptions?: number[]
@@ -202,11 +194,8 @@ const props = withDefaults(
 	},
 )
 
-// Two-way: the page reads the selection here, and CLEARS it by writing [].
 const selection = defineModel<string[]>("selection", { default: () => [] })
 
-// Only the CHOICE — this component never fetches, so what a new size means for the query is the
-// page's to decide.
 const pageSize = defineModel<number>("pageSize", { default: 20 })
 
 const emit = defineEmits<{
@@ -218,22 +207,18 @@ const emit = defineEmits<{
 	(e: "page-size", size: number): void
 }>()
 
-// A real track for the checkbox column: the molecule's own checkbox is padding, but this list
-// rolls its own.
+// A real track, because the molecule's own checkbox is padding and this list rolls its own.
 const CHECKBOX_TRACK = "2rem"
 const MIN_COLUMN_WIDTH = 60
 
-// The inner END inset, so a right-aligned last column doesn't jam the surface corner. The start
-// is flush — zeroed in <style> — so the checkbox sits at the surface edge.
+// The inner END inset. The start is flush — zeroed in <style> — so the checkbox sits at the edge.
 const ROW_PADDING_X = "0.5rem"
 
 const listColumns = computed(() => {
 	const tracks = props.columns.map(trackFor)
-	// A trailing FILLER, only when every column is fixed. The row divider is a grid child spanning
-	// `2 / -1` and stops at the last grid line, but the hover surface is `width: 100%` and runs the
-	// full list — with only fixed tracks the two disagree, and the divider ends mid-row. Skipped
-	// when a column already flexes, since an `fr` soaks up the slack itself and a filler would
-	// compete with it.
+	// A trailing FILLER, only when every column is fixed. The row divider spans `2 / -1` and stops
+	// at the last grid line, but the hover surface is `width: 100%` and runs the full list — with
+	// only fixed tracks the two disagree and the divider ends mid-row.
 	const hasFlexible = tracks.some((track) => track.includes("fr"))
 	if (!hasFlexible) tracks.push("minmax(0, 1fr)")
 	return [CHECKBOX_TRACK, ...tracks].join(" ")
@@ -250,8 +235,8 @@ function trackFor(column: any) {
 const widthOverride = reactive<Record<string, string>>({})
 let drag: { key: string; startX: number; startWidth: number } | null = null
 
-// `drag` is a plain let (written per mousemove, nothing renders from it), so the handle needs its
-// own reactive copy to keep its line lit.
+// `drag` is a plain let (written per mousemove, nothing renders from it), so the handle needs a
+// reactive copy to keep its line lit.
 const resizingKey = ref<string | null>(null)
 
 function startResize(column: any, event: MouseEvent) {
@@ -322,7 +307,6 @@ function alignClass(column: any) {
 }
 
 // The click can land on the radio or anything inside it, so walk up to the radio that owns it.
-// Its label IS the size. Guarded, since a click on the strip's padding hits no radio at all.
 function onPageSizeClick(event: MouseEvent) {
 	const item = (event.target as HTMLElement).closest("[role='radio']")
 	if (!item) return
@@ -333,16 +317,14 @@ function onPageSizeClick(event: MouseEvent) {
 </script>
 
 <style scoped>
-/* The molecule draws the header's border as a grid child spanning ALL tracks, so it runs
-   full-bleed under the checkbox track, while the row dividers start at 2 / -1. Inset the header
-   border to match, so the two lines share one edge. */
+/* The molecule draws the header's border spanning ALL tracks while the row dividers start at
+   2 / -1. Inset the header border to match, so the two lines share one edge. */
 :deep([data-slot="list-header-border"]) {
 	grid-column: 2 / -1;
 }
 
 /* The molecule derives BOTH the start and end content padding from the single
-   --list-row-padding-x hook, so the start is overridden here to sit the checkbox flush against
-   the rounded surface's edge while the end stays inset. */
+   --list-row-padding-x hook, so the start is overridden here while the end stays inset. */
 :deep([data-slot="list-row"]),
 :deep([data-slot="list-header"]) {
 	padding-inline-start: 0;
