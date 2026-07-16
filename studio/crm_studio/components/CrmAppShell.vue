@@ -72,7 +72,7 @@
 				     lets it eat the free space so the account avatar drops to the rail's foot, exactly
 				     like gameplan's Rail (its own story pushes the "You" avatar down with a flex-1
 				     middle). Items still sit top-aligned — flex-col starts them at the top. -->
-				<div class="flex w-full flex-1 flex-col items-center gap-1">
+				<div class="flex w-full flex-1 flex-col items-center gap-3">
 					<RailItem
 						v-for="item in railItems"
 						:key="item.dt"
