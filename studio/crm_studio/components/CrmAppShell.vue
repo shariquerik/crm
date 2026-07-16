@@ -68,8 +68,11 @@
 					</button>
 				</div>
 
-				<!-- The doctype switcher. The gap lives here, not on Rail (see header comment). -->
-				<div class="flex w-full flex-col items-center gap-1">
+				<!-- The doctype switcher. The gap lives here, not on Rail (see header comment); flex-1
+				     lets it eat the free space so the account avatar drops to the rail's foot, exactly
+				     like gameplan's Rail (its own story pushes the "You" avatar down with a flex-1
+				     middle). Items still sit top-aligned — flex-col starts them at the top. -->
+				<div class="flex w-full flex-1 flex-col items-center gap-1">
 					<RailItem
 						v-for="item in railItems"
 						:key="item.dt"
@@ -78,6 +81,39 @@
 						:active="item.dt === activeDoctype"
 						@click="go(`/${encodeSegment(item.dt)}`)"
 					/>
+				</div>
+
+				<!-- The account menu, at the rail's foot like gameplan. A bespoke avatar button is the
+				     trigger — not a RailItem: RailItem's root is a <Tooltip>, which can't forward reka's
+				     as-child trigger ref (the same reason the app mark above is a bespoke button). Like
+				     gameplan, the menu opens ABOVE the avatar, left-aligned (side="top" align="start"),
+				     with the theme submenu flying out to the right; #item-suffix draws the active theme's
+				     checkmark. The avatar gets NO ring/raised state on open — gameplan leaves it plain.
+				     Holds Toggle theme + Log out for now — more entries can join `userMenuOptions`. -->
+				<div class="mt-2 flex shrink-0 justify-center">
+					<Dropdown :options="userMenuOptions" side="top" align="start">
+						<template #default="{ open }">
+							<button
+								type="button"
+								class="flex size-7 items-center justify-center rounded-full transition focus-visible:ring-0 focus-visible:focus-ring"
+								:class="open ? '' : 'hover:opacity-90'"
+								:aria-label="userLabel"
+							>
+								<Avatar
+									:image="currentUser.user_image"
+									:label="userLabel"
+									size="md"
+								/>
+							</button>
+						</template>
+						<template #item-suffix="{ selected }">
+							<span
+								v-if="selected"
+								class="lucide-check size-4 text-ink-gray-7"
+								aria-hidden="true"
+							/>
+						</template>
+					</Dropdown>
 				</div>
 			</Rail>
 		</template>
@@ -153,6 +189,7 @@
 
 <script setup lang="ts">
 import {
+	Avatar,
 	DesktopShell,
 	Dropdown,
 	PageHeader,
@@ -163,8 +200,10 @@ import {
 	SidebarItem,
 	SidebarLabel,
 } from "frappe-ui"
-import { computed } from "vue"
+import { computed, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
+
+import { useAccountMenu } from "@app/composables/useAccountMenu"
 
 withDefaults(
 	defineProps<{
@@ -240,24 +279,58 @@ const appMenuOptions = [
 function encodeSegment(value: string) {
 	return encodeURIComponent(value)
 }
+
+// The rail's account menu — the current user (for the avatar) and the dropdown options (Toggle
+// theme + Log out). Session data and the theme/menu assembly live in `@app/data/session` and
+// `@app/composables/useAccountMenu`; the shell just renders them. `loadCurrentUser` fills the
+// avatar's name + image on mount (the email-initials fallback shows until then).
+const { currentUser, userLabel, userMenuOptions, loadCurrentUser } = useAccountMenu()
+
+onMounted(loadCurrentUser)
 </script>
 
 <style scoped>
-/* The island — gameplan's content-region treatment, applied verbatim. DesktopShell renders
-   its content slot flush edge-to-edge by default and documents this as opt-in theming (style
-   data-slot="desktop-shell-content" yourself), so this is the intended seam, not a hack. Only
-   a top/bottom/right gutter (my-1 mr-1, no left) so the card sits flush against the sidebar;
-   its rounded edge + shadow IS the sidebar↔content divider. Dark mode drops the shadow (which
-   doesn't read on dark) for a left border instead. :deep reaches the element inside
-   DesktopShell; the .crm-desktop-shell prefix keeps it scoped to this shell. */
+/* The island — a floating rounded card in BOTH themes (Raven's dark-mode treatment). DesktopShell
+   renders its content slot flush edge-to-edge by default and documents this as opt-in theming
+   (style data-slot="desktop-shell-content" yourself), so this is the intended seam, not a hack. A
+   top/bottom/right gutter (my-1 mr-1, no left) sits the card flush against the sidebar; its rounded
+   edge is the sidebar↔content divider. :deep reaches the element inside DesktopShell; the
+   .crm-desktop-shell prefix keeps it scoped to this shell.
+
+   Surfaces follow Raven: the CHROME (rail + sidebar + gutter) is `surface-elevation-1`, and the
+   ISLAND is `surface-base` — so in dark the island reads as #171717 recessed into the lighter
+   #1f1f1f shell around it (the reverse of light, where the white island lifts off the gray-50
+   frame with a shadow). Earlier we had these swapped, which either flattened the card
+   (`dark:m-0`) or lit it the wrong way. Light keeps the shadow lift; dark drops it (shadows don't
+   read on dark) and adds a hairline border so the recessed card still has a crisp edge — the way
+   Raven frames its message pane in the dark chrome. */
 .crm-desktop-shell :deep([data-slot="desktop-shell-content"]) {
-	@apply my-1 mr-1 rounded-lg bg-surface-base shadow-sm dark:m-0 dark:rounded-none dark:border-l dark:shadow-none;
+	@apply my-1 mr-1 rounded-lg bg-surface-base shadow-sm dark:border dark:border-outline-gray-1 dark:shadow-none;
 }
 
-/* The frame the island floats in: rail, sidebar and the gutter around the card share one
-   surface. Gameplan inherits this from its global app body; Studio hosts our page, so we set
-   it on the shell root here. */
+/* The frame the island sits in: rail, sidebar and the gutter around the card share one surface.
+   Gameplan inherits this from its global app body; Studio hosts our page, so we set it on the
+   shell root here. `surface-sidebar` handles light (#f8f8f8), but it is TRANSPARENT in dark —
+   leaving the frame (and the transparent-in-dark Rail/Sidebar that sit on it) with no fill, so
+   everything flattened onto one surface. `dark:bg-surface-elevation-1` gives the whole shell a
+   solid #1f1f1f in dark — Raven's chrome surface — the lighter canvas the darker `surface-base`
+   island (#171717) recesses into. */
 .crm-desktop-shell {
-	@apply bg-surface-sidebar;
+	@apply bg-surface-sidebar dark:bg-surface-elevation-1;
+}
+
+/* The doctype switcher tiles, re-skinned for DARK only. RailItem's tile variant hardcodes a
+   surface-gray-3 (#383838) fill with no glyph ink — in dark that's a heavy light box, its glyph
+   left at an inherited/dim color, and its active state (gray-4 #424242) barely distinct from
+   inactive. We keep the tile look but repaint it against the #1f1f1f chrome via RailItem's stable
+   data-* hooks: inactive tiles recede to surface-gray-2 (#292929) with a muted ink-gray-6 glyph;
+   the active tile lifts to surface-gray-4 (#424242) with a bright ink-gray-9 glyph. The
+   [data-state="active"] rule carries one more attribute than the base, so it wins without
+   !important; both out-specify RailItem's single-class utilities. Light mode is untouched. */
+.crm-desktop-shell :deep([data-slot="rail-item"][data-variant="tile"]) {
+	@apply dark:bg-surface-gray-2 dark:text-ink-gray-6;
+}
+.crm-desktop-shell :deep([data-slot="rail-item"][data-variant="tile"][data-state="active"]) {
+	@apply dark:bg-surface-gray-4 dark:text-ink-gray-9;
 }
 </style>
