@@ -34,6 +34,8 @@
        "children": [
         {
          "blockName": "detail-error",
+         "children": [],
+         "classes": [],
          "componentId": "detail-error",
          "componentName": "ErrorMessage",
          "componentProps": {
@@ -43,6 +45,8 @@
         },
         {
          "blockName": "detail-form",
+         "children": [],
+         "classes": [],
          "componentId": "detail-form",
          "componentName": "FormLayout",
          "componentProps": {
@@ -66,6 +70,8 @@
          "children": [
           {
            "blockName": "detail-tab-buttons",
+           "children": [],
+           "classes": [],
            "componentId": "detail-tab-buttons",
            "componentName": "TabButtons",
            "componentProps": {
@@ -109,6 +115,8 @@
                 "minWidth": "0"
                },
                "blockName": "note-title",
+               "children": [],
+               "classes": [],
                "componentId": "note-title",
                "componentName": "FormControl",
                "componentProps": {
@@ -127,6 +135,8 @@
                 "minWidth": "0"
                },
                "blockName": "note-content",
+               "children": [],
+               "classes": [],
                "componentId": "note-content",
                "componentName": "FormControl",
                "componentProps": {
@@ -151,6 +161,8 @@
                "children": [
                 {
                  "blockName": "note-add",
+                 "children": [],
+                 "classes": [],
                  "componentEvents": {
                   "click": {
                    "action": "Run Script",
@@ -167,11 +179,13 @@
                  }
                 }
                ],
+               "classes": [],
                "componentId": "detail-note-actions",
                "componentName": "container",
                "originalElement": "div"
               }
              ],
+             "classes": [],
              "componentId": "detail-notes-composer",
              "componentName": "container",
              "originalElement": "div"
@@ -182,6 +196,8 @@
               "width": "100%"
              },
              "blockName": "detail-notes-rows",
+             "children": [],
+             "classes": [],
              "componentId": "detail-notes-rows",
              "componentName": "ListView",
              "componentProps": {
@@ -215,6 +231,7 @@
              }
             }
            ],
+           "classes": [],
            "componentId": "detail-notes-panel",
            "componentName": "container",
            "originalElement": "div",
@@ -245,6 +262,8 @@
                 "minWidth": "0"
                },
                "blockName": "task-title",
+               "children": [],
+               "classes": [],
                "componentId": "task-title",
                "componentName": "FormControl",
                "componentProps": {
@@ -265,6 +284,8 @@
                 "width": "16rem"
                },
                "blockName": "task-due-date",
+               "children": [],
+               "classes": [],
                "componentId": "task-due-date",
                "componentName": "FormControl",
                "componentProps": {
@@ -279,6 +300,8 @@
               },
               {
                "blockName": "task-add",
+               "children": [],
+               "classes": [],
                "componentEvents": {
                 "click": {
                  "action": "Run Script",
@@ -295,6 +318,7 @@
                }
               }
              ],
+             "classes": [],
              "componentId": "detail-tasks-composer",
              "componentName": "container",
              "originalElement": "div"
@@ -305,6 +329,8 @@
               "width": "100%"
              },
              "blockName": "detail-tasks-rows",
+             "children": [],
+             "classes": [],
              "componentId": "detail-tasks-rows",
              "componentName": "ListView",
              "componentProps": {
@@ -343,17 +369,20 @@
              }
             }
            ],
+           "classes": [],
            "componentId": "detail-tasks-panel",
            "componentName": "container",
            "originalElement": "div",
            "visibilityCondition": "{{ activeTab === 'tasks' }}"
           }
          ],
+         "classes": [],
          "componentId": "detail-tabs",
          "componentName": "container",
          "originalElement": "div"
         }
        ],
+       "classes": [],
        "componentId": "detail-content",
        "componentName": "container",
        "originalElement": "div",
@@ -379,6 +408,8 @@
           "fontWeight": "600"
          },
          "blockName": "detail-not-found-title",
+         "children": [],
+         "classes": [],
          "componentId": "detail-not-found-title",
          "componentName": "TextBlock",
          "componentProps": {
@@ -391,6 +422,8 @@
           "fontSize": "14px"
          },
          "blockName": "detail-not-found-message",
+         "children": [],
+         "classes": [],
          "componentId": "detail-not-found-message",
          "componentName": "TextBlock",
          "componentProps": {
@@ -402,6 +435,8 @@
           "marginTop": "8px"
          },
          "blockName": "detail-not-found-home",
+         "children": [],
+         "classes": [],
          "componentEvents": {
           "click": {
            "action": "Run Script",
@@ -417,24 +452,29 @@
          }
         }
        ],
+       "classes": [],
        "componentId": "detail-not-found",
        "componentName": "container",
        "originalElement": "div",
        "visibilityCondition": "{{ routeDoctype.data && !routeDoctype.data.doctype }}"
       }
      ],
+     "classes": [],
      "componentId": "crm-app-shell",
      "componentName": "CrmAppShell",
      "componentProps": {
       "activeDoctype": "{{ route.params.doctype }}",
+      "appName": "CRM",
       "heading": "{{ doctypeLabels[route.params.doctype] || route.params.doctype }}",
       "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}",
       "views": "{{ views[route.params.doctype] || [] }}"
      },
      "componentSlots": {
       "header": {
+       "parentBlockId": "crm-app-shell",
        "slotContent": [
         {
+         "attributes": {},
          "baseStyles": {
           "alignItems": "center",
           "display": "flex",
@@ -446,15 +486,28 @@
          "blockName": "detail-header",
          "children": [
           {
+           "attributes": {},
+           "baseStyles": {},
            "blockName": "detail-breadcrumbs",
+           "children": [],
+           "classes": [],
+           "componentEvents": {},
            "componentId": "detail-breadcrumbs",
            "componentName": "Breadcrumbs",
            "componentProps": {
             "items": "{{ breadcrumbs }}"
-           }
+           },
+           "componentSlots": {},
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
           },
           {
+           "attributes": {},
+           "baseStyles": {},
            "blockName": "detail-save",
+           "children": [],
+           "classes": [],
            "componentEvents": {
             "click": {
              "action": "Run Script",
@@ -468,21 +521,34 @@
             "label": "Save",
             "loading": "{{ saving }}",
             "variant": "solid"
-           }
+           },
+           "componentSlots": {},
+           "mobileStyles": {},
+           "rawStyles": {},
+           "tabletStyles": {}
           }
          ],
+         "classes": [],
+         "componentEvents": {},
          "componentId": "detail-header",
          "componentName": "container",
+         "componentProps": {},
+         "componentSlots": {},
+         "mobileStyles": {},
          "originalElement": "div",
+         "rawStyles": {},
+         "tabletStyles": {},
          "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
         }
        ],
+       "slotId": "crm-app-shell:header",
        "slotName": "header"
       }
      },
      "isCustomVueComponent": true
     }
    ],
+   "classes": [],
    "componentId": "root",
    "componentName": "div",
    "originalElement": "body"
@@ -492,7 +558,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-15 16:30:50.805279",
+ "modified": "2026-07-16 14:45:47.837020",
  "modified_by": "Administrator",
  "name": "detail",
  "owner": "Administrator",

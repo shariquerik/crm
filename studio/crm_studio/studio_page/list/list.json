@@ -30,7 +30,6 @@
        "blockName": "list-island",
        "children": [
         {
-         "attributes": {},
          "baseStyles": {
           "alignItems": "flex-start",
           "display": "flex",
@@ -44,7 +43,6 @@
          "blockName": "list-controls",
          "children": [
           {
-           "attributes": {},
            "baseStyles": {
             "display": "flex",
             "flexDirection": "column",
@@ -55,12 +53,9 @@
            "blockName": "list-quickfilter-wrap",
            "children": [
             {
-             "attributes": {},
-             "baseStyles": {},
              "blockName": "list-quickfilter",
              "children": [],
              "classes": [],
-             "componentEvents": {},
              "componentId": "list-quickfilter",
              "componentName": "QuickFilter",
              "componentProps": {
@@ -73,26 +68,15 @@
                "$type": "variable",
                "name": "filters"
               }
-             },
-             "componentSlots": {},
-             "mobileStyles": {},
-             "rawStyles": {},
-             "tabletStyles": {}
+             }
             }
            ],
            "classes": [],
-           "componentEvents": {},
            "componentId": "list-quickfilter-wrap",
            "componentName": "container",
-           "componentProps": {},
-           "componentSlots": {},
-           "mobileStyles": {},
-           "originalElement": "div",
-           "rawStyles": {},
-           "tabletStyles": {}
+           "originalElement": "div"
           },
           {
-           "attributes": {},
            "baseStyles": {
             "alignItems": "center",
             "display": "flex",
@@ -104,12 +88,9 @@
            "blockName": "list-control-buttons",
            "children": [
             {
-             "attributes": {},
-             "baseStyles": {},
              "blockName": "list-filter",
              "children": [],
              "classes": [],
-             "componentEvents": {},
              "componentId": "list-filter",
              "componentName": "Filter",
              "componentProps": {
@@ -118,19 +99,12 @@
                "$type": "variable",
                "name": "filters"
               }
-             },
-             "componentSlots": {},
-             "mobileStyles": {},
-             "rawStyles": {},
-             "tabletStyles": {}
+             }
             },
             {
-             "attributes": {},
-             "baseStyles": {},
              "blockName": "list-sort",
              "children": [],
              "classes": [],
-             "componentEvents": {},
              "componentId": "list-sort",
              "componentName": "SortBy",
              "componentProps": {
@@ -139,19 +113,12 @@
                "$type": "variable",
                "name": "sort"
               }
-             },
-             "componentSlots": {},
-             "mobileStyles": {},
-             "rawStyles": {},
-             "tabletStyles": {}
+             }
             },
             {
-             "attributes": {},
-             "baseStyles": {},
              "blockName": "list-columns",
              "children": [],
              "classes": [],
-             "componentEvents": {},
              "componentId": "list-columns",
              "componentName": "ColumnSettings",
              "componentProps": {
@@ -160,19 +127,12 @@
                "$type": "variable",
                "name": "columns"
               }
-             },
-             "componentSlots": {},
-             "mobileStyles": {},
-             "rawStyles": {},
-             "tabletStyles": {}
+             }
             },
             {
-             "attributes": {},
-             "baseStyles": {},
              "blockName": "list-control-menu",
              "children": [],
              "classes": [],
-             "componentEvents": {},
              "componentId": "list-control-menu",
              "componentName": "Dropdown",
              "componentProps": {
@@ -182,36 +142,20 @@
               },
               "options": "{{ controlOptions }}",
               "placement": "right"
-             },
-             "componentSlots": {},
-             "mobileStyles": {},
-             "rawStyles": {},
-             "tabletStyles": {}
+             }
             }
            ],
            "classes": [],
-           "componentEvents": {},
            "componentId": "list-control-buttons",
            "componentName": "container",
-           "componentProps": {},
-           "componentSlots": {},
-           "mobileStyles": {},
            "originalElement": "div",
-           "rawStyles": {},
-           "tabletStyles": {},
            "visibilityCondition": "{{ !customizing }}"
           }
          ],
          "classes": [],
-         "componentEvents": {},
          "componentId": "list-controls",
          "componentName": "container",
-         "componentProps": {},
-         "componentSlots": {},
-         "mobileStyles": {},
-         "originalElement": "div",
-         "rawStyles": {},
-         "tabletStyles": {}
+         "originalElement": "div"
         },
         {
          "baseStyles": {
@@ -485,6 +429,7 @@
      "componentName": "CrmAppShell",
      "componentProps": {
       "activeDoctype": "{{ route.params.doctype }}",
+      "appName": "CRM",
       "heading": "{{ doctypeLabels[route.params.doctype] || route.params.doctype }}",
       "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}",
       "views": "{{ views[route.params.doctype] || [] }}"
@@ -570,7 +515,11 @@
                "label": "{{ viewLabel }}",
                "variant": "ghost"
               },
-              "options": "{{ viewOptions }}"
+              "offset": 4,
+              "open": false,
+              "options": "{{ viewOptions }}",
+              "portalTo": "body",
+              "side": "bottom"
              },
              "componentSlots": {},
              "mobileStyles": {},
@@ -644,7 +593,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-15 16:35:29.701393",
+ "modified": "2026-07-16 14:45:47.798312",
  "modified_by": "Administrator",
  "name": "list",
  "owner": "Administrator",

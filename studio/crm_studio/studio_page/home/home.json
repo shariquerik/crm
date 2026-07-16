@@ -36,6 +36,8 @@
           "fontWeight": "600"
          },
          "blockName": "home-title",
+         "children": [],
+         "classes": [],
          "componentId": "home-title",
          "componentName": "TextBlock",
          "componentProps": {
@@ -47,6 +49,8 @@
           "color": "#6b7280"
          },
          "blockName": "home-subtitle",
+         "children": [],
+         "classes": [],
          "componentId": "home-subtitle",
          "componentName": "TextBlock",
          "componentProps": {
@@ -54,11 +58,13 @@
          }
         }
        ],
+       "classes": [],
        "componentId": "home-body",
        "componentName": "container",
        "originalElement": "div"
       }
      ],
+     "classes": [],
      "componentId": "crm-app-shell",
      "componentName": "CrmAppShell",
      "componentProps": {
@@ -70,6 +76,7 @@
      "isCustomVueComponent": true
     }
    ],
+   "classes": [],
    "componentId": "root",
    "componentName": "div",
    "originalElement": "body"
@@ -79,7 +86,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-15 16:02:26.410133",
+ "modified": "2026-07-16 14:45:47.856095",
  "modified_by": "Administrator",
  "name": "home",
  "owner": "Administrator",
