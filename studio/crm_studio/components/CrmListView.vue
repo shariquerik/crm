@@ -71,7 +71,7 @@
 				     sticky header that has no stacking rank — that is the header/first-row overlap. A
 				     z-index lifts the header over the positioned rows. The `isolate` on the root keeps this
 				     rank local, so an open dialog's backdrop still dims the header (see the root comment). -->
-				<ListHeader class="sticky top-0 z-10 bg-surface-base">
+				<ListHeader class="group sticky top-0 z-10 bg-surface-base">
 					<!-- Select-all sits in the first (checkbox) track. @click.stop so it never reaches a row. -->
 					<div class="flex items-center justify-center">
 						<Checkbox
@@ -88,13 +88,24 @@
 					>
 						{{ column.label }}
 						<!-- The resize handle lives in #suffix (a shrink-0 span, no truncate) and is absolutely
-						     positioned to the cell's right edge. Drag resizes; double-click resets to auto. -->
+						     positioned to the cell's right edge. Drag resizes; double-click resets to auto.
+						     The grab area is 8px wide but the line it draws is 1px, centered in it: the target
+						     stays forgiving while the chrome stays quiet. The line only shows once the pointer
+						     is anywhere over the header (`group` on ListHeader) — and stays lit through a drag,
+						     because the pointer leaves the header the moment you drag down into the rows. -->
 						<template #suffix>
 							<span
-								class="absolute inset-y-0 -right-1 w-2 cursor-col-resize"
+								class="absolute inset-y-0 -right-1 flex w-2 cursor-col-resize justify-center"
 								@mousedown.stop.prevent="startResize(column, $event)"
 								@dblclick.stop.prevent="resetColumn(column)"
-							/>
+							>
+								<!-- A border, not a background: `outline-*` ships only as border/outline scales,
+								     so `bg-outline-*` silently generates no rule and the line stays invisible. -->
+								<span
+									class="border-l border-outline-gray-2 opacity-0 transition-opacity group-hover:opacity-100"
+									:class="{ 'opacity-100': resizingKey === column.key }"
+								/>
+							</span>
 						</template>
 					</ListHeaderCell>
 				</ListHeader>
@@ -203,7 +214,7 @@
 <script setup lang="ts">
 import { Button, Checkbox, ScrollArea, TabButtons, Tooltip } from "frappe-ui"
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from "frappe-ui/list"
-import { computed, reactive } from "vue"
+import { computed, reactive, ref } from "vue"
 
 const props = withDefaults(
 	defineProps<{
@@ -275,9 +286,19 @@ const ROW_PADDING_X = "0.5rem"
 
 // One track per column, prefixed by the checkbox track, written to `--list-columns`. A live drag
 // width in `widthOverride` wins; otherwise the column's own width (string = fixed, number = `fr`).
-const listColumns = computed(() =>
-	[CHECKBOX_TRACK, ...props.columns.map(trackFor)].join(" "),
-)
+const listColumns = computed(() => {
+	const tracks = props.columns.map(trackFor)
+	// A trailing FILLER track, added only when every column is a fixed width. The row divider is a
+	// grid child spanning `2 / -1`, so it stops at the last grid line — but the row's hover surface
+	// is `width: 100%` and runs the full list. With only fixed tracks the columns can total less
+	// than the list, and those two disagree: the divider ends mid-row while the hover reaches the
+	// edge. An empty filler soaks up the slack so the last line sits at the edge and they agree.
+	// Skipped when a column is already flexible, because an `fr` column consumes the slack itself —
+	// a filler would just compete with it for space and shrink the real column.
+	const hasFlexible = tracks.some((track) => track.includes("fr"))
+	if (!hasFlexible) tracks.push("minmax(0, 1fr)")
+	return [CHECKBOX_TRACK, ...tracks].join(" ")
+})
 
 function trackFor(column: any) {
 	const width = widthOverride[column.key] ?? column.width
@@ -292,12 +313,17 @@ function trackFor(column: any) {
 const widthOverride = reactive<Record<string, string>>({})
 let drag: { key: string; startX: number; startWidth: number } | null = null
 
+// The column being dragged, for the template — `drag` is a plain let (it is written per mousemove and
+// nothing renders from it), so the handle needs its own reactive copy to keep its line lit.
+const resizingKey = ref<string | null>(null)
+
 function startResize(column: any, event: MouseEvent) {
 	const cell = (event.currentTarget as HTMLElement).closest<HTMLElement>(
 		"[data-slot='list-header-cell']",
 	)
 	if (!cell) return
 	drag = { key: column.key, startX: event.clientX, startWidth: cell.getBoundingClientRect().width }
+	resizingKey.value = column.key
 	window.addEventListener("mousemove", onDrag)
 	window.addEventListener("mouseup", endDrag)
 }
@@ -311,6 +337,7 @@ function onDrag(event: MouseEvent) {
 function endDrag() {
 	window.removeEventListener("mousemove", onDrag)
 	window.removeEventListener("mouseup", endDrag)
+	resizingKey.value = null
 	if (!drag) return
 	const { key } = drag
 	const width = widthOverride[key]
