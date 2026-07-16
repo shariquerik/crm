@@ -441,8 +441,6 @@
           "flexDirection": "row",
           "gap": "12px",
           "justifyContent": "space-between",
-          "paddingBottom": "6px",
-          "paddingTop": "6px",
           "width": "100%"
          },
          "blockName": "detail-header",

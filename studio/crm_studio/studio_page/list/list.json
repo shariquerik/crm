@@ -30,6 +30,190 @@
        "blockName": "list-island",
        "children": [
         {
+         "attributes": {},
+         "baseStyles": {
+          "alignItems": "flex-start",
+          "display": "flex",
+          "flexDirection": "row",
+          "flexShrink": "0",
+          "gap": "8px",
+          "justifyContent": "space-between",
+          "padding": "8px 20px 0 20px",
+          "width": "100%"
+         },
+         "blockName": "list-controls",
+         "children": [
+          {
+           "attributes": {},
+           "baseStyles": {
+            "display": "flex",
+            "flexDirection": "column",
+            "flexGrow": "1",
+            "minWidth": "0",
+            "width": "auto"
+           },
+           "blockName": "list-quickfilter-wrap",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockName": "list-quickfilter",
+             "children": [],
+             "classes": [],
+             "componentEvents": {},
+             "componentId": "list-quickfilter",
+             "componentName": "QuickFilter",
+             "componentProps": {
+              "customizing": {
+               "$type": "variable",
+               "name": "customizing"
+              },
+              "doctype": "{{ route.params.doctype }}",
+              "filters": {
+               "$type": "variable",
+               "name": "filters"
+              }
+             },
+             "componentSlots": {},
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "componentEvents": {},
+           "componentId": "list-quickfilter-wrap",
+           "componentName": "container",
+           "componentProps": {},
+           "componentSlots": {},
+           "mobileStyles": {},
+           "originalElement": "div",
+           "rawStyles": {},
+           "tabletStyles": {}
+          },
+          {
+           "attributes": {},
+           "baseStyles": {
+            "alignItems": "center",
+            "display": "flex",
+            "flexDirection": "row",
+            "flexShrink": "0",
+            "gap": "8px",
+            "width": "auto"
+           },
+           "blockName": "list-control-buttons",
+           "children": [
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockName": "list-filter",
+             "children": [],
+             "classes": [],
+             "componentEvents": {},
+             "componentId": "list-filter",
+             "componentName": "Filter",
+             "componentProps": {
+              "doctype": "{{ route.params.doctype }}",
+              "modelValue": {
+               "$type": "variable",
+               "name": "filters"
+              }
+             },
+             "componentSlots": {},
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockName": "list-sort",
+             "children": [],
+             "classes": [],
+             "componentEvents": {},
+             "componentId": "list-sort",
+             "componentName": "SortBy",
+             "componentProps": {
+              "doctype": "{{ route.params.doctype }}",
+              "modelValue": {
+               "$type": "variable",
+               "name": "sort"
+              }
+             },
+             "componentSlots": {},
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockName": "list-columns",
+             "children": [],
+             "classes": [],
+             "componentEvents": {},
+             "componentId": "list-columns",
+             "componentName": "ColumnSettings",
+             "componentProps": {
+              "doctype": "{{ route.params.doctype }}",
+              "modelValue": {
+               "$type": "variable",
+               "name": "columns"
+              }
+             },
+             "componentSlots": {},
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {},
+             "blockName": "list-control-menu",
+             "children": [],
+             "classes": [],
+             "componentEvents": {},
+             "componentId": "list-control-menu",
+             "componentName": "Dropdown",
+             "componentProps": {
+              "button": {
+               "icon": "more-horizontal",
+               "variant": "subtle"
+              },
+              "options": "{{ controlOptions }}",
+              "placement": "right"
+             },
+             "componentSlots": {},
+             "mobileStyles": {},
+             "rawStyles": {},
+             "tabletStyles": {}
+            }
+           ],
+           "classes": [],
+           "componentEvents": {},
+           "componentId": "list-control-buttons",
+           "componentName": "container",
+           "componentProps": {},
+           "componentSlots": {},
+           "mobileStyles": {},
+           "originalElement": "div",
+           "rawStyles": {},
+           "tabletStyles": {},
+           "visibilityCondition": "{{ !customizing }}"
+          }
+         ],
+         "classes": [],
+         "componentEvents": {},
+         "componentId": "list-controls",
+         "componentName": "container",
+         "componentProps": {},
+         "componentSlots": {},
+         "mobileStyles": {},
+         "originalElement": "div",
+         "rawStyles": {},
+         "tabletStyles": {}
+        },
+        {
          "baseStyles": {
           "display": "flex",
           "flexDirection": "column",
@@ -312,14 +496,15 @@
         {
          "attributes": {},
          "baseStyles": {
+          "alignItems": "center",
           "display": "flex",
-          "flexDirection": "column",
+          "flexDirection": "row",
+          "flexShrink": "0",
           "gap": "8px",
-          "paddingBottom": "6px",
-          "paddingTop": "6px",
+          "justifyContent": "space-between",
           "width": "100%"
          },
-         "blockName": "list-toolbar",
+         "blockName": "list-header",
          "children": [
           {
            "attributes": {},
@@ -327,115 +512,65 @@
             "alignItems": "center",
             "display": "flex",
             "flexDirection": "row",
-            "flexShrink": "0",
-            "gap": "8px",
-            "justifyContent": "space-between",
-            "width": "100%"
+            "gap": "2px",
+            "minWidth": "0",
+            "width": "auto"
            },
-           "blockName": "list-header",
+           "blockName": "list-crumbs",
            "children": [
             {
              "attributes": {},
-             "baseStyles": {
-              "alignItems": "center",
-              "display": "flex",
-              "flexDirection": "row",
-              "gap": "2px",
-              "minWidth": "0",
-              "width": "auto"
-             },
-             "blockName": "list-crumbs",
-             "children": [
-              {
-               "attributes": {},
-               "baseStyles": {},
-               "blockName": "list-breadcrumbs",
-               "children": [],
-               "classes": [],
-               "componentEvents": {},
-               "componentId": "list-breadcrumbs",
-               "componentName": "Breadcrumbs",
-               "componentProps": {
-                "items": "{{ breadcrumbs }}"
-               },
-               "componentSlots": {},
-               "mobileStyles": {},
-               "rawStyles": {},
-               "tabletStyles": {}
-              },
-              {
-               "attributes": {},
-               "baseStyles": {
-                "color": "var(--ink-gray-4)",
-                "flexShrink": "0"
-               },
-               "blockName": "list-crumb-separator",
-               "children": [],
-               "classes": [],
-               "componentEvents": {},
-               "componentId": "list-crumb-separator",
-               "componentName": "TextBlock",
-               "componentProps": {
-                "text": "/"
-               },
-               "componentSlots": {},
-               "mobileStyles": {},
-               "rawStyles": {},
-               "tabletStyles": {}
-              },
-              {
-               "attributes": {},
-               "baseStyles": {},
-               "blockName": "list-view-picker",
-               "children": [],
-               "classes": [],
-               "componentEvents": {},
-               "componentId": "list-view-picker",
-               "componentName": "Dropdown",
-               "componentProps": {
-                "button": {
-                 "iconRight": "chevron-down",
-                 "label": "{{ viewLabel }}",
-                 "variant": "ghost"
-                },
-                "options": "{{ viewOptions }}"
-               },
-               "componentSlots": {},
-               "mobileStyles": {},
-               "rawStyles": {},
-               "tabletStyles": {}
-              }
-             ],
+             "baseStyles": {},
+             "blockName": "list-breadcrumbs",
+             "children": [],
              "classes": [],
              "componentEvents": {},
-             "componentId": "list-crumbs",
-             "componentName": "container",
-             "componentProps": {},
+             "componentId": "list-breadcrumbs",
+             "componentName": "Breadcrumbs",
+             "componentProps": {
+              "items": "{{ breadcrumbs }}"
+             },
              "componentSlots": {},
              "mobileStyles": {},
-             "originalElement": "div",
+             "rawStyles": {},
+             "tabletStyles": {}
+            },
+            {
+             "attributes": {},
+             "baseStyles": {
+              "color": "var(--ink-gray-4)",
+              "flexShrink": "0"
+             },
+             "blockName": "list-crumb-separator",
+             "children": [],
+             "classes": [],
+             "componentEvents": {},
+             "componentId": "list-crumb-separator",
+             "componentName": "TextBlock",
+             "componentProps": {
+              "text": "/"
+             },
+             "componentSlots": {},
+             "mobileStyles": {},
              "rawStyles": {},
              "tabletStyles": {}
             },
             {
              "attributes": {},
              "baseStyles": {},
-             "blockName": "list-create",
+             "blockName": "list-view-picker",
              "children": [],
              "classes": [],
-             "componentEvents": {
-              "click": {
-               "action": "Run Script",
-               "event": "click",
-               "script": "function handleEvent() { openCreate() }"
-              }
-             },
-             "componentId": "list-create",
-             "componentName": "Button",
+             "componentEvents": {},
+             "componentId": "list-view-picker",
+             "componentName": "Dropdown",
              "componentProps": {
-              "iconLeft": "plus",
-              "label": "Create",
-              "variant": "solid"
+              "button": {
+               "iconRight": "chevron-down",
+               "label": "{{ viewLabel }}",
+               "variant": "ghost"
+              },
+              "options": "{{ viewOptions }}"
              },
              "componentSlots": {},
              "mobileStyles": {},
@@ -445,7 +580,7 @@
            ],
            "classes": [],
            "componentEvents": {},
-           "componentId": "list-header",
+           "componentId": "list-crumbs",
            "componentName": "container",
            "componentProps": {},
            "componentSlots": {},
@@ -456,199 +591,40 @@
           },
           {
            "attributes": {},
-           "baseStyles": {
-            "alignItems": "flex-start",
-            "display": "flex",
-            "flexDirection": "row",
-            "flexShrink": "0",
-            "gap": "8px",
-            "justifyContent": "space-between",
-            "width": "100%"
-           },
-           "blockName": "list-controls",
-           "children": [
-            {
-             "attributes": {},
-             "baseStyles": {
-              "display": "flex",
-              "flexDirection": "column",
-              "flexGrow": "1",
-              "minWidth": "0",
-              "width": "auto"
-             },
-             "blockName": "list-quickfilter-wrap",
-             "children": [
-              {
-               "attributes": {},
-               "baseStyles": {},
-               "blockName": "list-quickfilter",
-               "children": [],
-               "classes": [],
-               "componentEvents": {},
-               "componentId": "list-quickfilter",
-               "componentName": "QuickFilter",
-               "componentProps": {
-                "customizing": {
-                 "$type": "variable",
-                 "name": "customizing"
-                },
-                "doctype": "{{ route.params.doctype }}",
-                "filters": {
-                 "$type": "variable",
-                 "name": "filters"
-                }
-               },
-               "componentSlots": {},
-               "mobileStyles": {},
-               "rawStyles": {},
-               "tabletStyles": {}
-              }
-             ],
-             "classes": [],
-             "componentEvents": {},
-             "componentId": "list-quickfilter-wrap",
-             "componentName": "container",
-             "componentProps": {},
-             "componentSlots": {},
-             "mobileStyles": {},
-             "originalElement": "div",
-             "rawStyles": {},
-             "tabletStyles": {}
-            },
-            {
-             "attributes": {},
-             "baseStyles": {
-              "alignItems": "center",
-              "display": "flex",
-              "flexDirection": "row",
-              "flexShrink": "0",
-              "gap": "8px",
-              "width": "auto"
-             },
-             "blockName": "list-control-buttons",
-             "children": [
-              {
-               "attributes": {},
-               "baseStyles": {},
-               "blockName": "list-filter",
-               "children": [],
-               "classes": [],
-               "componentEvents": {},
-               "componentId": "list-filter",
-               "componentName": "Filter",
-               "componentProps": {
-                "doctype": "{{ route.params.doctype }}",
-                "modelValue": {
-                 "$type": "variable",
-                 "name": "filters"
-                }
-               },
-               "componentSlots": {},
-               "mobileStyles": {},
-               "rawStyles": {},
-               "tabletStyles": {}
-              },
-              {
-               "attributes": {},
-               "baseStyles": {},
-               "blockName": "list-sort",
-               "children": [],
-               "classes": [],
-               "componentEvents": {},
-               "componentId": "list-sort",
-               "componentName": "SortBy",
-               "componentProps": {
-                "doctype": "{{ route.params.doctype }}",
-                "modelValue": {
-                 "$type": "variable",
-                 "name": "sort"
-                }
-               },
-               "componentSlots": {},
-               "mobileStyles": {},
-               "rawStyles": {},
-               "tabletStyles": {}
-              },
-              {
-               "attributes": {},
-               "baseStyles": {},
-               "blockName": "list-columns",
-               "children": [],
-               "classes": [],
-               "componentEvents": {},
-               "componentId": "list-columns",
-               "componentName": "ColumnSettings",
-               "componentProps": {
-                "doctype": "{{ route.params.doctype }}",
-                "modelValue": {
-                 "$type": "variable",
-                 "name": "columns"
-                }
-               },
-               "componentSlots": {},
-               "mobileStyles": {},
-               "rawStyles": {},
-               "tabletStyles": {}
-              },
-              {
-               "attributes": {},
-               "baseStyles": {},
-               "blockName": "list-control-menu",
-               "children": [],
-               "classes": [],
-               "componentEvents": {},
-               "componentId": "list-control-menu",
-               "componentName": "Dropdown",
-               "componentProps": {
-                "button": {
-                 "icon": "more-horizontal",
-                 "variant": "subtle"
-                },
-                "options": "{{ controlOptions }}",
-                "placement": "right"
-               },
-               "componentSlots": {},
-               "mobileStyles": {},
-               "rawStyles": {},
-               "tabletStyles": {}
-              }
-             ],
-             "classes": [],
-             "componentEvents": {},
-             "componentId": "list-control-buttons",
-             "componentName": "container",
-             "componentProps": {},
-             "componentSlots": {},
-             "mobileStyles": {},
-             "originalElement": "div",
-             "rawStyles": {},
-             "tabletStyles": {},
-             "visibilityCondition": "{{ !customizing }}"
-            }
-           ],
+           "baseStyles": {},
+           "blockName": "list-create",
+           "children": [],
            "classes": [],
-           "componentEvents": {},
-           "componentId": "list-controls",
-           "componentName": "container",
-           "componentProps": {},
+           "componentEvents": {
+            "click": {
+             "action": "Run Script",
+             "event": "click",
+             "script": "function handleEvent() { openCreate() }"
+            }
+           },
+           "componentId": "list-create",
+           "componentName": "Button",
+           "componentProps": {
+            "iconLeft": "plus",
+            "label": "Create",
+            "variant": "solid"
+           },
            "componentSlots": {},
            "mobileStyles": {},
-           "originalElement": "div",
            "rawStyles": {},
            "tabletStyles": {}
           }
          ],
          "classes": [],
          "componentEvents": {},
-         "componentId": "list-toolbar",
+         "componentId": "list-header",
          "componentName": "container",
          "componentProps": {},
          "componentSlots": {},
          "mobileStyles": {},
          "originalElement": "div",
          "rawStyles": {},
-         "tabletStyles": {},
-         "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
+         "tabletStyles": {}
         }
        ],
        "slotId": "crm-app-shell:header",
