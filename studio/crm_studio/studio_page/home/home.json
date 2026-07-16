@@ -8,74 +8,7 @@
     "width": "inherit"
    },
    "blockName": "body",
-   "children": [
-    {
-     "baseStyles": {
-      "height": "100%",
-      "minHeight": "0",
-      "minWidth": "0",
-      "width": "100%"
-     },
-     "blockName": "crm-app-shell",
-     "children": [
-      {
-       "baseStyles": {
-        "display": "flex",
-        "flexDirection": "column",
-        "flexGrow": "1",
-        "gap": "8px",
-        "minWidth": "0",
-        "padding": "40px",
-        "width": "100%"
-       },
-       "blockName": "home-body",
-       "children": [
-        {
-         "baseStyles": {
-          "fontSize": "24px",
-          "fontWeight": "600"
-         },
-         "blockName": "home-title",
-         "children": [],
-         "classes": [],
-         "componentId": "home-title",
-         "componentName": "TextBlock",
-         "componentProps": {
-          "text": "CRM on Studio"
-         }
-        },
-        {
-         "baseStyles": {
-          "color": "#6b7280"
-         },
-         "blockName": "home-subtitle",
-         "children": [],
-         "classes": [],
-         "componentId": "home-subtitle",
-         "componentName": "TextBlock",
-         "componentProps": {
-          "text": "Pick a doctype from the rail to see its list."
-         }
-        }
-       ],
-       "classes": [],
-       "componentId": "home-body",
-       "componentName": "container",
-       "originalElement": "div"
-      }
-     ],
-     "classes": [],
-     "componentId": "crm-app-shell",
-     "componentName": "CrmAppShell",
-     "componentProps": {
-      "activeDoctype": "",
-      "heading": "",
-      "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}",
-      "views": "{{ views[route.params.doctype] || [] }}"
-     },
-     "isCustomVueComponent": true
-    }
-   ],
+   "children": [],
    "classes": [],
    "componentId": "root",
    "componentName": "div",
@@ -84,9 +17,25 @@
  ],
  "creation": "2026-07-13 15:37:32.953260",
  "doctype": "Studio Page",
+ "draft_blocks": [
+  {
+   "baseStyles": {
+    "display": "flex",
+    "flexDirection": "column",
+    "height": "100%",
+    "width": "inherit"
+   },
+   "blockName": "body",
+   "children": [],
+   "classes": [],
+   "componentId": "root",
+   "componentName": "div",
+   "originalElement": "body"
+  }
+ ],
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-16 14:45:47.856095",
+ "modified": "2026-07-16 15:22:11.462375",
  "modified_by": "Administrator",
  "name": "home",
  "owner": "Administrator",
@@ -105,11 +54,5 @@
  ],
  "route": "/",
  "studio_app": "crm-studio",
- "variables": [
-  {
-   "initial_value": "{}",
-   "variable_name": "views",
-   "variable_type": "Object"
-  }
- ]
+ "variables": []
 }

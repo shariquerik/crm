@@ -60,17 +60,19 @@
 			     `group-hover` can't reach it. `:has()` on the shell root can't either — it'd fire on the
 			     island too. Hence a ref. -->
 			<Rail @mouseenter="railHovered = true" @mouseleave="railHovered = false">
-				<!-- The app mark. A bespoke button, not a RailItem — it's the CRM icon, has no
-				     tooltip, and its raised active treatment (surface-base fill + shadow) differs
-				     from the switcher tiles. Clicking it goes home. The logo is served by Frappe
-				     at /assets/crm/ from crm/public/images. -->
+				<!-- The app mark. A bespoke button, not a RailItem — it's the CRM icon and has no
+				     tooltip. Clicking it goes to the FIRST module in the rail: there is no home
+				     screen (`/` is a bare redirector that lands in the same place, see home.ts),
+				     so the app mark leads where the app itself opens. It carries no active
+				     treatment for that reason — wherever it takes you, that module's own RailItem
+				     is the thing that lights up. The logo is served by Frappe at /assets/crm/ from
+				     crm/public/images. -->
 				<div class="mb-3 flex shrink-0 items-center justify-center">
 					<button
 						type="button"
-						class="flex size-7 items-center justify-center rounded-[7px] transition focus-visible:ring-0 focus-visible:focus-ring"
-						:class="isHome ? 'bg-surface-base shadow-sm' : 'hover:opacity-90'"
-						aria-label="CRM home"
-						@click="go('/')"
+						class="flex size-7 items-center justify-center rounded-[7px] transition hover:opacity-90 focus-visible:ring-0 focus-visible:focus-ring"
+						aria-label="Go to the first module"
+						@click="goToFirstModule"
 					>
 						<img
 							:src="logoUrl"
@@ -372,7 +374,9 @@ import { useRoute, useRouter } from "vue-router"
 
 import { useAccountMenu } from "@app/composables/useAccountMenu"
 
-withDefaults(
+// Bound to `props` (not left bare) because the app mark reads `railItems` from script to find
+// the first module — see goToFirstModule.
+const props = withDefaults(
 	defineProps<{
 		/** The doctype switcher, one rail entry per item: `{ dt, label }`. `dt` is the doctype
 		 *  name. The glyph is chosen by `railIcon` per doctype, not taken from the data. */
@@ -440,12 +444,20 @@ const route = useRoute()
 // A saved view is active when the route names it (`/:doctype/view/:viewName`).
 const activeView = computed(() => String(route.params.viewName ?? ""))
 
-// The app-mark button raises when we're on the home page (the switcher's "nothing selected"
-// landing), mirroring gameplan's logo-active-on-Home treatment.
-const isHome = computed(() => route.path === "/")
-
 function go(path: string) {
 	router.push(path)
+}
+
+// The app mark leads to the first module in the rail — the app has no home screen. It reads
+// `railItems` rather than hard-coding a doctype, so it follows whatever the server's sidebar
+// layout leads with (get_sidebar_layout), and a reordered sidebar moves it with no change here.
+//
+// `railItems` is filled by an auto-fetching resource, so it is [] until that lands. Falling back
+// to "/" rather than doing nothing keeps the button honest in that window: `/` is the redirector
+// that picks the same first module once the layout arrives, so both paths end in one place.
+function goToFirstModule() {
+	const first = props.railItems[0]
+	go(first ? `/${encodeSegment(first.dt)}` : "/")
 }
 
 // The app-level menu. Just Settings for now (routes to the settings page — to be built);

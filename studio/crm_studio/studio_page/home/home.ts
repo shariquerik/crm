@@ -1,25 +1,37 @@
+// The app's front door, and nothing else — there is no home SCREEN. This page exists purely so
+// that `/` resolves: Studio's published router registers a route per page and REMOVES its
+// catch-all once they're in (app_router.ts), so a route with no page behind it doesn't render a
+// Not Found — `beforeEach` aborts the navigation and toasts "Page does not exist or is not
+// published". `/` is where the app opens (`/crm-studio` lands here) and where every "Go to home"
+// button leads, so it has to go somewhere real.
+//
+// It goes to the first module in the rail: the same place the rail's app mark goes, decided from
+// the same server-driven sidebar layout, so the two can't drift apart. The page renders no UI —
+// its body is empty on purpose. Anything drawn here would flash for one fetch and be replaced.
+// That is also why it fetches no saved views (the `views` the other pages hand the sidebar): no
+// shell renders here, so there is nothing to hand them to.
+import { watch } from "vue"
+
 export default function setup(ctx: any) {
-	// Saved views hang under their doctype in the sidebar, so EVERY page needs them — but a
-	// Studio Component cannot declare a resource of its own, so the fetch lives here, in the
-	// snippet every page splices into its setup(), and lands in the `views` variable the
-	// component renders. The list page's view picker reads the same variable: one fetch, one
-	// source of truth. The call goes through `ctx.call` (Studio puts frappe-ui's `call` in
-	// every script's context) rather than an import, because the pages' scripts share no set
-	// of static imports — the home page imports nothing from frappe-ui.
-	const { views } = ctx
-	ctx.call("crm.api.views.get_views").then((rows: any[]) => {
-		// Grouped by the doctype they belong to — which is also all a row needs to build its
-		// URL, since the route carries the doctype name itself (`/:doctype/view/:viewName`).
-		// So a view on ANY doctype routes correctly, not just the six the sidebar advertises.
-		const grouped: Record<string, any[]> = {}
-		for (const row of rows || []) {
-			// A standard view IS the doctype's default (unsaved) view, not a saved one;
-			// kanban/group_by views have no screen in this app (ADR-0002).
-			if (!row.dt || row.is_standard || (row.type && row.type !== "list")) continue
-			grouped[row.dt] = [...(grouped[row.dt] || []), row]
-		}
-		views.value = grouped
-	})
+	// `sidebarLayout` is auto=1: already in flight when this runs. Its rows are the sidebar's
+	// sections; the rail is their items flattened, exactly as the other pages' block trees bind it
+	// ({{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}).
+	const { sidebarLayout, router } = ctx
+
+	watch(
+		() => sidebarLayout.data,
+		(sections: any[]) => {
+			const first = (sections || []).flatMap((section: any) => section.items || [])[0]
+			// An empty layout leaves the user here on a blank page rather than sending them to
+			// `/undefined`, which would toast "Page does not exist" and strand them anyway. The
+			// fixture ships six modules, so this is the can't-happen branch, not a real state.
+			if (!first?.dt) return
+			// replace(), not push(): the front door must not sit in history, or Back out of the
+			// first module would land here and bounce straight forward again.
+			router.replace(`/${encodeURIComponent(first.dt)}`)
+		},
+		{ immediate: true },
+	)
 
 	return {}
 }
