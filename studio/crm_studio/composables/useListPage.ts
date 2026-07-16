@@ -1,157 +1,171 @@
-import { computed, getCurrentScope, ref, watch } from "vue"
-import { useDoctypeMeta } from "@framework/ui"
-import { applyColumnWidth, clearColumnWidth, getDefaultColumns } from "@framework/ui/ColumnSettings"
-import { doctypeLabels, guardDoctype } from "@app/data/doctypes"
-import { useBulkDelete } from "@app/composables/useBulkDelete"
-import { useCreateDoc } from "@app/composables/useCreateDoc"
-import { useListQuery, usePaging } from "@app/composables/useListQuery"
-import { useSavedViews } from "@app/composables/useSavedViews"
-import { useUrlFilters } from "@app/composables/useUrlFilters"
+import { computed, getCurrentScope, ref, watch } from 'vue'
+import { useDoctypeMeta } from '@framework/ui'
+import {
+  applyColumnWidth,
+  clearColumnWidth,
+  getDefaultColumns,
+} from '@framework/ui/ColumnSettings'
+import { doctypeLabels, guardDoctype } from '@app/data/doctypes'
+import { useBulkDelete } from '@app/composables/useBulkDelete'
+import { useCreateDoc } from '@app/composables/useCreateDoc'
+import { useListQuery, usePaging } from '@app/composables/useListQuery'
+import { useSavedViews } from '@app/composables/useSavedViews'
+import { useUrlFilters } from '@app/composables/useUrlFilters'
 
 const GENERIC_COLUMNS = [
-	{ fieldname: "name", label: "Name" },
-	{ fieldname: "modified", label: "Last Modified" },
+  { fieldname: 'name', label: 'Name' },
+  { fieldname: 'modified', label: 'Last Modified' },
 ]
 
 export function useListPage(ctx: any) {
-	const { listData, createLayout, route, router } = ctx
+  const { listData, createLayout, route, router } = ctx
 
-	const filters = ref<any[]>([])
-	const sort = ref<any[]>([{ fieldname: "modified", direction: "desc" }])
-	const columns = ref<any[]>([])
-	const customizing = ref(false)
-	const pageSize = ref(20)
-	const pageLength = ref(20)
+  const filters = ref<any[]>([])
+  const sort = ref<any[]>([{ fieldname: 'modified', direction: 'desc' }])
+  const columns = ref<any[]>([])
+  const customizing = ref(false)
+  const pageSize = ref(20)
+  const pageLength = ref(20)
 
-	const doctype = route.params.doctype
-	const currentView = ctx.currentView
-	const viewName = route.params.viewName
+  const doctype = route.params.doctype
+  const currentView = ctx.currentView
+  const viewName = route.params.viewName
 
-	const { metaFields, titleField, loadMeta } = useMeta()
+  const { metaFields, titleField, loadMeta } = useMeta()
 
-	function seedColumns(fields: any[]) {
-		if (!fields.some((f: any) => f.in_list_view)) {
-			columns.value = GENERIC_COLUMNS.map((column) => ({ ...column }))
-			return
-		}
-		columns.value = getDefaultColumns(fields, titleField.value)
-	}
+  function seedColumns(fields: any[]) {
+    if (!fields.some((f: any) => f.in_list_view)) {
+      columns.value = GENERIC_COLUMNS.map((column) => ({ ...column }))
+      return
+    }
+    columns.value = getDefaultColumns(fields, titleField.value)
+  }
 
-	function resizeColumn(key: string, width: string) {
-		columns.value = applyColumnWidth(columns.value || [], key, width)
-	}
+  function resizeColumn(key: string, width: string) {
+    columns.value = applyColumnWidth(columns.value || [], key, width)
+  }
 
-	function resetColumnWidth(key: string) {
-		columns.value = clearColumnWidth(columns.value || [], key)
-	}
+  function resetColumnWidth(key: string) {
+    columns.value = clearColumnWidth(columns.value || [], key)
+  }
 
-	const query = useListQuery({ listData, doctype, filters, sort, columns, metaFields, pageSize, pageLength })
-	const { setPageSize, loadMore } = usePaging(pageSize, pageLength)
+  const query = useListQuery({
+    listData,
+    doctype,
+    filters,
+    sort,
+    columns,
+    metaFields,
+    pageSize,
+    pageLength,
+  })
+  const { setPageSize, loadMore } = usePaging(pageSize, pageLength)
 
-	useUrlFilters({ filters, metaFields, doctype, currentView, router })
+  useUrlFilters({ filters, metaFields, doctype, currentView, router })
 
-	const savedViews = useSavedViews({
-		ctx,
-		doctype,
-		viewName,
-		currentView,
-		filters,
-		sort,
-		columns,
-		metaFields,
-		seedColumns,
-		listParams: query.listParams,
-		submit: query.submit,
-	})
+  const savedViews = useSavedViews({
+    ctx,
+    doctype,
+    viewName,
+    currentView,
+    filters,
+    sort,
+    columns,
+    metaFields,
+    seedColumns,
+    listParams: query.listParams,
+    submit: query.submit,
+  })
 
-	guardDoctype(
-		ctx,
-		() => {
-			loadMeta(doctype)
-			if (currentView) {
-				currentView.fetch()
-				return
-			}
-			startPlainList()
-		},
-		viewName ? `/view/${viewName}` : "",
-	)
+  guardDoctype(
+    ctx,
+    () => {
+      loadMeta(doctype)
+      if (currentView) {
+        currentView.fetch()
+        return
+      }
+      startPlainList()
+    },
+    viewName ? `/view/${viewName}` : '',
+  )
 
-	function startPlainList() {
-		let started = false
-		watch(
-			metaFields,
-			(fields: any[]) => {
-				if (started || !fields.length) return
-				started = true
-				seedColumns(fields)
-				query.submit()
-			},
-			{ immediate: true },
-		)
-	}
+  function startPlainList() {
+    let started = false
+    watch(
+      metaFields,
+      (fields: any[]) => {
+        if (started || !fields.length) return
+        started = true
+        seedColumns(fields)
+        query.submit()
+      },
+      { immediate: true },
+    )
+  }
 
-	const createDoc = useCreateDoc({ createLayout, doctype, route, router })
-	const bulkDelete = useBulkDelete({ listData, doctype, submit: query.submit })
+  const createDoc = useCreateDoc({ createLayout, doctype, route, router })
+  const bulkDelete = useBulkDelete({ listData, doctype, submit: query.submit })
 
-	const controlOptions = computed(() => [
-		{
-			label: "Customize Quick Filter",
-			icon: "lucide-sliders-horizontal",
-			onClick: () => {
-				customizing.value = true
-			},
-		},
-	])
+  const controlOptions = computed(() => [
+    {
+      label: 'Customize Quick Filter',
+      icon: 'lucide-sliders-horizontal',
+      onClick: () => {
+        customizing.value = true
+      },
+    },
+  ])
 
-	const breadcrumbs = computed(() => [
-		{
-			label: doctypeLabels[doctype] || doctype,
-			route: `/${encodeURIComponent(route.params.doctype)}`,
-		},
-	])
+  const breadcrumbs = computed(() => [
+    {
+      label: doctypeLabels[doctype] || doctype,
+      route: `/${encodeURIComponent(route.params.doctype)}`,
+    },
+  ])
 
-	return {
-		filters,
-		sort,
-		columns,
-		customizing,
-		pageSize,
-		pageLength,
-		doctypeLabels,
+  return {
+    filters,
+    sort,
+    columns,
+    customizing,
+    pageSize,
+    pageLength,
+    doctypeLabels,
 
-		wireColumns: query.wireColumns,
-		breadcrumbs,
-		controlOptions,
-		resizeColumn,
-		resetColumnWidth,
-		loadMore,
-		setPageSize,
-		...savedViews,
-		...createDoc,
-		...bulkDelete,
-	}
+    wireColumns: query.wireColumns,
+    breadcrumbs,
+    controlOptions,
+    resizeColumn,
+    resetColumnWidth,
+    loadMore,
+    setPageSize,
+    ...savedViews,
+    ...createDoc,
+    ...bulkDelete,
+  }
 }
 
 function useMeta() {
-	const scope = getCurrentScope()
-	const metaFields = ref<any[]>([])
-	const titleField = ref<string>("")
+  const scope = getCurrentScope()
+  const metaFields = ref<any[]>([])
+  const titleField = ref<string>('')
 
-	function loadMeta(doctype: string) {
-		const run = () => {
-			const { meta } = useDoctypeMeta(doctype)
-			watch(
-				meta,
-				(loaded: any) => {
-					titleField.value = loaded?.title_field || ""
-					metaFields.value = loaded?.fields ?? []
-				},
-				{ immediate: true },
-			)
-		}
-		scope ? scope.run(run) : run()
-	}
+  function loadMeta(doctype: string) {
+    const run = () => {
+      const { meta } = useDoctypeMeta(doctype)
+      watch(
+        meta,
+        (loaded: any) => {
+          titleField.value = loaded?.title_field || ''
+          metaFields.value = loaded?.fields ?? []
+        },
+        { immediate: true },
+      )
+    }
+    if (scope) scope.run(run)
+    else run()
+  }
 
-	return { metaFields, titleField, loadMeta }
+  return { metaFields, titleField, loadMeta }
 }

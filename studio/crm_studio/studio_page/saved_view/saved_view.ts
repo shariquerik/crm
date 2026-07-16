@@ -1,5 +1,5 @@
-import { useListPage } from "@app/composables/useListPage"
+import { useListPage } from '@app/composables/useListPage'
 
 export default function setup(ctx: any) {
-	return useListPage(ctx)
+  return useListPage(ctx)
 }

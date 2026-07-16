@@ -41,6 +41,14 @@ share modules rather than copying them.
   narrate the next line, restate a name, explain a feature, or record history and rationale;
   those belong in the commit message.
 
+## Formatting
+
+Prettier and ESLint run over `crm_studio/` on pre-commit, using the crm repo's own configs
+(`.prettierrc.json` at the repo root, `frontend/eslint.config.mjs`) — the same style as
+`frontend/`: two-space indent, single quotes, no semicolons. Studio's own tabs-and-double-quotes
+style does not apply here. `studio_page/*/*.json` is excluded: the builder writes it at
+`json.dumps(indent=1)` and prettier would fight it on every save.
+
 ## Frontend
 
 - Rely on `frappe-ui` components instead of building them from scratch. The `@framework/ui`
