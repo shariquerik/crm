@@ -4,9 +4,19 @@
 // translated into what `crm.api.doc.get_data` takes, and the only thing that refetches.
 //
 // setup(ctx) runs in a per-navigation effect scope. `ctx` holds the page's resources
-// by name, its variables as refs, and route/router. What it RETURNS is exposed to the
-// block expressions ({{ wireColumns }}), which is how the table repaints the instant
-// ColumnSettings changes, without waiting for the refetch.
+// by name and route/router. What it RETURNS is exposed to the block expressions
+// ({{ wireColumns }}), which is how the table repaints the instant ColumnSettings
+// changes, without waiting for the refetch.
+//
+// The page's STATE is declared here too, as plain refs, rather than in the Studio
+// Variables panel — one place to read the page from, next to the code that drives it,
+// with a real initial value instead of a JSON string. A returned ref binds exactly like
+// a panel variable: a block's `{{ }}` reads it unwrapped, and a two-way `$type: variable`
+// prop writes straight through to `.value` (codeStore's setValueInVariable checks isRef).
+// Two constraints come with it, and both hold on this page: the binding must be a REF
+// (a plain object bound with v-model would be written to a phantom variable instead), and
+// a resource's creation params can't see these — they are evaluated against the panel's
+// variables + route/router only, and no resource here references page state.
 import { computed, getCurrentScope, onScopeDispose, ref, watch } from "vue"
 import { call, toast } from "frappe-ui"
 // The controls ship the wire translation as pure helpers; the page script is compiled
@@ -24,13 +34,50 @@ import {
 	serializeColumns,
 } from "@framework/ui/ColumnSettings"
 
+// The curated doctypes' nicer plurals, read by the header here and by the block tree
+// ({{ doctypeLabels[route.params.doctype] }}). A frozen lookup, never written, so it is a
+// plain object rather than a ref — a `{{ }}` read unwraps a binding whether or not it is
+// one. (Anything the blocks bind TWO-WAY must still be a ref; see the note above.)
+const doctypeLabels: Record<string, string> = {
+	"CRM Lead": "Leads",
+	"CRM Deal": "Deals",
+	Contact: "Contacts",
+	"CRM Organization": "Organizations",
+	"CRM Task": "Tasks",
+	"FCRM Note": "Notes",
+}
+
 export default function setup(ctx: any) {
-	const { listData, filters, sort, columns, route, router } = ctx
-	// `views` is not destructured here — the sidebar's snippet below already declares it
-	// (it owns the fetch), and this script shares that one scope.
-	const { viewDialog, newViewLabel, customizing } = ctx
-	const { createLayout, doctypeLabels, createDialog, newDoc, creating, createError } = ctx
-	const { selection, deleteDialog, deleting, deleteError } = ctx
+	// Resources stay on ctx — Studio owns their lifecycle, and only it can create them.
+	const { listData, createLayout, route, router } = ctx
+
+	// --- page state ---------------------------------------------------------------------
+	// The toolbar's four controls own these; every one is bound two-way from the block tree.
+	const filters = ref<any[]>([])
+	const sort = ref<any[]>([{ fieldname: "modified", direction: "desc" }])
+	const columns = ref<any[]>([])
+	// The saved views the sidebar renders, grouped by doctype (fetched below).
+	const views = ref<Record<string, any[]>>({})
+	// "Save view" dialog.
+	const viewDialog = ref(false)
+	const newViewLabel = ref("")
+	// QuickFilter's edit mode, which the control leaves to its host.
+	const customizing = ref(false)
+	// Quick-entry dialog.
+	const createDialog = ref(false)
+	const newDoc = ref<Record<string, any>>({})
+	const creating = ref(false)
+	const createError = ref("")
+	// The ticked rows (docnames), two-way with CrmListView.
+	const selection = ref<string[]>([])
+	// The footer's two numbers: the page size the strip shows, and the running total fetched.
+	const pageSize = ref(20)
+	const pageLength = ref(20)
+	// Bulk-delete confirm dialog.
+	const deleteDialog = ref(false)
+	const deleting = ref(false)
+	const deleteError = ref("")
+
 	// The route carries the doctype name itself ("CRM Lead"), already decoded by vue-router.
 	const doctype = route.params.doctype
 	// Only the saved-view page declares this resource, and only it has a :viewName.
@@ -39,12 +86,11 @@ export default function setup(ctx: any) {
 
 	// Saved views hang under their doctype in the sidebar, so EVERY page needs them — but a
 	// Studio Component cannot declare a resource of its own, so the fetch lives here, in the
-	// snippet every page splices into its setup(), and lands in the `views` variable the
-	// component renders. The list page's view picker reads the same variable: one fetch, one
-	// source of truth. The call goes through `ctx.call` (Studio puts frappe-ui's `call` in
-	// every script's context) rather than an import, because the pages' scripts share no set
-	// of static imports — the home page imports nothing from frappe-ui.
-	const { views } = ctx
+	// snippet every page splices into its setup(), and lands in the `views` ref the component
+	// renders. The list page's view picker reads the same ref: one fetch, one source of truth.
+	// The call goes through `ctx.call` (Studio puts frappe-ui's `call` in every script's
+	// context) rather than an import, because the pages' scripts share no set of static
+	// imports — the home page imports nothing from frappe-ui.
 	ctx.call("crm.api.views.get_views").then((rows: any[]) => {
 		// Grouped by the doctype they belong to — which is also all a row needs to build its
 		// URL, since the route carries the doctype name itself (`/:doctype/view/:viewName`).
@@ -236,12 +282,6 @@ export default function setup(ctx: any) {
 		const wire = (params.columns as { width?: unknown }[]) || []
 		return JSON.stringify({ ...params, columns: wire.map(({ width, ...rest }) => rest) })
 	}
-	// The footer's two numbers. Like every other page variable they have to be taken off `ctx`
-	// to be in scope — a variable declared on the page but not destructured here is a
-	// ReferenceError on first use, and one of those takes the WHOLE script down with it (no
-	// refetch, no Create, no delete), not just the line that missed.
-	const { pageSize, pageLength } = ctx
-
 	// The footer's two moves, and both of them are just a new `pageLength` — the watcher below
 	// sees it change and re-sends the query.
 	//
@@ -670,7 +710,7 @@ export default function setup(ctx: any) {
 	// --- the header ------------------------------------------------------------------
 	// The curated doctypes have a nicer plural ("Leads"); anything else — and any doctype
 	// can be reached by URL — shows as its own name. Same fallback as the detail page.
-	const doctypeLabel = computed(() => doctypeLabels.value[doctype] || doctype)
+	const doctypeLabel = computed(() => doctypeLabels[doctype] || doctype)
 
 	// One crumb: the list itself. The VIEW is the second crumb, and it is a Dropdown rather
 	// than a Breadcrumbs item (an item is a link, not a picker) — so the block tree draws it
@@ -790,7 +830,32 @@ export default function setup(ctx: any) {
 
 	// Exposed to the block expressions. `wireColumns` is the ColumnSettings model in the
 	// table's render shape (see modelColumns) — the control's state, not the response's.
+	//
+	// This return is now the page's whole surface: the state declared at the top has to come
+	// back out through it, exactly as the computeds and handlers do, or the blocks binding it
+	// by name would read `undefined`. The refs are returned AS refs — a `{{ }}` read unwraps
+	// them, and a two-way `$type: variable` prop needs the ref itself to write through.
 	return {
+		// State the block tree binds by name. The first eleven are bound two-way.
+		filters,
+		sort,
+		columns,
+		viewDialog,
+		newViewLabel,
+		customizing,
+		createDialog,
+		newDoc,
+		selection,
+		pageSize,
+		deleteDialog,
+		views,
+		doctypeLabels,
+		creating,
+		createError,
+		pageLength,
+		deleting,
+		deleteError,
+
 		wireColumns: modelColumns,
 		breadcrumbs,
 		viewLabel,
@@ -805,9 +870,7 @@ export default function setup(ctx: any) {
 		// the same way `openCreate` is for the toolbar's buttons.)
 		resizeColumn,
 		resetColumnWidth,
-		// The footer's two buttons. A function only reaches a block's props by being RETURNED here
-		// — being declared in the script is not enough. (`pageSize`, the other half of the
-		// footer, needs none of this: it is a page VARIABLE, and a block binds those by name.)
+		// The footer's two buttons, alongside the `pageSize` above that they move.
 		loadMore,
 		setPageSize,
 		bulkActions,
