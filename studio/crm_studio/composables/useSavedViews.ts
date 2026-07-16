@@ -23,7 +23,7 @@ export function useSavedViews(options: {
   const { metaFields, seedColumns, listParams, submit } = options
   const { route, router } = ctx
 
-  const views = fetchViews(ctx)
+  const { views } = fetchViews()
   const viewDialog = ref(false)
   const newViewLabel = ref('')
 
@@ -139,7 +139,6 @@ export function useSavedViews(options: {
   ])
 
   return {
-    views,
     viewDialog,
     newViewLabel,
     viewLabel,

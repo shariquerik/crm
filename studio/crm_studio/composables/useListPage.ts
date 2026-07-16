@@ -18,7 +18,7 @@ const GENERIC_COLUMNS = [
 ]
 
 export function useListPage(ctx: any) {
-  const { listData, createLayout, route, router } = ctx
+  const { listData, routeDoctype, createLayout, route, router } = ctx
 
   const filters = ref<any[]>([])
   const sort = ref<any[]>([{ fieldname: 'modified', direction: 'desc' }])
@@ -124,6 +124,24 @@ export function useListPage(ctx: any) {
     },
   ])
 
+  // `listData` still holds the previous doctype's rows until the new route resolves.
+  const servingOtherDoctype = computed(
+    () =>
+      Boolean(routeDoctype?.data) &&
+      routeDoctype.data.doctype !== route.params.doctype,
+  )
+
+  const listLoading = computed(
+    () =>
+      listData.loading ||
+      (!listData.fetched && !listData.error) ||
+      servingOtherDoctype.value,
+  )
+
+  const listRows = computed(() =>
+    servingOtherDoctype.value ? [] : listData.data?.data ?? [],
+  )
+
   return {
     filters,
     sort,
@@ -131,9 +149,10 @@ export function useListPage(ctx: any) {
     customizing,
     pageSize,
     pageLength,
-    doctypeLabels,
 
     wireColumns: query.wireColumns,
+    listLoading,
+    listRows,
     breadcrumbs,
     controlOptions,
     resizeColumn,

@@ -2,6 +2,7 @@ import { computed, onScopeDispose, watch, type Ref } from 'vue'
 import { fetchFields, serializeColumns } from '@framework/ui/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/SortBy'
 import { completeFilters, fetchKey, toFiltersDict } from '@app/data/listWire'
+import { rowsByQuery } from '@app/data/listCache'
 
 const REFETCH_DEBOUNCE_MS = 250
 
@@ -50,10 +51,18 @@ export function useListQuery(options: {
 
   let sent = fetchKey(listParams())
 
+  function fetchRows(params: Record<string, unknown>, key: string) {
+    const cached = rowsByQuery.get(key)
+    if (cached !== undefined) listData.setData(cached)
+    listData.submit(params, {
+      onSuccess: (data: unknown) => rowsByQuery.set(key, data),
+    })
+  }
+
   function submit() {
     const params = listParams()
     sent = fetchKey(params)
-    listData.submit(params)
+    fetchRows(params, sent)
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -66,7 +75,7 @@ export function useListQuery(options: {
         const encoded = fetchKey(params)
         if (encoded === sent) return
         sent = encoded
-        listData.submit(params)
+        fetchRows(params, encoded)
       }, REFETCH_DEBOUNCE_MS)
     },
     { deep: true },

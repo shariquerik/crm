@@ -82,6 +82,14 @@
             </ListCell>
           </ListRow>
         </ListRows>
+        <template v-else-if="loading">
+          <ListRow v-for="index in SKELETON_ROW_COUNT" :key="index">
+            <div />
+            <ListCell v-for="column in skeletonColumns" :key="column.key">
+              <Skeleton class="h-3 w-full rounded" />
+            </ListCell>
+          </ListRow>
+        </template>
         <div v-else class="flex flex-col items-center gap-1 py-16 text-center">
           <span class="text-base font-medium text-ink-gray-7">
             {{ props.options.emptyState?.title ?? 'No records' }}
@@ -96,71 +104,24 @@
       </List>
     </ScrollArea>
 
-    <div
-      v-if="rows.length"
-      class="flex shrink-0 items-center justify-between gap-2 border-t border-outline-gray-1 py-2"
-      :style="{ paddingInline: gutter }"
-    >
-      <div @click.capture="onPageSizeClick">
-        <TabButtons
-          v-model="pageSize"
-          :options="
-            pageLengthOptions.map((size) => ({
-              label: String(size),
-              value: size,
-            }))
-          "
-        />
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-sm text-ink-gray-5"
-          >{{ rowCount }} of {{ totalCount }}</span
-        >
-        <Button
-          v-if="rowCount < totalCount"
-          variant="subtle"
-          label="Load More"
-          @click="emit('load-more')"
-        />
-      </div>
-    </div>
+    <CrmListFooter
+      v-if="rows.length || loading"
+      v-model:pageSize="pageSize"
+      :rowCount="rowCount"
+      :totalCount="totalCount"
+      :hasLiveCounts="hasLiveCounts"
+      :pageLengthOptions="pageLengthOptions"
+      :gutter="gutter"
+      @load-more="emit('load-more')"
+      @page-size="emit('page-size', $event)"
+    />
 
-    <Transition
-      enter-active-class="duration-200 ease-out"
-      enter-from-class="translate-y-2 opacity-0"
-      leave-active-class="duration-200 ease-in"
-      leave-to-class="translate-y-2 opacity-0"
-    >
-      <div
-        v-if="selection.length"
-        class="absolute inset-x-0 bottom-16 mx-auto w-max"
-      >
-        <div
-          class="flex items-center gap-3 rounded-lg bg-surface-base px-4 py-2 text-base shadow-2xl"
-        >
-          <Checkbox :modelValue="true" :disabled="true" />
-          <span class="text-ink-gray-9">{{ selection.length }} selected</span>
-          <div
-            class="flex items-center gap-1 border-l border-outline-gray-2 ps-3"
-          >
-            <Button
-              v-for="action in bulkActions"
-              :key="action.label"
-              :label="action.label"
-              :theme="action.theme"
-              variant="ghost"
-              @click="action.onClick(selection)"
-            />
-            <Button variant="ghost" icon="lucide-x" @click="selection = []" />
-          </div>
-        </div>
-      </div>
-    </Transition>
+    <CrmListBulkBar v-model:selection="selection" :actions="bulkActions" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Button, Checkbox, ScrollArea, TabButtons, Tooltip } from 'frappe-ui'
+import { Checkbox, ScrollArea, Skeleton, Tooltip } from 'frappe-ui'
 import {
   List,
   ListCell,
@@ -170,7 +131,13 @@ import {
   ListRows,
 } from 'frappe-ui/list'
 import 'frappe-ui/list-style.css'
-import { computed, reactive, ref } from 'vue'
+import { computed, toRef, watch } from 'vue'
+
+import CrmListBulkBar from '@app/components/CrmListBulkBar.vue'
+import CrmListFooter from '@app/components/CrmListFooter.vue'
+import { useColumnResize } from '@app/composables/useColumnResize'
+import { useListSnapshot } from '@app/composables/useListSnapshot'
+import { useRowSelection } from '@app/composables/useRowSelection'
 
 const props = withDefaults(
   defineProps<{
@@ -188,6 +155,8 @@ const props = withDefaults(
     totalCount?: number
     pageLengthOptions?: number[]
     rowHeight?: number
+    loading?: boolean
+    cacheKey?: string
   }>(),
   {
     columns: () => [],
@@ -200,6 +169,8 @@ const props = withDefaults(
     totalCount: 0,
     pageLengthOptions: () => [20, 100, 500, 2500],
     rowHeight: 40,
+    loading: false,
+    cacheKey: '',
   },
 )
 
@@ -214,96 +185,43 @@ const emit = defineEmits<{
   (e: 'page-size', size: number): void
 }>()
 
-const CHECKBOX_TRACK = '2rem'
-const MIN_COLUMN_WIDTH = 60
-
 const ROW_PADDING_X = '0.5rem'
 
-const listColumns = computed(() => {
-  const tracks = props.columns.map(trackFor)
-  const hasFlexible = tracks.some((track) => track.includes('fr'))
-  if (!hasFlexible) tracks.push('minmax(0, 1fr)')
-  return [CHECKBOX_TRACK, ...tracks].join(' ')
+const SKELETON_ROW_COUNT = 10
+const SKELETON_COLUMN_COUNT = 4
+
+const { rows, columns, hasLiveCounts } = useListSnapshot(props)
+
+const { selectAllState, toggle, toggleSelectAll } = useRowSelection({
+  selection,
+  rows,
+  rowKey: toRef(props, 'rowKey'),
 })
 
-function trackFor(column: any) {
-  const width = widthOverride[column.key] ?? column.width
-  if (width == null) return 'minmax(0, 1fr)'
-  return typeof width === 'number' ? `${width}fr` : String(width)
-}
+// Column metadata is a request behind `loading`; without stand-in columns the skeleton
+// rows have no cells and the list reads as blank.
+const skeletonColumns = computed(() => {
+  if (columns.value.length) return columns.value
+  return Array.from({ length: SKELETON_COLUMN_COUNT }, (_, index) => ({
+    key: `skeleton-${index}`,
+  }))
+})
 
-const widthOverride = reactive<Record<string, string>>({})
-let drag: { key: string; startX: number; startWidth: number } | null = null
-
-const resizingKey = ref<string | null>(null)
-
-function startResize(column: any, event: MouseEvent) {
-  const cell = (event.currentTarget as HTMLElement).closest<HTMLElement>(
-    "[data-slot='list-header-cell']",
-  )
-  if (!cell) return
-  drag = {
-    key: column.key,
-    startX: event.clientX,
-    startWidth: cell.getBoundingClientRect().width,
-  }
-  resizingKey.value = column.key
-  window.addEventListener('mousemove', onDrag)
-  window.addEventListener('mouseup', endDrag)
-}
-
-function onDrag(event: MouseEvent) {
-  if (!drag) return
-  const width = Math.max(
-    MIN_COLUMN_WIDTH,
-    drag.startWidth + (event.clientX - drag.startX),
-  )
-  widthOverride[drag.key] = `${Math.round(width)}px`
-}
-
-function endDrag() {
-  window.removeEventListener('mousemove', onDrag)
-  window.removeEventListener('mouseup', endDrag)
-  resizingKey.value = null
-  if (!drag) return
-  const { key } = drag
-  const width = widthOverride[key]
-  delete widthOverride[key]
-  drag = null
-  if (width) emit('column-resize', { key, width })
-}
-
-function resetColumn(column: any) {
-  delete widthOverride[column.key]
-  emit('column-reset', { key: column.key })
-}
-
-const allKeys = computed(() =>
-  props.rows.map((row) => String(row[props.rowKey])),
+const trackedColumns = computed(() =>
+  props.loading ? skeletonColumns.value : columns.value,
 )
 
-const selectAllState = computed<'none' | 'some' | 'all'>(() => {
-  const selected = allKeys.value.filter((key) =>
-    selection.value.includes(key),
-  ).length
-  if (!selected) return 'none'
-  return selected === allKeys.value.length ? 'all' : 'some'
+const { listColumns, resizingKey, startResize, resetColumn } = useColumnResize({
+  columns: trackedColumns,
+  emit,
 })
 
-function toggle(value: string) {
-  selection.value = selection.value.includes(value)
-    ? selection.value.filter((key) => key !== value)
-    : [...selection.value, value]
-}
-
-function toggleSelectAll() {
-  if (selectAllState.value === 'all') {
-    const universe = new Set(allKeys.value)
-    selection.value = selection.value.filter((key) => !universe.has(key))
-  } else {
-    selection.value = [...new Set([...selection.value, ...allKeys.value])]
-  }
-}
+watch(
+  () => props.cacheKey,
+  () => {
+    selection.value = []
+  },
+)
 
 function cellLabel(column: any, row: any) {
   const value = row[column.key]
@@ -313,14 +231,6 @@ function cellLabel(column: any, row: any) {
 
 function alignClass(column: any) {
   return column.align === 'right' ? 'justify-end' : ''
-}
-
-function onPageSizeClick(event: MouseEvent) {
-  const item = (event.target as HTMLElement).closest("[role='radio']")
-  if (!item) return
-  const size = Number(item.textContent?.trim())
-  if (!Number.isFinite(size) || size <= 0) return
-  emit('page-size', size)
 }
 </script>
 

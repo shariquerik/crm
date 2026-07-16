@@ -155,6 +155,9 @@
          "classes": [],
          "componentId": "list-controls",
          "componentName": "container",
+         "componentProps": {
+          "key": "{{ route.path }}"
+         },
          "originalElement": "div"
         },
         {
@@ -182,8 +185,10 @@
            "componentName": "CrmListView",
            "componentProps": {
             "bulkActions": "{{ bulkActions }}",
+            "cacheKey": "{{ route.path }}",
             "columns": "{{ wireColumns }}",
             "gutter": "12px",
+            "loading": "{{ listLoading }}",
             "onColumnReset": "(event) => resetColumnWidth(event.key)",
             "onColumnResize": "(event) => resizeColumn(event.key, event.width)",
             "onLoadMore": "() => loadMore()",
@@ -209,7 +214,7 @@
             "rowCount": "{{ listData.data.row_count }}",
             "rowHeight": 40,
             "rowKey": "name",
-            "rows": "{{ listData.data.data }}",
+            "rows": "{{ listRows }}",
             "selection": {
              "$type": "variable",
              "name": "selection"
@@ -351,7 +356,7 @@
        "componentId": "list-island",
        "componentName": "container",
        "originalElement": "div",
-       "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
+       "visibilityCondition": "{{ !routeDoctype.data || !!routeDoctype.data.doctype }}"
       },
       {
        "baseStyles": {
@@ -430,9 +435,7 @@
      "componentProps": {
       "activeDoctype": "{{ route.params.doctype }}",
       "appName": "CRM",
-      "heading": "{{ doctypeLabels[route.params.doctype] || route.params.doctype }}",
-      "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}",
-      "views": "{{ views[route.params.doctype] || [] }}"
+      "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}"
      },
      "componentSlots": {
       "header": {
@@ -589,7 +592,7 @@
    "originalElement": "body"
   }
  ],
- "creation": "2026-07-15 15:23:53.844286",
+ "creation": "2026-07-16 20:18:32.772399",
  "doctype": "Studio Page",
  "draft_blocks": [
   {
@@ -747,6 +750,9 @@
          "classes": [],
          "componentId": "list-controls",
          "componentName": "container",
+         "componentProps": {
+          "key": "{{ route.path }}"
+         },
          "originalElement": "div"
         },
         {
@@ -774,8 +780,10 @@
            "componentName": "CrmListView",
            "componentProps": {
             "bulkActions": "{{ bulkActions }}",
+            "cacheKey": "{{ route.path }}",
             "columns": "{{ wireColumns }}",
             "gutter": "12px",
+            "loading": "{{ listLoading }}",
             "onColumnReset": "(event) => resetColumnWidth(event.key)",
             "onColumnResize": "(event) => resizeColumn(event.key, event.width)",
             "onLoadMore": "() => loadMore()",
@@ -801,7 +809,7 @@
             "rowCount": "{{ listData.data.row_count }}",
             "rowHeight": 40,
             "rowKey": "name",
-            "rows": "{{ listData.data.data }}",
+            "rows": "{{ listRows }}",
             "selection": {
              "$type": "variable",
              "name": "selection"
@@ -943,7 +951,7 @@
        "componentId": "list-island",
        "componentName": "container",
        "originalElement": "div",
-       "visibilityCondition": "{{ routeDoctype.data && routeDoctype.data.doctype === route.params.doctype }}"
+       "visibilityCondition": "{{ !routeDoctype.data || !!routeDoctype.data.doctype }}"
       },
       {
        "baseStyles": {
@@ -1022,9 +1030,7 @@
      "componentProps": {
       "activeDoctype": "{{ route.params.doctype }}",
       "appName": "CRM",
-      "heading": "{{ doctypeLabels[route.params.doctype] || route.params.doctype }}",
-      "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}",
-      "views": "{{ views[route.params.doctype] || [] }}"
+      "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}"
      },
      "componentSlots": {
       "header": {
@@ -1183,7 +1189,7 @@
  ],
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-16 15:15:13.750027",
+ "modified": "2026-07-16 23:14:44.123207",
  "modified_by": "Administrator",
  "name": "list",
  "owner": "Administrator",
@@ -1200,6 +1206,7 @@
   },
   {
    "auto": 1,
+   "cache": 1,
    "method": "GET",
    "params": "{}",
    "resource_name": "sidebarLayout",
@@ -1208,6 +1215,7 @@
   },
   {
    "auto": 1,
+   "cache": 1,
    "method": "GET",
    "params": "{\"doctype\": \"{{ route.params.doctype }}\"}",
    "resource_name": "routeDoctype",
@@ -1215,6 +1223,7 @@
    "url": "crm.api.doc.resolve_doctype"
   },
   {
+   "cache": 1,
    "method": "GET",
    "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"type\": \"Quick Entry\"}",
    "resource_name": "createLayout",

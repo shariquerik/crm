@@ -1,12 +1,11 @@
 import { computed, ref, watch } from 'vue'
 import { call, toast } from 'frappe-ui'
-import { doctypeLabels, fetchViews, guardDoctype } from '@app/data/doctypes'
+import { doctypeLabels, guardDoctype } from '@app/data/doctypes'
 import { errorMessage } from '@app/data/errors'
 
 export default function setup(ctx: any) {
   const { record, notes, tasks, fieldsLayout, route, router } = ctx
 
-  const views = fetchViews(ctx)
   const doc = ref<Record<string, any>>({})
   const saving = ref(false)
   const saveError = ref('')
@@ -157,8 +156,6 @@ export default function setup(ctx: any) {
     noteContent,
     taskTitle,
     taskDueDate,
-    views,
-    doctypeLabels,
     saving,
     saveError,
     addingNote,
