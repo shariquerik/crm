@@ -14,16 +14,20 @@
       active one highlighted from `activeDoctype`. The switcher's inter-item GAP lives on a
       wrapper div, NOT on Rail: Rail is a bare flex column and frappe-ui leaves item spacing
       to the consumer (its own DesktopShell story wraps the switcher the same way);
-    - the SIDEBAR (fixed 14rem) lists the active doctype's saved `views` under a "Views"
-      label, its own ScrollArea so it scrolls apart from the table;
+    - the SIDEBAR (14rem, collapsible to nothing via the circular toggle straddling its outer
+      edge) lists the active doctype's saved `views` under a "Views" label, its own ScrollArea
+      so it scrolls apart from the table;
     - the `#header` slot is the toolbar, rendered into a PageHeader that TELEPORTS up to
       DesktopShell's pinned target (PageHeaderBase teleports to the target DesktopShell
       registers), so it stays put while the table scrolls under it;
     - the default slot is the island — the table, which brings its own ScrollArea.
 
   Two dividers, both mirroring gameplan's DesktopLayout:
-    - RAIL ↔ SIDEBAR is a `border-r` on the Rail (gameplan draws it via `showBorder`). Rail
-      and Sidebar share `bg-surface-sidebar`, so without this line they'd blend.
+    - RAIL ↔ SIDEBAR is a `border-l` on the SIDEBAR. Rail and Sidebar share
+      `bg-surface-sidebar`, so without this line they'd blend. Gameplan draws it as the Rail's
+      `border-r` (`showBorder`); ours hangs off the sidebar instead so it collapses with it —
+      on a rail that outlives the sidebar, the line would be left dividing the rail from the
+      island's gutter, which the island's own edge already separates.
     - SIDEBAR ↔ CONTENT is the ISLAND's own edge — there is no border on the sidebar. The
       content region (`data-slot="desktop-shell-content"`) is themed in the scoped <style>
       below into a floating card: gameplan's exact `my-1 mr-1 rounded-lg bg-surface-base
@@ -43,11 +47,19 @@
   regenerate the bundle.
 -->
 <template>
-	<DesktopShell :scroll="false" class="crm-desktop-shell">
+	<!-- `relative` makes the shell root the containing block for the sidebar's collapse toggle. It
+	     has to be an ANCESTOR of that button rather than the sidebar column it sits on: positioning
+	     the column itself would make it paint over the island's shadow (see the toggle's comment). -->
+	<DesktopShell :scroll="false" class="crm-desktop-shell relative">
 		<template #rail>
-			<!-- border-r is the rail↔sidebar divider (gameplan's showBorder). Both surfaces are
-			     bg-surface-sidebar, so this line is what separates them. -->
-			<Rail class="border-r border-outline-gray-1">
+			<!-- No border here: the rail↔sidebar divider is drawn by the SIDEBAR's border-l, so it
+			     collapses along with it (see there). -->
+			<!-- Tracking rail hover in JS, not CSS: while collapsed, hovering the rail reveals the
+			     collapse toggle (the way back to the sidebar — see the toggle). The rail is the toggle's
+			     SIBLING, not its ancestor, and a hover group only flows down to descendants, so
+			     `group-hover` can't reach it. `:has()` on the shell root can't either — it'd fire on the
+			     island too. Hence a ref. -->
+			<Rail @mouseenter="railHovered = true" @mouseleave="railHovered = false">
 				<!-- The app mark. A bespoke button, not a RailItem — it's the CRM icon, has no
 				     tooltip, and its raised active treatment (surface-base fill + shadow) differs
 				     from the switcher tiles. Clicking it goes home. The logo is served by Frappe
@@ -80,6 +92,39 @@
 						:icon="railIcon(item.dt)"
 						:active="item.dt === activeDoctype"
 						@click="go(`/${encodeSegment(item.dt)}`)"
+					/>
+				</div>
+
+				<!-- Utility icons, above the avatar. `ghost`, not the switcher's `tile`: these are
+				     actions, not destinations, and frappe-ui's ghost variant is its icon-button look
+				     (transparent until hover) — the tiles would read as two more doctypes. gap-1 keeps
+				     this cluster tighter than the switcher's gap-3 above, so the two groups stay
+				     legible as separate things. -->
+				<div class="flex w-full shrink-0 flex-col items-center gap-1">
+					<RailItem
+						label="Search"
+						icon="lucide-search"
+						variant="ghost"
+						@click="openSearch"
+					/>
+					<RailItem
+						label="Notifications"
+						icon="lucide-bell"
+						variant="ghost"
+						:badge="unreadCount"
+						badgeStyle="dot"
+					/>
+					<RailItem
+						label="Help"
+						icon="lucide-circle-help"
+						variant="ghost"
+						@click="openDocs"
+					/>
+					<RailItem
+						label="Settings"
+						icon="lucide-settings"
+						variant="ghost"
+						@click="go('/settings')"
 					/>
 				</div>
 
@@ -119,60 +164,182 @@
 		</template>
 
 		<template #sidebar>
-			<!-- disableCollapse pins the width open: this app has no collapse toggle (the old
-			     sidebarCollapsed/localStorage machinery is gone), so the sidebar is always 14rem.
-			     No border here — the island's edge is the sidebar↔content divider. -->
-			<!-- Sidebar's root is already `flex h-full flex-col`, so these stack directly as its
-			     slot children (no wrapper) — the same shape as gameplan's AppSidebar. -->
-			<Sidebar width="14rem" disableCollapse>
-				<!-- App-level menu, gameplan's AppDropdown: a full-width button showing the app name
-				     + chevron, opening the app menu. In its own p-2 cell (gameplan) so its box is
-				     inset 8px, matching the views below. For now it holds only Settings; more entries
-				     (Apps switcher, About, …) can join `appMenuOptions` later. -->
-				<div class="flex shrink-0 items-center p-2">
-					<Dropdown :options="appMenuOptions" placement="left-start" match-trigger-width>
-						<template #default="{ open }">
-							<button
-								type="button"
-								class="flex w-full min-w-0 items-center justify-between rounded px-2 py-1 text-ink-gray-7 transition"
-								:class="open ? 'bg-surface-elevation-2 shadow-sm' : 'hover:bg-surface-gray-2'"
-							>
-								<span class="truncate text-lg-medium">{{ appName }}</span>
-								<div class="grid size-7 place-content-center">
-									<span
-										class="lucide-chevron-down size-4 shrink-0 text-ink-gray-5"
-										aria-hidden="true"
-									/>
-								</div>
-							</button>
-						</template>
-					</Dropdown>
-				</div>
-				<!-- The doctype label, pinned above the scroll. px-4 lands its text at the same 16px
-				     inset as the dropdown's and the views' text (8px box inset + 8px inner padding). -->
-				<div
-					v-if="heading"
-					class="flex h-7 shrink-0 items-center px-4 text-base font-medium text-ink-gray-8"
+			<!-- The sidebar column + its toggle. The wrapper exists ONLY to be the toggle's hover group:
+			     the button reveals on hover of this whole column, so it has to live inside the element
+			     being hovered. It stays a direct child of DesktopShell's root (this slot renders there),
+			     which keeps the button outside the content region's overflow-hidden — that would shear
+			     the circle in half. Deliberately not overflow-hidden itself: the button hangs outside this
+			     box, past the right edge. It mirrors Sidebar's own root box (h-full, shrink-0) so the flex
+			     row is unchanged.
+
+			     Emphatically NOT `relative`, though it's the obvious home for the button's containing
+			     block: that makes this column a POSITIONED element, which paints in a later step than its
+			     in-flow siblings — so the sidebar would paint over the island and cover the shadow_sm
+			     bleeding onto it from the island's left edge. The shell root carries the `relative`
+			     instead; an ancestor gives the button the same containing block without reordering the
+			     paint between this column and the island. -->
+			<div class="group/sidebar flex h-full shrink-0">
+				<!-- Collapses to ZERO width, not to an icon strip: the rail already is the icon-only
+				     view of this nav, so frappe-ui's default 3rem collapsedWidth would just sit a second
+				     dead column beside it. Sidebar animates the width itself (transition-[width] 300ms),
+				     and its overflow-x-hidden clips the 14rem of content as it closes, so nothing here
+				     needs a v-if. `collapsed` is driven by the floating toggle below.
+
+				     border-l is the rail↔sidebar divider (gameplan draws it as the Rail's own border-r
+				     via showBorder). It lives on the SIDEBAR, not the rail, so it belongs to the thing it
+				     divides: collapsed, the rail abuts the island's gutter, and a rail-owned line would
+				     hang there dividing nothing. Rail and Sidebar share bg-surface-sidebar, so this line
+				     is what separates them while open. Transparent rather than dropped when collapsed
+				     because a border-box element can't shrink its border below 1px — at width:0 the line
+				     would still paint. Recoloring keeps the box the same 1px and just stops drawing it.
+				     Only the LEFT edge: the island's own edge is the sidebar↔content divider. -->
+				<!-- Sidebar's root is already `flex h-full flex-col`, so these stack directly as its
+				     slot children (no wrapper) — the same shape as gameplan's AppSidebar. -->
+				<Sidebar
+					v-model:collapsed="collapsed"
+					:width="SIDEBAR_WIDTH"
+					collapsedWidth="0px"
+					class="border-l"
+					:class="collapsed ? 'border-transparent' : 'border-outline-gray-1'"
 				>
-					<span class="truncate">{{ heading }}</span>
-				</div>
-				<!-- The views scroller. Padding the VIEWPORT (not the ScrollArea) is what gives the
-				     active row's rounded shadow room — otherwise the ScrollArea root's overflow-hidden
-				     clips it flat against the edge. This is gameplan's exact fix. -->
-				<ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pt-0.5 pb-10">
-					<SidebarLabel>Views</SidebarLabel>
-					<SidebarItem
-						v-for="view in views"
-						:key="view.name"
-						:label="view.label"
-						:active="String(view.name) === activeView"
-						:onClick="() => go(`/${encodeSegment(activeDoctype)}/view/${view.name}`)"
-					/>
-					<div v-if="!views.length" class="px-2 py-1 text-sm text-ink-gray-4">
-						No saved views
+					<!-- App-level menu, gameplan's AppDropdown: a full-width button showing the app name
+					     + chevron, opening the app menu. In its own p-2 cell (gameplan) so its box is
+					     inset 8px, matching the views below. For now it holds only Settings; more entries
+					     (Apps switcher, About, …) can join `appMenuOptions` later. -->
+					<div class="flex shrink-0 items-center p-2">
+						<Dropdown :options="appMenuOptions" placement="left-start" match-trigger-width>
+							<template #default="{ open }">
+								<button
+									type="button"
+									class="flex w-full min-w-0 items-center justify-between rounded px-2 py-1 text-ink-gray-7 transition"
+									:class="open ? 'bg-surface-elevation-2 shadow-sm' : 'hover:bg-surface-gray-2'"
+								>
+									<span class="truncate text-lg-medium">{{ appName }}</span>
+									<div class="grid size-7 place-content-center">
+										<span
+											class="lucide-chevron-down size-4 shrink-0 text-ink-gray-5"
+											aria-hidden="true"
+										/>
+									</div>
+								</button>
+							</template>
+						</Dropdown>
 					</div>
-				</ScrollArea>
-			</Sidebar>
+					<!-- The doctype label, pinned above the scroll. px-4 lands its text at the same 16px
+					     inset as the dropdown's and the views' text (8px box inset + 8px inner padding). -->
+					<div
+						v-if="heading"
+						class="flex h-7 shrink-0 items-center px-4 text-base font-medium text-ink-gray-8"
+					>
+						<span class="truncate">{{ heading }}</span>
+					</div>
+					<!-- The views scroller. Padding the VIEWPORT (not the ScrollArea) is what gives the
+					     active row's rounded shadow room — otherwise the ScrollArea root's overflow-hidden
+					     clips it flat against the edge. This is gameplan's exact fix. -->
+					<ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pt-0.5 pb-10">
+						<SidebarLabel>Views</SidebarLabel>
+						<SidebarItem
+							v-for="view in views"
+							:key="view.name"
+							:label="view.label"
+							:active="String(view.name) === activeView"
+							:onClick="() => go(`/${encodeSegment(activeDoctype)}/view/${view.name}`)"
+						/>
+						<div v-if="!views.length" class="px-2 py-1 text-sm text-ink-gray-4">
+							No saved views
+						</div>
+					</ScrollArea>
+				</Sidebar>
+
+				<!-- The seam hit-strip: an invisible 8px column centered on the sidebar↔island edge,
+				     running the full height. It makes the whole edge the affordance the circle only hints
+				     at — hovering anywhere on it swaps the cursor and (being inside the hover group) fades
+				     the circle in; clicking it toggles, so you never have to hit the 24px circle itself.
+
+				     Purely decorative in the a11y tree: aria-hidden, no tabindex, a div rather than a
+				     button. It's a redundant pointer shortcut to the circle beside it, which stays the
+				     real, focusable, labelled control — exposing both would just put two identical
+				     controls in the tab order and the screen-reader output.
+
+				     The cursor POINTS WHERE THE EDGE WILL GO: w-resize while open (clicking sends the seam
+				     west, closing it), e-resize while collapsed (it comes back east). Both are single-
+				     headed, so they read as a direction rather than `col-resize`'s double-headed "drag me
+				     either way" — which would promise a drag-to-resize this edge doesn't do.
+
+				     Absolutely positioned like the circle (same `left`, same containing block — the shell
+				     root, NOT the column) and so also paints above the island, but it has no background,
+				     so unlike a positioned column it hides no shadow. w-2 is a comfortable pointer target
+				     that still leaves the island's own content clear — its rows are padded well past 4px. -->
+				<div
+					class="absolute inset-y-0 z-10 w-2 -translate-x-1/2 transition-[left] duration-300 ease-in-out"
+					:class="collapsed ? 'cursor-e-resize' : 'cursor-w-resize'"
+					:style="{ left: `calc(50px + ${collapsed ? '0px' : SIDEBAR_WIDTH})` }"
+					aria-hidden="true"
+					@click="collapsed = !collapsed"
+				/>
+
+				<!-- The collapse toggle: a circle straddling the sidebar↔island seam, near the foot.
+				     NOT frappe-ui's SidebarCollapseToggle — that one is a SidebarItem, i.e. a labelled row
+				     INSIDE the sidebar, which has nowhere to live once the sidebar is 0px wide (and would
+				     be clipped by its overflow-x-hidden on the way out). So it's a bespoke button, which
+				     is also why `collapsed` is a manual ref rather than Sidebar's provided toggle — that
+				     only reaches its own subtree, and this sits outside it.
+
+				     `left` is the seam, measured from the shell root — the containing block, since this
+				     column can't be the one (see the wrapper above): the rail's fixed 50px plus whatever
+				     the sidebar currently is (0 when collapsed). -translate-x-1/2 centers the circle on
+				     that line, and the transition matches Sidebar's own width animation so the button
+				     rides the edge instead of jumping. z-20 keeps it over the island's shadow AND over the
+				     seam strip it overlaps, so pointing at the circle gives you the circle — its own
+				     cursor-pointer, its own click — rather than the strip's resize cursor underneath.
+
+				     `bottom-1/3` anchors it to the VIEWPORT — a third of the way up, translate-y-1/2 to
+				     center it on that line — not to the rail's contents. That matters because COLLAPSED,
+				     the sidebar is 0 and this seam becomes the rail's own right edge: the circle hangs
+				     over the rail's 50px column and lands on whatever shares its height, and RailItem's
+				     tooltips are placement="right", so they fly into this strip too. An earlier version
+				     measured the rail's foot and floated just above it — correct, but it drifted with the
+				     icon count and read as unmoored. A fraction of the viewport holds still.
+
+				     The lower third specifically, because the rail is busy at BOTH ends and this is the
+				     gap between them: the switcher grows DOWN from the top (278px at 6 tiles, 398px at 9
+				     — `railItems` is server-driven, so treat it as unbounded) and the foot cluster grows
+				     UP from the bottom (172px today). A third from the TOP sits inside the switcher at
+				     every realistic window height; a third from the bottom clears both, and keeps the
+				     low-and-right placement the design started from.
+
+				     Always hidden until something is hovered, in both states — it's chrome, and the layout
+				     shouldn't carry a permanent button for an occasional action. What reveals it differs:
+				     EXPANDED, the sidebar column (the group), which is 14rem of easy target. COLLAPSED,
+				     that column is a 1px sliver, so the RAIL takes over as the trigger — hence the extra
+				     `railHovered` term, since a CSS group can't see a sibling. The seam strip keeps
+				     working in both, and it's a child of the group, as is this button: pointing at either
+				     one holds it open, so it never vanishes as you reach for it.
+
+				     Opacity, not v-if, so it fades rather than pops and stays keyboard-reachable —
+				     focus-visible:opacity-100 reveals it on tab, since a keyboard user trips no hover at
+				     all. It keeps pointer events while transparent, which is what lets its own invisible
+				     hit area (via the group) be one of the things that reveals it. -->
+				<button
+					type="button"
+					class="absolute bottom-1/3 z-20 flex size-6 -translate-x-1/2 translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-outline-gray-2 bg-surface-base text-ink-gray-5 shadow-sm transition-[left,opacity,background-color] duration-300 ease-in-out hover:bg-surface-gray-2 focus-visible:opacity-100 focus-visible:focus-ring"
+					:class="
+						collapsed && railHovered
+							? 'opacity-100'
+							: 'opacity-0 group-hover/sidebar:opacity-100'
+					"
+					:style="{ left: `calc(50px + ${collapsed ? '0px' : SIDEBAR_WIDTH})` }"
+					:aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+					:aria-expanded="!collapsed"
+					@click="collapsed = !collapsed"
+				>
+					<span
+						class="lucide-chevron-left size-4 transition-transform duration-300 ease-in-out"
+						:class="{ 'rotate-180': collapsed }"
+						aria-hidden="true"
+					/>
+				</button>
+			</div>
 		</template>
 
 		<!-- The pinned top bar. PageHeader teleports to DesktopShell's target, so declaring it
@@ -200,7 +367,7 @@ import {
 	SidebarItem,
 	SidebarLabel,
 } from "frappe-ui"
-import { computed, onMounted } from "vue"
+import { computed, onMounted, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
 
 import { useAccountMenu } from "@app/composables/useAccountMenu"
@@ -252,6 +419,21 @@ function railIcon(doctype: string) {
 // static src="/assets/..." fails the Vite build). Frappe serves crm/public/images here.
 const logoUrl = "/assets/crm/images/logo.svg"
 
+// The sidebar's open width, shared by Sidebar and the toggle button that tracks its edge — they
+// must agree or the button drifts off the seam.
+const SIDEBAR_WIDTH = "14rem"
+
+// Sidebar open/closed, owned here rather than by Sidebar's own provided toggle (see the button's
+// comment). Explicitly `false`, not Sidebar's default `null`: null means "unset", which makes it
+// auto-collapse below the sm breakpoint — reasonable for a phone, but this shell is desktop-only
+// and the table beside it needs the sidebar's state to be the user's choice alone. Not persisted:
+// it resets to open each load.
+const collapsed = ref(false)
+
+// Whether the pointer is over the rail — the collapsed sidebar's reveal trigger for the toggle.
+// State rather than a CSS hover group because the rail is the toggle's sibling; see the Rail.
+const railHovered = ref(false)
+
 const router = useRouter()
 const route = useRoute()
 
@@ -279,6 +461,25 @@ const appMenuOptions = [
 function encodeSegment(value: string) {
 	return encodeURIComponent(value)
 }
+
+// Help — the only rail-foot action with a real destination. CRM's own docs, opened in a new tab
+// rather than routed: it leaves the app entirely, so it isn't the router's business. `noopener`
+// because a plain target="_blank" hands the opened page a live `window.opener` back into ours.
+const DOCS_URL = "https://docs.frappe.io/crm"
+
+function openDocs() {
+	window.open(DOCS_URL, "_blank", "noopener")
+}
+
+// STUB. Search has no UI yet — CRM's frontend has no command palette to borrow and Studio hosts no
+// search of its own, so there is nothing to open. The rail entry exists to hold the slot (and its
+// place in the foot's layout); wire this to a palette when one lands.
+function openSearch() {}
+
+// STUB. Hardcoded so the dot badge renders — nothing counts notifications yet. CRM's own sidebar
+// gets this from `notificationsStore()` in its frontend, which Studio's bundle can't reach; this
+// wants a resource of its own. Until then the dot is decoration, and it always shows.
+const unreadCount = ref(3)
 
 // The rail's account menu — the current user (for the avatar) and the dropdown options (Toggle
 // theme + Log out). Session data and the theme/menu assembly live in `@app/data/session` and
