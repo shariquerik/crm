@@ -1,4 +1,3 @@
-// The list's "Create" dialog: a blank doc, FormLayout's fields, and the insert.
 import { computed, ref } from "vue"
 import { call, toast } from "frappe-ui"
 import { errorMessage } from "@app/data/errors"
@@ -14,7 +13,6 @@ export function useCreateDoc(options: { createLayout: any; doctype: string; rout
 	const createTitle = `New ${doctype}`
 
 	function openCreate() {
-		// FormLayout edits this object in place, so a reused one would carry an abandoned draft
 		newDoc.value = {}
 		createError.value = ""
 		if (!createLayout.data && !createLayout.loading) createLayout.fetch()

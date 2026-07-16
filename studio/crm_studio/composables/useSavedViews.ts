@@ -1,5 +1,3 @@
-// The saved views a list offers: the picker in the header, applying the one the route names, and
-// saving the current state as a new one.
 import { computed, ref, watch, type Ref } from "vue"
 import { call } from "frappe-ui"
 import { parseColumns } from "@framework/ui/ColumnSettings"
@@ -41,14 +39,9 @@ export function useSavedViews(options: {
 		)
 	}
 
-	// get_data does NOT expand a view — passing a view name only affects is_default — so a view is
-	// applied client-side, and parsing it back into the controls' native shapes is what makes it
-	// visible in the toolbar rather than merely applied to the query.
 	function applyView(view: any, fields: any[]) {
 		const wire: [string, string, unknown][] = []
 		for (const [fieldname, condition] of Object.entries(JSON.parse(view.filters || "{}"))) {
-			// we store {fieldname: [operator, value]}; CRM's frontend also writes a bare
-			// {fieldname: value}, which means equals
 			if (Array.isArray(condition) && condition.length === 2) {
 				wire.push([fieldname, condition[0] as string, condition[1]])
 			} else {
@@ -103,8 +96,6 @@ export function useSavedViews(options: {
 		const label = (newViewLabel.value || "").trim()
 		if (!label) return
 		const params = listParams() as any
-		// create_or_update_view takes the view's doctype as `doctype` (not `dt`), and its JSON
-		// fields as strings. With no `name` and no `is_standard` it routes to create().
 		const view = await call(
 			"crm.fcrm.doctype.crm_view_settings.crm_view_settings.create_or_update_view",
 			{

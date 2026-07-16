@@ -1,7 +1,3 @@
-// The account menu behind the rail's avatar: the current user, a theme submenu and "Log out".
-//
-// The `lucide-*` icons are literal strings on purpose — the JIT-safelist constraint
-// `data/doctypes.ts` documents.
 import { useTheme } from "frappe-ui"
 import { computed } from "vue"
 

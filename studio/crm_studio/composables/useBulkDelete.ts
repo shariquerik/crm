@@ -1,9 +1,7 @@
-// The list's selection and the bulk delete it feeds.
 import { computed, ref, watch } from "vue"
 import { call, toast } from "frappe-ui"
 import { errorMessage } from "@app/data/errors"
 
-// Over this many, the server enqueues the delete and returns straight away.
 const BACKGROUND_DELETE_THRESHOLD = 10
 
 export function useBulkDelete(options: { listData: any; doctype: string; submit: () => void }) {
@@ -14,8 +12,6 @@ export function useBulkDelete(options: { listData: any; doctype: string; submit:
 	const deleting = ref(false)
 	const deleteError = ref("")
 
-	// A refetch replaces the rows under a selection the component would otherwise keep: filter
-	// something out while it's ticked and Delete would hit records the user cannot see.
 	watch(() => listData.data, () => (selection.value = []))
 
 	async function deleteSelected() {

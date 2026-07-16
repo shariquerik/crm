@@ -1,4 +1,3 @@
-// Detail page (/:doctype/:id): load one record, hand it to FormLayout, save the edits back.
 import { computed, ref, watch } from "vue"
 import { call, toast } from "frappe-ui"
 import { doctypeLabels, fetchViews, guardDoctype } from "@app/data/doctypes"
@@ -19,8 +18,6 @@ export default function setup(ctx: any) {
 	const taskDueDate = ref("")
 	const addingTask = ref(false)
 
-	// Every resource here is auto=0: they all take the route's doctype, so none may fire until the
-	// server has confirmed the route actually names one.
 	guardDoctype(
 		ctx,
 		() => {
@@ -35,14 +32,11 @@ export default function setup(ctx: any) {
 	const doctype = computed(() => route.params.doctype)
 	const doctypeLink = computed(() => `/${encodeURIComponent(route.params.doctype)}`)
 
-	// The pair every note/task hangs off — the same one CRM's own activities API reads, so rows
-	// created here show up in CRM's frontend too.
 	const reference = computed(() => ({
 		reference_doctype: doctype.value,
 		reference_docname: route.params.id,
 	}))
 
-	// `doc` is FormLayout's model: the user edits it in place, and every (re)fetch overwrites it.
 	watch(
 		() => record.data,
 		(data) => {
@@ -57,8 +51,6 @@ export default function setup(ctx: any) {
 		{ label: doc.value?.name || route.params.id },
 	])
 
-	// Only what the user touched: writing the whole doc back would clobber fields the read never
-	// returned (frappe.client.get strips nulls and perm-level-restricted fields).
 	function changedFields() {
 		const stored = record.data || {}
 		const changes: Record<string, any> = {}
@@ -79,8 +71,6 @@ export default function setup(ctx: any) {
 		saving.value = true
 		saveError.value = ""
 		try {
-			// set_value runs the full save (mandatory, permissions, hooks) on the stored doc and
-			// ignores framework fields in the payload.
 			await call("frappe.client.set_value", {
 				doctype: doctype.value,
 				name: route.params.id,
@@ -121,7 +111,6 @@ export default function setup(ctx: any) {
 		await insertRow(addingTask, tasks, {
 			doctype: "CRM Task",
 			title: taskTitle.value.trim(),
-			// a Datetime Frappe won't parse is worse than no due date at all
 			due_date: taskDueDate.value || null,
 			...reference.value,
 		})
