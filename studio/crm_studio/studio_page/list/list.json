@@ -27,7 +27,7 @@
         "minWidth": "0",
         "width": "100%"
        },
-       "blockName": "list-island",
+       "blockName": "list-body",
        "children": [
         {
          "baseStyles": {
@@ -353,7 +353,7 @@
         }
        ],
        "classes": [],
-       "componentId": "list-island",
+       "componentId": "list-body",
        "componentName": "container",
        "originalElement": "div",
        "visibilityCondition": "{{ !routeDoctype.data || !!routeDoctype.data.doctype }}"
@@ -622,7 +622,7 @@
         "minWidth": "0",
         "width": "100%"
        },
-       "blockName": "list-island",
+       "blockName": "list-body",
        "children": [
         {
          "baseStyles": {
@@ -948,7 +948,7 @@
         }
        ],
        "classes": [],
-       "componentId": "list-island",
+       "componentId": "list-body",
        "componentName": "container",
        "originalElement": "div",
        "visibilityCondition": "{{ !routeDoctype.data || !!routeDoctype.data.doctype }}"

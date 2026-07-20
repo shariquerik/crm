@@ -250,7 +250,7 @@ onMounted(loadCurrentUser)
 
 <style scoped>
 .crm-desktop-shell :deep([data-slot='desktop-shell-content']) {
-  @apply my-1 mr-1 rounded-lg bg-surface-base shadow-sm dark:border dark:border-outline-gray-1 dark:shadow-none;
+  @apply border-l border-outline-gray-1 bg-surface-base;
 }
 
 .crm-desktop-shell {
