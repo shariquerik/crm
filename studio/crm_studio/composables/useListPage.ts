@@ -10,6 +10,7 @@ import { useBulkDelete } from '@app/composables/useBulkDelete'
 import { useCreateDoc } from '@app/composables/useCreateDoc'
 import { useListQuery, usePaging } from '@app/composables/useListQuery'
 import { useSavedViews } from '@app/composables/useSavedViews'
+import { useSavedViewRestore } from '@app/composables/useSavedViewRestore'
 import { useUrlFilters } from '@app/composables/useUrlFilters'
 
 const GENERIC_COLUMNS = [
@@ -76,6 +77,19 @@ export function useListPage(ctx: any) {
     listParams: query.listParams,
     submit: query.submit,
   })
+
+  const savedViewRestore = viewName
+    ? useSavedViewRestore({
+        doctype,
+        viewName,
+        filters,
+        sort,
+        columns,
+        metaFields,
+        seedColumns,
+        submit: query.submit,
+      })
+    : null
 
   guardDoctype(
     ctx,
@@ -160,6 +174,7 @@ export function useListPage(ctx: any) {
     loadMore,
     setPageSize,
     ...savedViews,
+    ...savedViewRestore,
     ...createDoc,
     ...bulkDelete,
   }
