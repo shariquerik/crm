@@ -1,5 +1,5 @@
 import { watch, type Ref } from 'vue'
-import { useSavedViews } from '@framework/ui/SavedViews'
+import { useSavedViews } from '@framework/ui/components/SavedViews'
 
 // Restores a framework `Saved View` into the list page's control state.
 //

@@ -123,32 +123,7 @@
             <span class="truncate">{{ heading }}</span>
           </div>
           <ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pt-0.5 pb-10">
-            <SidebarLabel>Views</SidebarLabel>
-            <SidebarItem
-              v-for="view in doctypeViews"
-              :key="view.name"
-              :label="view.label"
-              :active="String(view.name) === activeView"
-              :onClick="
-                () => go(`/${encodeSegment(activeDoctype)}/view/${view.name}`)
-              "
-            />
-            <div v-if="viewsLoading" class="px-2 py-1">
-              <Skeleton class="h-3 w-24 rounded" />
-            </div>
-            <div
-              v-else-if="viewsError"
-              class="flex items-center gap-1.5 px-2 py-1 text-sm text-ink-gray-4"
-            >
-              <span class="truncate">Could not load views</span>
-              <Button variant="ghost" label="Retry" @click="reloadViews" />
-            </div>
-            <div
-              v-else-if="!doctypeViews.length"
-              class="px-2 py-1 text-sm text-ink-gray-4"
-            >
-              No saved views
-            </div>
+            <ViewSidebar :key="activeDoctype" :doctype="activeDoctype" />
           </ScrollArea>
         </Sidebar>
 
@@ -194,7 +169,6 @@
 <script setup lang="ts">
 import {
   Avatar,
-  Button,
   DesktopShell,
   Dropdown,
   PageHeader,
@@ -202,15 +176,13 @@ import {
   RailItem,
   ScrollArea,
   Sidebar,
-  SidebarItem,
-  SidebarLabel,
-  Skeleton,
 } from 'frappe-ui'
+import { ViewSidebar } from '@framework/ui/components/SavedViews'
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 
 import { useAccountMenu } from '@app/composables/useAccountMenu'
-import { doctypeIcon, doctypeLabels, fetchViews } from '@app/data/doctypes'
+import { doctypeIcon, doctypeLabels } from '@app/data/doctypes'
 
 const props = withDefaults(
   defineProps<{
@@ -225,15 +197,6 @@ const props = withDefaults(
   },
 )
 
-const {
-  views,
-  loading: viewsLoading,
-  error: viewsError,
-  reload: reloadViews,
-} = fetchViews()
-
-const doctypeViews = computed(() => views.value[props.activeDoctype] || [])
-
 const heading = computed(
   () => doctypeLabels[props.activeDoctype] || props.activeDoctype,
 )
@@ -247,9 +210,6 @@ const collapsed = ref(false)
 const railHovered = ref(false)
 
 const router = useRouter()
-const route = useRoute()
-
-const activeView = computed(() => String(route.params.viewName ?? ''))
 
 function go(path: string) {
   router.push(path)
