@@ -121,15 +121,7 @@
               :key="`${activeDoctype}:${sidebarRefreshToken}`"
               :doctype="activeDoctype"
               :refreshToken="countsRefreshToken"
-            >
-              <template #header>
-                <span
-                  v-if="heading"
-                  class="truncate text-base font-medium text-ink-gray-8"
-                  >{{ heading }}</span
-                >
-              </template>
-            </ViewSidebar>
+            />
           </ScrollArea>
         </Sidebar>
 
@@ -184,12 +176,12 @@ import {
   Sidebar,
 } from 'frappe-ui'
 import { ViewSidebar } from '@framework/ui/components/SavedViews'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAccountMenu } from '@app/composables/useAccountMenu'
 import { countsRefreshToken } from '@app/data/countsRefresh'
-import { doctypeIcon, doctypeLabels } from '@app/data/doctypes'
+import { doctypeIcon } from '@app/data/doctypes'
 import { sidebarRefreshToken } from '@app/data/sidebarRefresh'
 
 const props = withDefaults(
@@ -203,10 +195,6 @@ const props = withDefaults(
     activeDoctype: '',
     appName: 'CRM',
   },
-)
-
-const heading = computed(
-  () => doctypeLabels[props.activeDoctype] || props.activeDoctype,
 )
 
 const logoUrl = '/assets/crm/images/logo.svg'
