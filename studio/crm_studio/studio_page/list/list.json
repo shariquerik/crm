@@ -447,47 +447,6 @@
              "mobileStyles": {},
              "rawStyles": {},
              "tabletStyles": {}
-            },
-            {
-             "attributes": {},
-             "baseStyles": {
-              "color": "var(--ink-gray-4)",
-              "flexShrink": "0"
-             },
-             "blockName": "list-crumb-separator",
-             "children": [],
-             "classes": [],
-             "componentEvents": {},
-             "componentId": "list-crumb-separator",
-             "componentName": "TextBlock",
-             "componentProps": {
-              "text": "/"
-             },
-             "componentSlots": {},
-             "mobileStyles": {},
-             "rawStyles": {},
-             "tabletStyles": {}
-            },
-            {
-             "attributes": {},
-             "baseStyles": {
-              "color": "var(--ink-gray-8)",
-              "flexShrink": "0",
-              "fontWeight": "500"
-             },
-             "blockName": "list-view-label",
-             "children": [],
-             "classes": [],
-             "componentEvents": {},
-             "componentId": "list-view-label",
-             "componentName": "TextBlock",
-             "componentProps": {
-              "text": "{{ viewLabel }}"
-             },
-             "componentSlots": {},
-             "mobileStyles": {},
-             "rawStyles": {},
-             "tabletStyles": {}
             }
            ],
            "classes": [],
@@ -997,47 +956,6 @@
              "componentName": "Breadcrumbs",
              "componentProps": {
               "items": "{{ breadcrumbs }}"
-             },
-             "componentSlots": {},
-             "mobileStyles": {},
-             "rawStyles": {},
-             "tabletStyles": {}
-            },
-            {
-             "attributes": {},
-             "baseStyles": {
-              "color": "var(--ink-gray-4)",
-              "flexShrink": "0"
-             },
-             "blockName": "list-crumb-separator",
-             "children": [],
-             "classes": [],
-             "componentEvents": {},
-             "componentId": "list-crumb-separator",
-             "componentName": "TextBlock",
-             "componentProps": {
-              "text": "/"
-             },
-             "componentSlots": {},
-             "mobileStyles": {},
-             "rawStyles": {},
-             "tabletStyles": {}
-            },
-            {
-             "attributes": {},
-             "baseStyles": {
-              "color": "var(--ink-gray-8)",
-              "flexShrink": "0",
-              "fontWeight": "500"
-             },
-             "blockName": "list-view-label",
-             "children": [],
-             "classes": [],
-             "componentEvents": {},
-             "componentId": "list-view-label",
-             "componentName": "TextBlock",
-             "componentProps": {
-              "text": "{{ viewLabel }}"
              },
              "componentSlots": {},
              "mobileStyles": {},

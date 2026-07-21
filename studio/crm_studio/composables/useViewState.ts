@@ -1,5 +1,5 @@
 import { computed, onScopeDispose, ref, watch, type Ref } from 'vue'
-import { useSavedViews } from '@framework/ui/components/SavedViews'
+import { findView, useSavedViews } from '@framework/ui/components/SavedViews'
 import { serializeColumns } from '@framework/ui/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/SortBy'
 import { completeFilters, toFiltersDict } from '@app/data/listWire'
@@ -139,9 +139,14 @@ export function useViewState(options: {
   }
   onScopeDispose(() => clearTimeout(landingTimer))
 
-  const viewLabel = computed(() =>
-    viewName ? views.activeView.value?.label || 'View' : 'Default view',
-  )
+  // The plain list route opens the user's default, so it carries that view's own
+  // label — an empty one (no default yet) leaves the breadcrumb at the doctype.
+  const viewLabel = computed(() => {
+    const view = viewName
+      ? views.activeView.value
+      : findView(views.groups.value, views.defaultView.value)
+    return view?.label || ''
+  })
 
   // A personal view is editable only by its owner; a shared one only by a manager.
   const canEditActiveView = computed(() => {

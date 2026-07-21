@@ -91,12 +91,15 @@ export function useListPage(ctx: any) {
     },
   ])
 
-  const breadcrumbs = computed(() => [
-    {
-      label: doctypeLabels[doctype] || doctype,
-      route: `/${encodeURIComponent(route.params.doctype)}`,
-    },
-  ])
+  const breadcrumbs = computed(() =>
+    [
+      {
+        label: doctypeLabels[doctype] || doctype,
+        route: `/${encodeURIComponent(route.params.doctype)}`,
+      },
+      viewState.viewLabel.value ? { label: viewState.viewLabel.value } : null,
+    ].filter(Boolean),
+  )
 
   // `listData` still holds the previous doctype's rows until the new route resolves.
   const servingOtherDoctype = computed(
