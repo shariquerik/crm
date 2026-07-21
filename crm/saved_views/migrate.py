@@ -1,0 +1,133 @@
+# Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
+# MIT License. See license.txt
+
+"""Migrate legacy CRM View Settings into framework Saved Views and Groups.
+
+Each legacy record becomes one Saved View, placed by what its flags meant: a public
+view joins the shared "Views" section, a user's pinned view their Personal section,
+an un-pinned private view the pool (no section), and a standard view that user's
+default record. Legacy rows are left in place as read-only history, and each produced
+view is keyed on its identity, so re-running the patch adds nothing.
+
+Type, sort, columns, rows and kanban configuration copy across untouched — the legacy
+column shape already matches the framework's. Only `filters` is reshaped, from CRM's
+fieldname-keyed dict to the framework's `[fieldname, operator, value]` list.
+"""
+
+import json
+
+import frappe
+from frappe.desk.doctype.saved_view.api import get_or_create_group
+
+# Copied verbatim: the legacy column/sort/kanban shapes are the framework's already.
+COPIED_FIELDS = (
+	"order_by",
+	"columns",
+	"rows",
+	"group_by_field",
+	"column_field",
+	"title_field",
+	"kanban_columns",
+	"kanban_fields",
+)
+
+
+def migrate_crm_view_settings():
+	for legacy in frappe.get_all("CRM View Settings", fields=["*"]):
+		migrate_view(legacy)
+
+
+def migrate_view(legacy):
+	if not legacy.dt:
+		return
+
+	user, is_default, placement = classify(legacy)
+	filters = migrate_filters(legacy.filters)
+	if migrated_view_exists(legacy, user, is_default, filters):
+		return
+
+	view = create_view(legacy, user, is_default, filters)
+	if placement:
+		place_in_group(legacy.dt, placement, user, view.name)
+
+
+def classify(legacy):
+	"""What the legacy flags translate to: `(user, is_default, placement)`, where
+	placement is the section to drop the view into or `None` for a pool/default view."""
+	if legacy.is_standard:
+		return legacy.user or "", 1, None
+	if legacy.public:
+		return "", 0, "Views"
+	if legacy.pinned:
+		return legacy.user or "", 0, "Personal"
+	return legacy.user or "", 0, None
+
+
+def create_view(legacy, user, is_default, filters):
+	return frappe.get_doc(
+		{
+			"doctype": "Saved View",
+			"label": legacy.label or "View",
+			"icon": legacy.icon,
+			"reference_doctype": legacy.dt,
+			"type": legacy.type or "list",
+			"user": user,
+			"is_default": is_default,
+			"filters": filters,
+			**{field: legacy.get(field) for field in COPIED_FIELDS},
+		}
+	).insert(ignore_permissions=True)
+
+
+def migrate_filters(raw):
+	"""CRM's `{fieldname: value}` / `{fieldname: [operator, value]}` dict into the
+	framework's `[[fieldname, operator, value]]` list. A bare value is an equals."""
+	data = parse_json(raw)
+	if not isinstance(data, dict):
+		return json.dumps([])
+
+	wire = []
+	for fieldname, condition in data.items():
+		if isinstance(condition, list) and len(condition) == 2:
+			wire.append([fieldname, condition[0], condition[1]])
+		else:
+			wire.append([fieldname, "=", condition])
+	return json.dumps(wire)
+
+
+def place_in_group(doctype, label, user, view_name):
+	group = get_or_create_group(doctype, label, user)
+	if str(view_name) not in {str(row.view) for row in group.views}:
+		group.append("views", {"view": view_name})
+		group.save(ignore_permissions=True)
+
+
+def migrated_view_exists(legacy, user, is_default, filters):
+	"""A legacy record counts as already migrated only when a Saved View matches it
+	down to its filters. Label alone would let a seeded default (same label, its own
+	filters) shadow a user's view of that name and drop it — the site would lose a
+	view it had. Two byte-identical legacy records still collapse, which is a dedup,
+	not a loss."""
+	return bool(
+		frappe.db.exists(
+			"Saved View",
+			{
+				"reference_doctype": legacy.dt,
+				"user": user or ("in", ("", None)),
+				"label": legacy.label or "View",
+				"is_default": is_default,
+				"filters": filters,
+			},
+		)
+	)
+
+
+def parse_json(value):
+	if not value:
+		return None
+	if isinstance(value, dict | list):
+		return value
+	try:
+		return json.loads(value)
+	except (ValueError, TypeError):
+		return None

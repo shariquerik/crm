@@ -8,6 +8,7 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 from crm.fcrm.doctype.crm_dashboard.crm_dashboard import create_default_manager_dashboard
 from crm.fcrm.doctype.crm_products.crm_products import create_product_details_script
+from crm.saved_views.seed import seed_saved_views
 
 
 def before_install():
@@ -31,6 +32,7 @@ def after_install(force=False):
 	create_default_manager_dashboard(force)
 	create_assignment_rule_custom_fields()
 	add_assignment_rule_property_setters()
+	seed_saved_views()
 	frappe.db.commit()
 
 
