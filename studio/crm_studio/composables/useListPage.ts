@@ -9,7 +9,6 @@ import { doctypeLabels, guardDoctype } from '@app/data/doctypes'
 import { useBulkDelete } from '@app/composables/useBulkDelete'
 import { useCreateDoc } from '@app/composables/useCreateDoc'
 import { useListQuery, usePaging } from '@app/composables/useListQuery'
-import { useSavedViews } from '@app/composables/useSavedViews'
 import { useViewState } from '@app/composables/useViewState'
 
 const GENERIC_COLUMNS = [
@@ -28,7 +27,6 @@ export function useListPage(ctx: any) {
   const pageLength = ref(20)
 
   const doctype = route.params.doctype
-  const currentView = ctx.currentView
   const viewName = route.params.viewName
 
   const { metaFields, titleField, loadMeta } = useMeta()
@@ -61,20 +59,6 @@ export function useListPage(ctx: any) {
   })
   const { setPageSize, loadMore } = usePaging(pageSize, pageLength)
 
-  const savedViews = useSavedViews({
-    ctx,
-    doctype,
-    viewName,
-    currentView,
-    filters,
-    sort,
-    columns,
-    metaFields,
-    seedColumns,
-    listParams: query.listParams,
-    submit: query.submit,
-  })
-
   const viewState = useViewState({
     ctx,
     doctype,
@@ -90,10 +74,7 @@ export function useListPage(ctx: any) {
 
   guardDoctype(
     ctx,
-    () => {
-      loadMeta(doctype)
-      if (currentView) currentView.fetch()
-    },
+    () => loadMeta(doctype),
     viewName ? `/view/${viewName}` : '',
   )
 
@@ -152,7 +133,6 @@ export function useListPage(ctx: any) {
     resetColumnWidth,
     loadMore,
     setPageSize,
-    ...savedViews,
     ...viewState,
     ...createDoc,
     ...bulkDelete,

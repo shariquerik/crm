@@ -352,41 +352,6 @@
          }
         },
         {
-         "blockName": "list-view-dialog",
-         "children": [
-          {
-           "baseStyles": {
-            "width": "100%"
-           },
-           "blockName": "list-view-name",
-           "children": [],
-           "classes": [],
-           "componentId": "list-view-name",
-           "componentName": "TextInput",
-           "componentProps": {
-            "modelValue": {
-             "$type": "variable",
-             "name": "newViewLabel"
-            },
-            "placeholder": "e.g. Qualified leads",
-            "size": "md"
-           }
-          }
-         ],
-         "classes": [],
-         "componentId": "list-view-dialog",
-         "componentName": "Dialog",
-         "componentProps": {
-          "actions": "{{ createViewActions }}",
-          "modelValue": {
-           "$type": "variable",
-           "name": "viewDialog"
-          },
-          "size": "sm",
-          "title": "Create view"
-         }
-        },
-        {
          "blockName": "list-create-dialog",
          "children": [
           {
@@ -626,20 +591,19 @@
             },
             {
              "attributes": {},
-             "baseStyles": {},
-             "blockName": "list-view-picker",
+             "baseStyles": {
+              "color": "var(--ink-gray-8)",
+              "flexShrink": "0",
+              "fontWeight": "500"
+             },
+             "blockName": "list-view-label",
              "children": [],
              "classes": [],
              "componentEvents": {},
-             "componentId": "list-view-picker",
-             "componentName": "Dropdown",
+             "componentId": "list-view-label",
+             "componentName": "TextBlock",
              "componentProps": {
-              "button": {
-               "iconRight": "chevron-down",
-               "label": "{{ viewLabel }}",
-               "variant": "ghost"
-              },
-              "options": "{{ viewOptions }}"
+              "text": "{{ viewLabel }}"
              },
              "componentSlots": {},
              "mobileStyles": {},
@@ -754,14 +718,6 @@
    "resource_type": "API Resource",
    "transform": "function transform(tabs) {\n\tconst LAYOUT_BREAKS = [\"Tab Break\", \"Section Break\", \"Column Break\"]\n\t// get_fields_layout carries no child-table meta, so a grid would render column-less.\n\t// Child tables are out of scope for v1's form.\n\tconst CHILD_TABLES = [\"Table\", \"Table MultiSelect\"]\n\n\tfunction toFieldMeta(field) {\n\t\treturn {\n\t\t\tfieldname: field.fieldname,\n\t\t\tfieldtype: field.fieldtype,\n\t\t\tlabel: field.label,\n\t\t\t// Select options are a newline-joined string in meta; CRM hands some layouts\n\t\t\t// back as [{label, value}] instead.\n\t\t\toptions: Array.isArray(field.options)\n\t\t\t\t? field.options.map((option) => (option && option.value !== undefined ? option.value : option)).join(\"\\n\")\n\t\t\t\t: field.options,\n\t\t\treqd: Boolean(field.reqd),\n\t\t\thidden: Boolean(field.hidden),\n\t\t\treadOnly: Boolean(field.read_only) || field.fieldtype === \"Read Only\",\n\t\t\tprecision: field.precision ? Number(field.precision) : undefined,\n\t\t\tdescription: field.description || undefined,\n\t\t\tplaceholder: field.placeholder || undefined,\n\t\t\tdependsOn: field.depends_on || undefined,\n\t\t\tmandatoryDependsOn: field.mandatory_depends_on || undefined,\n\t\t\treadOnlyDependsOn: field.read_only_depends_on || undefined,\n\t\t}\n\t}\n\n\treturn (tabs || []).map(function (tab) {\n\t\treturn {\n\t\t\tname: tab.name,\n\t\t\tlabel: tab.label,\n\t\t\tsections: (tab.sections || []).map(function (section) {\n\t\t\t\treturn {\n\t\t\t\t\tname: section.name,\n\t\t\t\t\tlabel: section.label,\n\t\t\t\t\thideLabel: Boolean(section.hideLabel),\n\t\t\t\t\thideBorder: Boolean(section.hideBorder),\n\t\t\t\t\tcollapsible: Boolean(section.collapsible),\n\t\t\t\t\topened: section.opened !== false,\n\t\t\t\t\tcolumns: (section.columns || []).map(function (column) {\n\t\t\t\t\t\treturn {\n\t\t\t\t\t\t\tname: column.name,\n\t\t\t\t\t\t\tfields: (column.fields || [])\n\t\t\t\t\t\t\t\t// a fieldname the doctype no longer has stays an unexpanded string\n\t\t\t\t\t\t\t\t.filter((field) => field && typeof field === \"object\")\n\t\t\t\t\t\t\t\t.filter((field) => !LAYOUT_BREAKS.includes(field.fieldtype) && !CHILD_TABLES.includes(field.fieldtype))\n\t\t\t\t\t\t\t\t.map(toFieldMeta),\n\t\t\t\t\t\t}\n\t\t\t\t\t}),\n\t\t\t\t}\n\t\t\t}),\n\t\t}\n\t})\n}",
    "url": "crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout"
-  },
-  {
-   "cache": 1,
-   "method": "GET",
-   "params": "{\"doctype\": \"{{ route.params.doctype }}\", \"view_name\": \"{{ route.params.viewName }}\"}",
-   "resource_name": "currentView",
-   "resource_type": "API Resource",
-   "url": "crm.api.views.get_current_view"
   }
  ],
  "route": "/:doctype/view/:viewName",

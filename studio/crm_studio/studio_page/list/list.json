@@ -230,41 +230,6 @@
          "originalElement": "div"
         },
         {
-         "blockName": "list-view-dialog",
-         "children": [
-          {
-           "baseStyles": {
-            "width": "100%"
-           },
-           "blockName": "list-view-name",
-           "children": [],
-           "classes": [],
-           "componentId": "list-view-name",
-           "componentName": "TextInput",
-           "componentProps": {
-            "modelValue": {
-             "$type": "variable",
-             "name": "newViewLabel"
-            },
-            "placeholder": "e.g. Qualified leads",
-            "size": "md"
-           }
-          }
-         ],
-         "classes": [],
-         "componentId": "list-view-dialog",
-         "componentName": "Dialog",
-         "componentProps": {
-          "actions": "{{ createViewActions }}",
-          "modelValue": {
-           "$type": "variable",
-           "name": "viewDialog"
-          },
-          "size": "sm",
-          "title": "Create view"
-         }
-        },
-        {
          "blockName": "list-create-dialog",
          "children": [
           {
@@ -505,24 +470,19 @@
             },
             {
              "attributes": {},
-             "baseStyles": {},
-             "blockName": "list-view-picker",
+             "baseStyles": {
+              "color": "var(--ink-gray-8)",
+              "flexShrink": "0",
+              "fontWeight": "500"
+             },
+             "blockName": "list-view-label",
              "children": [],
              "classes": [],
              "componentEvents": {},
-             "componentId": "list-view-picker",
-             "componentName": "Dropdown",
+             "componentId": "list-view-label",
+             "componentName": "TextBlock",
              "componentProps": {
-              "button": {
-               "iconRight": "chevron-down",
-               "label": "{{ viewLabel }}",
-               "variant": "ghost"
-              },
-              "offset": 4,
-              "open": false,
-              "options": "{{ viewOptions }}",
-              "portalTo": "body",
-              "side": "bottom"
+              "text": "{{ viewLabel }}"
              },
              "componentSlots": {},
              "mobileStyles": {},
@@ -825,41 +785,6 @@
          "originalElement": "div"
         },
         {
-         "blockName": "list-view-dialog",
-         "children": [
-          {
-           "baseStyles": {
-            "width": "100%"
-           },
-           "blockName": "list-view-name",
-           "children": [],
-           "classes": [],
-           "componentId": "list-view-name",
-           "componentName": "TextInput",
-           "componentProps": {
-            "modelValue": {
-             "$type": "variable",
-             "name": "newViewLabel"
-            },
-            "placeholder": "e.g. Qualified leads",
-            "size": "md"
-           }
-          }
-         ],
-         "classes": [],
-         "componentId": "list-view-dialog",
-         "componentName": "Dialog",
-         "componentProps": {
-          "actions": "{{ createViewActions }}",
-          "modelValue": {
-           "$type": "variable",
-           "name": "viewDialog"
-          },
-          "size": "sm",
-          "title": "Create view"
-         }
-        },
-        {
          "blockName": "list-create-dialog",
          "children": [
           {
@@ -1100,24 +1025,19 @@
             },
             {
              "attributes": {},
-             "baseStyles": {},
-             "blockName": "list-view-picker",
+             "baseStyles": {
+              "color": "var(--ink-gray-8)",
+              "flexShrink": "0",
+              "fontWeight": "500"
+             },
+             "blockName": "list-view-label",
              "children": [],
              "classes": [],
              "componentEvents": {},
-             "componentId": "list-view-picker",
-             "componentName": "Dropdown",
+             "componentId": "list-view-label",
+             "componentName": "TextBlock",
              "componentProps": {
-              "button": {
-               "iconRight": "chevron-down",
-               "label": "{{ viewLabel }}",
-               "variant": "ghost"
-              },
-              "offset": 4,
-              "open": false,
-              "options": "{{ viewOptions }}",
-              "portalTo": "body",
-              "side": "bottom"
+              "text": "{{ viewLabel }}"
              },
              "componentSlots": {},
              "mobileStyles": {},

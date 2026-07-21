@@ -138,6 +138,10 @@ export function useViewState(options: {
   }
   onScopeDispose(() => clearTimeout(landingTimer))
 
+  const viewLabel = computed(() =>
+    viewName ? views.activeView.value?.label || 'View' : 'Default view',
+  )
+
   // A personal view is editable only by its owner; a shared one only by a manager.
   const canEditActiveView = computed(() => {
     const view = views.activeView.value
@@ -192,6 +196,7 @@ export function useViewState(options: {
   }
 
   return {
+    viewLabel,
     viewDirty: dirty,
     canEditActiveView,
     resetView,
