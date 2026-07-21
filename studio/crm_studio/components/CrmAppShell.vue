@@ -124,7 +124,7 @@
           </div>
           <ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pt-0.5 pb-10">
             <ViewSidebar
-              :key="activeDoctype"
+              :key="`${activeDoctype}:${sidebarRefreshToken}`"
               :doctype="activeDoctype"
               :refreshToken="countsRefreshToken"
             />
@@ -188,6 +188,7 @@ import { useRouter } from 'vue-router'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
 import { countsRefreshToken } from '@app/data/countsRefresh'
 import { doctypeIcon, doctypeLabels } from '@app/data/doctypes'
+import { sidebarRefreshToken } from '@app/data/sidebarRefresh'
 
 const props = withDefaults(
   defineProps<{

@@ -4,6 +4,7 @@ import { serializeColumns } from '@framework/ui/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/SortBy'
 import { completeFilters, toFiltersDict } from '@app/data/listWire'
 import { currentUser } from '@app/data/session'
+import { refreshSidebar } from '@app/data/sidebarRefresh'
 import {
   overridesFromQuery,
   preservedQuery,
@@ -178,6 +179,7 @@ export function useViewState(options: {
     if (!label) return
     const name = await views.saveAsNew(liveSnapshot(), { label })
     saveAsDialog.value = false
+    refreshSidebar()
     router.push(`/${encodeURIComponent(route.params.doctype)}/view/${name}`)
   }
 
