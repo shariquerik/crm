@@ -116,18 +116,20 @@
               </template>
             </Dropdown>
           </div>
-          <div
-            v-if="heading"
-            class="flex h-7 shrink-0 items-center px-4 text-base font-medium text-ink-gray-8"
-          >
-            <span class="truncate">{{ heading }}</span>
-          </div>
           <ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pt-0.5 pb-10">
             <ViewSidebar
               :key="`${activeDoctype}:${sidebarRefreshToken}`"
               :doctype="activeDoctype"
               :refreshToken="countsRefreshToken"
-            />
+            >
+              <template #header>
+                <span
+                  v-if="heading"
+                  class="truncate text-base font-medium text-ink-gray-8"
+                  >{{ heading }}</span
+                >
+              </template>
+            </ViewSidebar>
           </ScrollArea>
         </Sidebar>
 

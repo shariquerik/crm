@@ -40,7 +40,7 @@ def view_by_label(group, label):
 
 class TestSeed(IntegrationTestCase):
 	def setUp(self):
-		clear_saved_views("CRM Deal", "CRM Lead")
+		clear_saved_views("CRM Deal", "CRM Lead", "Contact", "CRM Organization", "CRM Task", "FCRM Note")
 		seed_saved_views()
 
 	def tearDown(self):
@@ -88,6 +88,39 @@ class TestSeed(IntegrationTestCase):
 			self.assertEqual(view.icon, status.color)
 			self.assertEqual(json.loads(view.filters), [["status", "=", status.name]])
 			self.assertEqual(view.user, "")
+
+	def test_contact_gets_views_and_no_pipeline(self):
+		group = shared_group("Contact", "Views")
+		self.assertEqual(view_labels(group), ["All", "My contacts", "Recently added", "No organization"])
+		self.assertIsNone(shared_group("Contact", "Pipeline"))
+
+	def test_recently_added_sorts_by_creation_instead_of_filtering(self):
+		view = view_by_label(shared_group("Contact", "Views"), "Recently added")
+		self.assertEqual(json.loads(view.filters), [])
+		self.assertEqual(view.order_by, "creation desc")
+
+	def test_no_organization_filters_on_the_company_name_field(self):
+		view = view_by_label(shared_group("Contact", "Views"), "No organization")
+		self.assertEqual(json.loads(view.filters), [["company_name", "is", "not set"]])
+
+	def test_select_pipeline_colours_options_from_the_palette(self):
+		group = shared_group("CRM Task", "Pipeline")
+		self.assertEqual(view_by_label(group, "Done").icon, "green")
+		self.assertEqual(view_by_label(group, "Canceled").icon, "red")
+
+	def test_organization_and_note_get_an_all_and_a_mine_view_only(self):
+		self.assertEqual(view_labels(shared_group("CRM Organization", "Views")), ["All", "My organizations"])
+		self.assertEqual(view_labels(shared_group("FCRM Note", "Views")), ["All", "My notes"])
+		self.assertIsNone(shared_group("CRM Organization", "Pipeline"))
+
+	def test_tasks_open_and_overdue_read_off_the_task_fields(self):
+		group = shared_group("CRM Task", "Views")
+		self.assertEqual(view_labels(group), ["All", "My tasks", "Open", "Overdue"])
+		self.assertIn(["assigned_to", "=", "@me"], json.loads(view_by_label(group, "My tasks").filters))
+		self.assertEqual(
+			json.loads(view_by_label(group, "Open").filters),
+			[["status", "not in", ["Done", "Canceled"]]],
+		)
 
 	def test_views_section_sits_before_pipeline(self):
 		self.assertLess(
