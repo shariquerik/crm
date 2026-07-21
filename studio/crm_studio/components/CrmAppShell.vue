@@ -123,7 +123,11 @@
             <span class="truncate">{{ heading }}</span>
           </div>
           <ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pt-0.5 pb-10">
-            <ViewSidebar :key="activeDoctype" :doctype="activeDoctype" />
+            <ViewSidebar
+              :key="activeDoctype"
+              :doctype="activeDoctype"
+              :refreshToken="countsRefreshToken"
+            />
           </ScrollArea>
         </Sidebar>
 
@@ -182,6 +186,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAccountMenu } from '@app/composables/useAccountMenu'
+import { countsRefreshToken } from '@app/data/countsRefresh'
 import { doctypeIcon, doctypeLabels } from '@app/data/doctypes'
 
 const props = withDefaults(
