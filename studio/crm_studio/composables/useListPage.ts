@@ -10,8 +10,7 @@ import { useBulkDelete } from '@app/composables/useBulkDelete'
 import { useCreateDoc } from '@app/composables/useCreateDoc'
 import { useListQuery, usePaging } from '@app/composables/useListQuery'
 import { useSavedViews } from '@app/composables/useSavedViews'
-import { useSavedViewRestore } from '@app/composables/useSavedViewRestore'
-import { useUrlFilters } from '@app/composables/useUrlFilters'
+import { useViewState } from '@app/composables/useViewState'
 
 const GENERIC_COLUMNS = [
   { fieldname: 'name', label: 'Name' },
@@ -62,8 +61,6 @@ export function useListPage(ctx: any) {
   })
   const { setPageSize, loadMore } = usePaging(pageSize, pageLength)
 
-  useUrlFilters({ filters, metaFields, doctype, currentView, router })
-
   const savedViews = useSavedViews({
     ctx,
     doctype,
@@ -78,45 +75,27 @@ export function useListPage(ctx: any) {
     submit: query.submit,
   })
 
-  const savedViewRestore = viewName
-    ? useSavedViewRestore({
-        doctype,
-        viewName,
-        filters,
-        sort,
-        columns,
-        metaFields,
-        seedColumns,
-        submit: query.submit,
-      })
-    : null
+  const viewState = useViewState({
+    ctx,
+    doctype,
+    viewName,
+    filters,
+    sort,
+    columns,
+    metaFields,
+    seedColumns,
+    submit: query.submit,
+    router,
+  })
 
   guardDoctype(
     ctx,
     () => {
       loadMeta(doctype)
-      if (currentView) {
-        currentView.fetch()
-        return
-      }
-      startPlainList()
+      if (currentView) currentView.fetch()
     },
     viewName ? `/view/${viewName}` : '',
   )
-
-  function startPlainList() {
-    let started = false
-    watch(
-      metaFields,
-      (fields: any[]) => {
-        if (started || !fields.length) return
-        started = true
-        seedColumns(fields)
-        query.submit()
-      },
-      { immediate: true },
-    )
-  }
 
   const createDoc = useCreateDoc({ createLayout, doctype, route, router })
   const bulkDelete = useBulkDelete({ listData, doctype, submit: query.submit })
@@ -174,7 +153,7 @@ export function useListPage(ctx: any) {
     loadMore,
     setPageSize,
     ...savedViews,
-    ...savedViewRestore,
+    ...viewState,
     ...createDoc,
     ...bulkDelete,
   }

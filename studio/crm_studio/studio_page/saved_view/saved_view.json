@@ -88,6 +88,93 @@
            "blockName": "list-control-buttons",
            "children": [
             {
+             "baseStyles": {
+              "alignItems": "center",
+              "display": "flex",
+              "flexDirection": "row",
+              "gap": "6px",
+              "marginRight": "4px"
+             },
+             "blockName": "list-modified",
+             "children": [
+              {
+               "baseStyles": {
+                "color": "var(--ink-gray-5)",
+                "fontSize": "13px",
+                "whiteSpace": "nowrap"
+               },
+               "blockName": "list-modified-label",
+               "children": [],
+               "classes": [],
+               "componentId": "list-modified-label",
+               "componentName": "TextBlock",
+               "componentProps": {
+                "text": "Modified"
+               }
+              },
+              {
+               "blockName": "list-modified-reset",
+               "children": [],
+               "classes": [],
+               "componentEvents": {
+                "click": {
+                 "action": "Run Script",
+                 "event": "click",
+                 "script": "function handleEvent() { resetView() }"
+                }
+               },
+               "componentId": "list-modified-reset",
+               "componentName": "Button",
+               "componentProps": {
+                "label": "Reset",
+                "variant": "ghost"
+               }
+              },
+              {
+               "blockName": "list-modified-save",
+               "children": [],
+               "classes": [],
+               "componentEvents": {
+                "click": {
+                 "action": "Run Script",
+                 "event": "click",
+                 "script": "function handleEvent() { saveActiveView() }"
+                }
+               },
+               "componentId": "list-modified-save",
+               "componentName": "Button",
+               "componentProps": {
+                "label": "Save",
+                "variant": "subtle"
+               },
+               "visibilityCondition": "{{ canEditActiveView }}"
+              },
+              {
+               "blockName": "list-modified-saveas",
+               "children": [],
+               "classes": [],
+               "componentEvents": {
+                "click": {
+                 "action": "Run Script",
+                 "event": "click",
+                 "script": "function handleEvent() { openSaveAs() }"
+                }
+               },
+               "componentId": "list-modified-saveas",
+               "componentName": "Button",
+               "componentProps": {
+                "label": "Save as new",
+                "variant": "subtle"
+               }
+              }
+             ],
+             "classes": [],
+             "componentId": "list-modified",
+             "componentName": "container",
+             "originalElement": "div",
+             "visibilityCondition": "{{ viewDirty }}"
+            },
+            {
              "blockName": "list-filter",
              "children": [],
              "classes": [],
@@ -228,6 +315,41 @@
          "componentId": "list-table",
          "componentName": "container",
          "originalElement": "div"
+        },
+        {
+         "blockName": "list-saveas-dialog",
+         "children": [
+          {
+           "baseStyles": {
+            "width": "100%"
+           },
+           "blockName": "list-saveas-name",
+           "children": [],
+           "classes": [],
+           "componentId": "list-saveas-name",
+           "componentName": "TextInput",
+           "componentProps": {
+            "modelValue": {
+             "$type": "variable",
+             "name": "saveAsLabel"
+            },
+            "placeholder": "e.g. My open deals",
+            "size": "md"
+           }
+          }
+         ],
+         "classes": [],
+         "componentId": "list-saveas-dialog",
+         "componentName": "Dialog",
+         "componentProps": {
+          "actions": "{{ saveAsActions }}",
+          "modelValue": {
+           "$type": "variable",
+           "name": "saveAsDialog"
+          },
+          "size": "sm",
+          "title": "Save as new view"
+         }
         },
         {
          "blockName": "list-view-dialog",
