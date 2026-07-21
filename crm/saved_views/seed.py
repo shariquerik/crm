@@ -31,13 +31,19 @@ def seed_doctype(doctype, status_doctype, owner_field, closing_field=None):
 def views_section(status_doctype, owner_field, closing_field):
 	open_statuses = open_status_names(status_doctype)
 	section = [
-		view_def("All", []),
-		view_def("Open", [["status", "in", open_statuses]]),
-		view_def("My open", [["status", "in", open_statuses], [owner_field, "=", "@me"]]),
+		view_def("All", [], icon="list"),
+		view_def("Open", [["status", "in", open_statuses]], icon="circle-dot"),
+		view_def("My open", [["status", "in", open_statuses], [owner_field, "=", "@me"]], icon="user"),
 	]
 	if closing_field:
-		section.append(view_def("Closing this month", [[closing_field, "timespan", "this month"]]))
-	section.append(view_def("Unassigned", [[owner_field, "is", "not set"]]))
+		section.append(
+			view_def(
+				"Closing this month",
+				[[closing_field, "timespan", "this month"]],
+				icon="calendar-clock",
+			)
+		)
+	section.append(view_def("Unassigned", [[owner_field, "is", "not set"]], icon="user-x"))
 	return section
 
 

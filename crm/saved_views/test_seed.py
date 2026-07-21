@@ -73,6 +73,11 @@ class TestSeed(IntegrationTestCase):
 		view = view_by_label(shared_group("CRM Lead", "Views"), "Unassigned")
 		self.assertEqual(json.loads(view.filters), [["lead_owner", "is", "not set"]])
 
+	def test_views_carry_lucide_icons(self):
+		group = shared_group("CRM Deal", "Views")
+		self.assertEqual(view_by_label(group, "All").icon, "list")
+		self.assertEqual(view_by_label(group, "Unassigned").icon, "user-x")
+
 	def test_pipeline_has_a_coloured_view_per_deal_status(self):
 		statuses = frappe.get_all("CRM Deal Status", fields=["name", "color"], order_by="position asc")
 		group = shared_group("CRM Deal", "Pipeline")
