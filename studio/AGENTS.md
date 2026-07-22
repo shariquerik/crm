@@ -21,12 +21,12 @@ share modules rather than copying them.
 
 ### Reading and hand-editing a page's blocks
 
-`crm_studio/scripts/blocks.py` reads the block trees so you don't have to hand-roll a walker:
+`crm_studio/tools/blocks.py` reads the block trees so you don't have to hand-roll a walker:
 
 ```
-python crm_studio/scripts/blocks.py dump saved_view          # scannable component tree
-python crm_studio/scripts/blocks.py find saved_view list-modified
-python crm_studio/scripts/blocks.py diff saved_view          # blocks vs draft_blocks
+python crm_studio/tools/blocks.py dump saved_view          # scannable component tree
+python crm_studio/tools/blocks.py find saved_view list-modified
+python crm_studio/tools/blocks.py diff saved_view          # blocks vs draft_blocks
 ```
 
 Two things the raw JSON will not tell you:

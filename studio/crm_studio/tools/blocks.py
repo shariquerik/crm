@@ -1,4 +1,4 @@
-"""Inspect Studio page block trees on disk: `python crm_studio/scripts/blocks.py dump saved_view`."""
+"""Inspect Studio page block trees on disk: `python crm_studio/tools/blocks.py dump saved_view`."""
 
 import argparse
 import difflib
