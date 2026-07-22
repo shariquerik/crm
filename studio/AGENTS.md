@@ -19,6 +19,26 @@ this role are deleted.
 `@app/*` resolves to `crm_studio/*` (vite's `studioRootAlias`), so page scripts and components
 share modules rather than copying them.
 
+### Reading and hand-editing a page's blocks
+
+`crm_studio/scripts/blocks.py` reads the block trees so you don't have to hand-roll a walker:
+
+```
+python crm_studio/scripts/blocks.py dump saved_view          # scannable component tree
+python crm_studio/scripts/blocks.py find saved_view list-modified
+python crm_studio/scripts/blocks.py diff saved_view          # blocks vs draft_blocks
+```
+
+Two things the raw JSON will not tell you:
+
+- Blocks nest through `children` **and** through `componentSlots.<slot>.slotContent` — the page
+  header lives in the app shell's `header` slot, so a walk over `children` alone misses it.
+- A page has both `blocks` and `draft_blocks`. `StudioPage.publish()` copies the draft over
+  `blocks` and clears it, so a page carrying a `draft_blocks` has unpublished builder edits and
+  **the builder shows the draft, not your hand-edit to `blocks`.** Mirror the edit into
+  `draft_blocks` or null it out; `BlockTree.save()` does the mirroring. A stale draft also
+  doubles the file, which makes an edit look far larger in `git diff` than it is.
+
 ## Agent Guidelines & Code Conventions
 
 ### Writing good code
