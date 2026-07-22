@@ -8,6 +8,7 @@ from frappe import _
 
 from crm.api.doc import _is_listable
 from crm.fcrm.doctype.crm_ui_customization.crm_ui_customization import get_sidebar_layout
+from crm.saved_views.seed import seed_all_view
 
 
 @frappe.whitelist()
@@ -22,14 +23,26 @@ def get_rail_layout() -> dict:
 def update_rail_layout(items: list | str) -> dict:
 	"""Replace the session user's rail, in order. Each entry is `{dt, label, icon}`;
 	`icon` is a bare Lucide name, and either may be empty to fall back to the
-	shared layout's value."""
+	shared layout's value.
+
+	A doctype arriving on the rail for the first time is seeded with the shared "Views"
+	section the built-in ones ship with, so every list opens the same way. Seeding is
+	shared rather than personal because the section it creates carries no opinion — an
+	unfiltered All — and a personal one would leave the next user to seed their own."""
 	if isinstance(items, str):
 		items = json.loads(items)
 	if not items:
 		frappe.throw(_("The sidebar needs at least one item"))
 
+	previous = {item["dt"] for item in get_rail_layout()["items"]}
 	shared = {item["dt"]: item for item in _flatten(get_sidebar_layout())}
-	_save_user_items([_as_item(entry, shared) for entry in items])
+	saved = [_as_item(entry, shared) for entry in items]
+	_save_user_items(saved)
+
+	for item in saved:
+		if item["dt"] not in previous:
+			seed_all_view(item["dt"])
+
 	return get_rail_layout()
 
 

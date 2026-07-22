@@ -111,6 +111,15 @@ def seed_note():
 	)
 
 
+def seed_all_view(doctype):
+	"""The sidebar a doctype gets when it is put on the rail by hand: the same shared
+	"Views" section the doctypes above open with, holding an All and nothing more —
+	what else is worth filtering for is that doctype's business, not ours. Without it
+	the sidebar falls back to a virtual All pointing at the plain list route, which
+	names no view and so leaves the breadcrumb reading only the doctype."""
+	seed_group(doctype, "Views", [view_def("All", [], icon="list")])
+
+
 def views_section(status_doctype, owner_field, closing_field):
 	open_statuses = open_status_names(status_doctype)
 	section = [
