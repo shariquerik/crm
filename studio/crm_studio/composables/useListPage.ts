@@ -5,7 +5,7 @@ import {
   clearColumnWidth,
   getDefaultColumns,
 } from '@framework/ui/ColumnSettings'
-import { doctypeLabels, guardDoctype } from '@app/data/doctypes'
+import { doctypeLabel, guardDoctype } from '@app/data/doctypes'
 import { useBulkDelete } from '@app/composables/useBulkDelete'
 import { useCreateDoc } from '@app/composables/useCreateDoc'
 import { useListQuery, usePaging } from '@app/composables/useListQuery'
@@ -94,7 +94,7 @@ export function useListPage(ctx: any) {
   const breadcrumbs = computed(() =>
     [
       {
-        label: doctypeLabels[doctype] || doctype,
+        label: doctypeLabel(doctype),
         route: `/${encodeURIComponent(route.params.doctype)}`,
       },
       viewState.viewLabel.value ? { label: viewState.viewLabel.value } : null,

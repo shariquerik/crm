@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { call, toast } from 'frappe-ui'
-import { doctypeLabels, guardDoctype } from '@app/data/doctypes'
+import { doctypeLabel, guardDoctype } from '@app/data/doctypes'
 import { errorMessage } from '@app/data/errors'
 
 export default function setup(ctx: any) {
@@ -49,7 +49,7 @@ export default function setup(ctx: any) {
 
   const breadcrumbs = computed(() => [
     {
-      label: doctypeLabels[doctype.value] || doctype.value,
+      label: doctypeLabel(doctype.value),
       route: doctypeLink.value,
     },
     { label: doc.value?.name || route.params.id },

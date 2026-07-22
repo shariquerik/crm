@@ -23,23 +23,29 @@
           >
             <Icon :name="doctypeIcon(item.dt, item.icon)" class="size-4" />
           </RailItem>
-          <div
+          <!-- Not a RailItem: this tile is a slot waiting to be filled, not a place
+            you can go, and it says so by being the one outlined tile in a rail of
+            filled ones. RailItem draws its own background, which stacked with an
+            outline read as a second grey blob. The active bar still shows, because
+            the list it would add is the list on screen. -->
+          <Tooltip
             v-if="unlistedDoctype"
-            class="rounded-lg outline-dashed outline-1 outline-offset-2 outline-outline-gray-3"
+            :text="`Add ${unlistedLabel} to sidebar`"
+            placement="right"
           >
-            <RailItem
-              :label="`Add ${unlistedLabel} to sidebar`"
-              active
+            <button
+              type="button"
+              class="relative flex size-7 shrink-0 items-center justify-center rounded-[7px] border border-dashed border-outline-gray-3 text-ink-gray-5 transition hover:border-outline-gray-4 hover:text-ink-gray-8 focus-visible:ring-0 focus-visible:focus-ring"
+              :aria-label="`Add ${unlistedLabel} to sidebar`"
               @click="addToRail(unlistedDoctype)"
             >
-              <Icon :name="doctypeIcon(unlistedDoctype)" class="size-4" />
               <span
-                class="absolute -right-1 -top-1 grid size-3.5 place-content-center rounded-full bg-surface-gray-7 text-ink-white"
-              >
-                <span class="lucide-plus size-2.5" aria-hidden="true" />
-              </span>
-            </RailItem>
-          </div>
+                class="absolute -left-[11px] top-1/2 h-7 w-1 -translate-y-1/2 rounded-r bg-surface-gray-8"
+                aria-hidden="true"
+              />
+              <Icon :name="doctypeIcon(unlistedDoctype)" class="size-4" />
+            </button>
+          </Tooltip>
         </div>
 
         <div class="flex w-full shrink-0 flex-col items-center gap-1">
@@ -105,7 +111,9 @@
     </template>
 
     <template #sidebar>
-      <div class="group/sidebar flex h-full shrink-0">
+      <!-- A URL naming no real doctype has no views to list and no list to head, so
+        it drops to the rail alone rather than framing an error in app chrome. -->
+      <div v-if="knownDoctype" class="group/sidebar flex h-full shrink-0">
         <Sidebar
           v-model:collapsed="collapsed"
           :width="SIDEBAR_WIDTH"
@@ -179,7 +187,7 @@
       </div>
     </template>
 
-    <PageHeader class="shrink-0">
+    <PageHeader v-if="knownDoctype" class="shrink-0">
       <slot name="header" />
     </PageHeader>
     <div class="flex min-h-0 flex-1 flex-col">
@@ -200,6 +208,7 @@ import {
   RailItem,
   ScrollArea,
   Sidebar,
+  Tooltip,
 } from 'frappe-ui'
 import { Icon } from 'frappe-ui/icons'
 import { ViewSidebar } from '@framework/ui/components/SavedViews'
@@ -209,7 +218,7 @@ import { useRouter } from 'vue-router'
 import CrmRailEditor from '@app/components/CrmRailEditor.vue'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
 import { countsRefreshToken } from '@app/data/countsRefresh'
-import { doctypeIcon, doctypeLabels } from '@app/data/doctypes'
+import { doctypeIcon, doctypeLabel } from '@app/data/doctypes'
 import { addableDoctypes, addToRail, railItems } from '@app/data/railLayout'
 import { sidebarRefreshToken } from '@app/data/sidebarRefresh'
 
@@ -266,8 +275,17 @@ const unlistedDoctype = computed(() =>
     : '',
 )
 
-const unlistedLabel = computed(
-  () => doctypeLabels[unlistedDoctype.value] || unlistedDoctype.value,
+const unlistedLabel = computed(() => doctypeLabel(unlistedDoctype.value))
+
+// A doctype on the rail is known without asking; anything else waits on the same
+// `addable_doctypes` answer the hint tile does. Unknown only once that has landed —
+// while it is in flight the chrome stays, since blinking it away on every load of a
+// perfectly good doctype is worse than a moment of it framing a page that is loading.
+const knownDoctype = computed(
+  () =>
+    !offRail.value ||
+    !addableDoctypes.fetched ||
+    Boolean(unlistedDoctype.value),
 )
 
 const appMenuOptions = [
