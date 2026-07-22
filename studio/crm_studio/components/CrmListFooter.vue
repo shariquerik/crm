@@ -1,7 +1,6 @@
 <template>
   <div
-    class="flex shrink-0 items-center justify-between gap-2 border-t border-outline-gray-1 py-2"
-    :style="{ paddingInline: gutter }"
+    class="flex shrink-0 items-center justify-between gap-2 border-t border-outline-gray-1 py-2 px-5"
   >
     <div class="flex items-center gap-2">
       <div @click.capture="onPageSizeClick">
@@ -40,14 +39,12 @@ withDefaults(
     totalCount?: number
     hasLiveCounts?: boolean
     pageLengthOptions?: number[]
-    gutter?: string
   }>(),
   {
     rowCount: 0,
     totalCount: 0,
     hasLiveCounts: false,
     pageLengthOptions: () => [20, 100, 500, 2500],
-    gutter: '12px',
   },
 )
 
