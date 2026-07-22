@@ -188,6 +188,19 @@ export function useViewState(options: {
     router.push(`/${encodeURIComponent(route.params.doctype)}/view/${name}`)
   }
 
+  const viewSaveOptions = computed(() =>
+    [
+      canEditActiveView.value
+        ? {
+            label: 'Save to this view',
+            icon: 'lucide-check',
+            onClick: saveActiveView,
+          }
+        : null,
+      { label: 'Save as new', icon: 'lucide-copy-plus', onClick: openSaveAs },
+    ].filter(Boolean),
+  )
+
   const saveAsActions = computed(() => [
     {
       label: 'Save',
@@ -212,5 +225,6 @@ export function useViewState(options: {
     saveAsLabel,
     saveAsActions,
     openSaveAs,
+    viewSaveOptions,
   }
 }
