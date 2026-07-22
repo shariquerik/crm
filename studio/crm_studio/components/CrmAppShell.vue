@@ -18,10 +18,28 @@
             v-for="item in railItems"
             :key="item.dt"
             :label="item.label"
-            :icon="doctypeIcon(item.dt)"
             :active="item.dt === activeDoctype"
             @click="go(`/${encodeSegment(item.dt)}`)"
-          />
+          >
+            <Icon :name="doctypeIcon(item.dt, item.icon)" class="size-4" />
+          </RailItem>
+          <div
+            v-if="unlistedDoctype"
+            class="rounded-lg outline-dashed outline-1 outline-offset-2 outline-outline-gray-3"
+          >
+            <RailItem
+              :label="`Add ${unlistedLabel} to sidebar`"
+              active
+              @click="addToRail(unlistedDoctype)"
+            >
+              <Icon :name="doctypeIcon(unlistedDoctype)" class="size-4" />
+              <span
+                class="absolute -right-1 -top-1 grid size-3.5 place-content-center rounded-full bg-surface-gray-7 text-ink-white"
+              >
+                <span class="lucide-plus size-2.5" aria-hidden="true" />
+              </span>
+            </RailItem>
+          </div>
         </div>
 
         <div class="flex w-full shrink-0 flex-col items-center gap-1">
@@ -43,6 +61,12 @@
             icon="lucide-circle-help"
             variant="ghost"
             @click="openDocs"
+          />
+          <RailItem
+            label="Customize sidebar"
+            icon="lucide-settings-2"
+            variant="ghost"
+            @click="editingRail = true"
           />
           <RailItem
             label="Settings"
@@ -161,6 +185,8 @@
     <div class="flex min-h-0 flex-1 flex-col">
       <slot />
     </div>
+
+    <CrmRailEditor v-model="editingRail" />
   </DesktopShell>
 </template>
 
@@ -175,23 +201,24 @@ import {
   ScrollArea,
   Sidebar,
 } from 'frappe-ui'
+import { Icon } from 'frappe-ui/icons'
 import { ViewSidebar } from '@framework/ui/components/SavedViews'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 
+import CrmRailEditor from '@app/components/CrmRailEditor.vue'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
 import { countsRefreshToken } from '@app/data/countsRefresh'
-import { doctypeIcon } from '@app/data/doctypes'
+import { doctypeIcon, doctypeLabels } from '@app/data/doctypes'
+import { addableDoctypes, addToRail, railItems } from '@app/data/railLayout'
 import { sidebarRefreshToken } from '@app/data/sidebarRefresh'
 
 const props = withDefaults(
   defineProps<{
-    railItems?: { dt: string; label: string }[]
     activeDoctype?: string
     appName?: string
   }>(),
   {
-    railItems: () => [],
     activeDoctype: '',
     appName: 'CRM',
   },
@@ -212,9 +239,36 @@ function go(path: string) {
 }
 
 function goToFirstModule() {
-  const first = props.railItems[0]
+  const first = railItems.value[0]
   go(first ? `/${encodeSegment(first.dt)}` : '/')
 }
+
+const editingRail = ref(false)
+
+const offRail = computed(
+  () =>
+    Boolean(props.activeDoctype) &&
+    railItems.value.length > 0 &&
+    !railItems.value.some((item) => item.dt === props.activeDoctype),
+)
+
+// addable_doctypes doubles as the validity gate for the hint tile, so a typo
+// URL ("/nonsense") never offers itself for the sidebar.
+watchEffect(() => {
+  if (offRail.value && !addableDoctypes.fetched && !addableDoctypes.loading) {
+    addableDoctypes.fetch()
+  }
+})
+
+const unlistedDoctype = computed(() =>
+  offRail.value && (addableDoctypes.data ?? []).includes(props.activeDoctype)
+    ? props.activeDoctype
+    : '',
+)
+
+const unlistedLabel = computed(
+  () => doctypeLabels[unlistedDoctype.value] || unlistedDoctype.value,
+)
 
 const appMenuOptions = [
   {

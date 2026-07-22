@@ -1,20 +1,32 @@
 import { watch } from 'vue'
 
+import { isIconName } from '@app/data/icons'
+
+// Icons are bare sprite names, not `lucide-*` CSS classes: the classes only exist
+// for names hard-coded in source, so a user-picked icon would render as nothing.
+// Everything draws them through `<Icon :name>` from frappe-ui/icons.
 const DOCTYPES: Record<string, { label: string; icon: string }> = {
-  'CRM Lead': { label: 'Leads', icon: 'lucide-users' },
-  'CRM Deal': { label: 'Deals', icon: 'lucide-handshake' },
-  Contact: { label: 'Contacts', icon: 'lucide-contact-round' },
-  'CRM Organization': { label: 'Organizations', icon: 'lucide-building-2' },
-  'CRM Task': { label: 'Tasks', icon: 'lucide-list-checks' },
-  'FCRM Note': { label: 'Notes', icon: 'lucide-notebook-pen' },
+  'CRM Lead': { label: 'Leads', icon: 'users' },
+  'CRM Deal': { label: 'Deals', icon: 'handshake' },
+  Contact: { label: 'Contacts', icon: 'contact-round' },
+  'CRM Organization': { label: 'Organizations', icon: 'building-2' },
+  'CRM Task': { label: 'Tasks', icon: 'list-checks' },
+  'FCRM Note': { label: 'Notes', icon: 'notebook-pen' },
 }
 
 export const doctypeLabels: Record<string, string> = Object.fromEntries(
   Object.entries(DOCTYPES).map(([doctype, { label }]) => [doctype, label]),
 )
 
-export function doctypeIcon(doctype: string) {
-  return DOCTYPES[doctype]?.icon ?? 'lucide-file'
+/** The icon a doctype renders with: the one saved on its rail item, else this
+ *  app's own default for it, else a generic glyph. */
+export function doctypeIcon(doctype: string, saved?: string | null) {
+  // A name the sprite no longer carries draws a blank tile, so it falls through
+  // — CRM's seeded layout still names the icons Lucide has since renamed
+  // (`home` -> `house`, `check-square` -> `square-check`, `edit` -> `square-pen`).
+  const picked = (saved ?? '').replace(/^lucide-/, '').trim()
+  if (picked && isIconName(picked)) return picked
+  return DOCTYPES[doctype]?.icon || 'file'
 }
 
 export function guardDoctype(ctx: any, onResolved: () => void, suffix = '') {

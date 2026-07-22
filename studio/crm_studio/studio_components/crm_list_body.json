@@ -423,8 +423,7 @@
   "componentId": "crm-app-shell",
   "componentName": "CrmAppShell",
   "componentProps": {
-   "activeDoctype": "{{ route.params.doctype }}",
-   "railItems": "{{ (sidebarLayout.data || []).flatMap(s => s.items || []) }}"
+   "activeDoctype": "{{ route.params.doctype }}"
   },
   "componentSlots": {
    "header": {
