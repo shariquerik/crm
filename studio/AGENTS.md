@@ -46,6 +46,40 @@ Two things the raw JSON will not tell you:
   a commit that would carry one. A stale draft also doubles the file, which makes an edit look far
   larger in `git diff` than it is.
 
+## Running and verifying locally
+
+Changes on disk are not live until they are imported. Keep the watcher running instead of
+syncing by hand:
+
+```
+bench --site <site> watch-studio
+```
+
+It imports changed `studio/**/*.json` into the DB, debounced, and then broadcasts
+`studio_doc_update` — which refreshes any open preview or editor, so a preview tab updates on its
+own. Only `.json` is watched: a page's sibling `.ts` is loaded off disk by the runtime and
+hot-reloads through vite. `bench --site <site> execute studio.sync.sync_studio_apps --kwargs
+"{'app_name':'crm'}"` is the one-shot equivalent; `bench migrate` is never needed for this.
+
+Two servers, and the ports vary per bench — read them from the Procfile or the running processes
+rather than assuming 8000:
+
+- the bench's own port serves the backend and the app: **verify work on the dev preview,
+  `/dev/crm-studio/<Doctype>`** (and `/dev/crm-studio/<Doctype>/view/<id>` for a saved view).
+- the Studio frontend's vite port serves the **builder**, at `/studio/app/crm-studio/<pageID>`.
+
+**`<pageID>` is the page's DB name, which is not its file name.** A page doc is named after
+`page_name`, so `studio_page/list/list.json` (whose `name` field even says `list`) is `crm-list` in
+the DB — likewise `crm-view`, `crm-detail`, `crm-home`. A wrong ID gives a silent `Loading…`
+canvas rather than an error.
+
+When a Studio screen hangs or renders blank, **read the network requests before the console.**
+Frappe's console errors are minified and say little more than `DoesNotExistError`; the failing
+request names the doctype and record outright.
+
+`sync_studio_apps()` treats every directory under `studio/` as a Studio app, so anything that is
+not one — tooling, scratch notes — belongs inside `crm_studio/` rather than beside it.
+
 ## Agent Guidelines & Code Conventions
 
 ### Writing good code
