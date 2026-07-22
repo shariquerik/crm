@@ -11,6 +11,12 @@ re-imports it on `bench migrate`. There is no seed script — the Python seeders
 this role are deleted.
 
 - `studio_page/<page>/<page>.json` — the blocks, authored in the builder.
+- `studio_components/<component>.json` — a block tree shared by more than one page. `list` and
+  `saved_view` are the same screen on two routes, so both are a thin reference to
+  `crm_list_body`. A referenced component keeps resolving `{{ … }}` and `$type: variable`
+  bindings against the *host page's* script, and the builder shows it as one collapsed layer.
+  Its usage-site `componentSlots` are dropped, though, so content cannot be slotted in per page —
+  vary behaviour with a `visibilityCondition` on an expression the page script owns instead.
 - `studio_page/<page>/<page>.ts` — the page script, edited on disk. A standard app's page
   script lives in the file, not in the page's `script` field; `export_page()` excludes it.
 - Editing a `.vue` component changes no Studio document, so nothing rebuilds on its own —
