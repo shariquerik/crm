@@ -153,6 +153,7 @@
               :key="`${activeDoctype}:${sidebarRefreshToken}`"
               :doctype="activeDoctype"
               :refreshToken="countsRefreshToken"
+              @changed="savedViewsChanged"
             />
           </ScrollArea>
         </Sidebar>
@@ -220,7 +221,10 @@ import { useAccountMenu } from '@app/composables/useAccountMenu'
 import { countsRefreshToken } from '@app/data/countsRefresh'
 import { doctypeIcon, doctypeLabel } from '@app/data/doctypes'
 import { addableDoctypes, addToRail, railItems } from '@app/data/railLayout'
-import { sidebarRefreshToken } from '@app/data/sidebarRefresh'
+import {
+  savedViewsChanged,
+  sidebarRefreshToken,
+} from '@app/data/sidebarRefresh'
 
 const props = withDefaults(
   defineProps<{

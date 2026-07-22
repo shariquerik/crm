@@ -4,7 +4,7 @@ import { serializeColumns } from '@framework/ui/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/SortBy'
 import { completeFilters, toFiltersDict } from '@app/data/listWire'
 import { currentUser } from '@app/data/session'
-import { refreshSidebar } from '@app/data/sidebarRefresh'
+import { refreshSidebar, savedViewsToken } from '@app/data/sidebarRefresh'
 import {
   overridesFromQuery,
   preservedQuery,
@@ -39,6 +39,11 @@ export function useViewState(options: {
 
   const started = ref(false)
   const baseline = ref('')
+
+  // The sidebar mutates views through its own useSavedViews instance, which leaves
+  // this one holding a stale sidebar — a renamed view, or a different one marked
+  // default, would otherwise only surface on reload.
+  watch(savedViewsToken, () => views.reload())
 
   const dirty = computed(
     () => Boolean(viewName) && started.value && tweakKey() !== baseline.value,
@@ -110,9 +115,25 @@ export function useViewState(options: {
       },
       { immediate: true },
     )
+    // Set-as-default rewrote the record this route reads, so the list on screen is
+    // no longer what it stores: re-seed from the newly chosen view rather than leave
+    // the sidebar marking one view while the rows and breadcrumb show another.
+    watch(views.defaultView, async (next: any, previous: any) => {
+      if (!started.value || previous == null || next === previous) return
+      await views.loadLanding()
+      applyBase(metaFields.value)
+      baseline.value = tweakKey()
+      submit()
+    })
+
+    // Only a real divergence is a tweak. Seeding the list reassigns all three refs,
+    // which the deep watcher cannot tell from an edit — and an auto-save there would
+    // turn the default into a standalone scratchpad, dropping the `source_view` that
+    // marks which view the user chose as default.
     watch(
       [filters, sort, columns],
-      () => started.value && scheduleLandingSave(),
+      () =>
+        started.value && tweakKey() !== baseline.value && scheduleLandingSave(),
       {
         deep: true,
       },
@@ -132,10 +153,10 @@ export function useViewState(options: {
   let landingTimer: ReturnType<typeof setTimeout> | undefined
   function scheduleLandingSave() {
     clearTimeout(landingTimer)
-    landingTimer = setTimeout(
-      () => views.saveLanding(liveSnapshot()),
-      LANDING_SAVE_DEBOUNCE_MS,
-    )
+    landingTimer = setTimeout(async () => {
+      await views.saveLanding(liveSnapshot())
+      baseline.value = tweakKey()
+    }, LANDING_SAVE_DEBOUNCE_MS)
   }
   onScopeDispose(() => clearTimeout(landingTimer))
 
