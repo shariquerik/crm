@@ -10,20 +10,18 @@
    "blockName": "body",
    "children": [
     {
-     "blockName": "crm-list-body-ref",
-     "componentId": "crm-list-body-ref",
-     "componentName": "crm_list_body",
-     "isStudioComponent": true,
-     "children": [],
-     "classes": [],
-     "componentProps": {},
-     "componentSlots": {},
      "baseStyles": {
       "height": "100%",
       "minHeight": "0",
       "minWidth": "0",
       "width": "100%"
-     }
+     },
+     "blockName": "crm-list-body-ref",
+     "children": [],
+     "classes": [],
+     "componentId": "crm-list-body-ref",
+     "componentName": "crm_list_body",
+     "isStudioComponent": true
     }
    ],
    "classes": [],
@@ -36,7 +34,7 @@
  "doctype": "Studio Page",
  "frappe_app": "crm",
  "is_standard": 1,
- "modified": "2026-07-22 12:30:23.587261",
+ "modified": "2026-07-22 14:27:28.390829",
  "modified_by": "Administrator",
  "name": "saved_view",
  "owner": "Administrator",

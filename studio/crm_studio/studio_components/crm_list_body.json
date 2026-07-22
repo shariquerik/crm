@@ -1,10 +1,4 @@
 {
- "doctype": "Studio Component",
- "name": "crm_list_body",
- "component_id": "crm_list_body",
- "component_name": "CRM List Body",
- "is_disabled": 0,
- "inputs": [],
  "block": {
   "baseStyles": {
    "height": "100%",
@@ -516,9 +510,9 @@
             "componentName": "Dropdown",
             "componentProps": {
              "button": {
+              "iconRight": "chevron-down",
               "label": "Save",
-              "variant": "subtle",
-              "iconRight": "chevron-down"
+              "variant": "subtle"
              },
              "options": "{{ viewSaveOptions }}",
              "placement": "left"
@@ -586,5 +580,17 @@
    }
   },
   "isCustomVueComponent": true
- }
+ },
+ "component_id": "crm_list_body",
+ "component_name": "CRM List Body",
+ "creation": "2026-07-22 13:46:47.774719",
+ "docstatus": 0,
+ "doctype": "Studio Component",
+ "idx": 0,
+ "inputs": [],
+ "is_disabled": 0,
+ "modified": "2026-07-22 13:46:47.774719",
+ "modified_by": "Administrator",
+ "name": "crm_list_body",
+ "owner": "Administrator"
 }
