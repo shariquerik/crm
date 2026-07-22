@@ -10,27 +10,30 @@ PAGES = Path(__file__).resolve().parent.parent / "studio_page"
 
 def main():
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument("command", choices=sorted(COMMANDS))
-	parser.add_argument("page")
-	parser.add_argument("component_id", nargs="?")
+	commands = parser.add_subparsers(dest="command", required=True)
+	for name in ("dump", "diff"):
+		commands.add_parser(name).add_argument("page")
+	locate = commands.add_parser("find")
+	locate.add_argument("page")
+	locate.add_argument("component_id")
+	commands.add_parser("check").add_argument("pages", nargs="*")
 	arguments = parser.parse_args()
-	COMMANDS[arguments.command](BlockTree.load(arguments.page), arguments.component_id)
+	return COMMANDS[arguments.command](arguments)
 
 
-def dump(tree, component_id):
-	print("\n".join(tree.outline()))
+def dump(arguments):
+	print("\n".join(BlockTree.load(arguments.page).outline()))
 
 
-def find(tree, component_id):
-	if not component_id:
-		raise SystemExit("find needs a componentId")
-	block = tree.find(component_id)
+def find(arguments):
+	block = BlockTree.load(arguments.page).find(arguments.component_id)
 	if not block:
-		raise SystemExit(f"no block with componentId {component_id}")
+		raise SystemExit(f"no block with componentId {arguments.component_id}")
 	print(json.dumps(block, indent=1))
 
 
-def diff(tree, component_id):
+def diff(arguments):
+	tree = BlockTree.load(arguments.page)
 	if tree.draft is None:
 		print("no draft_blocks — the page is published")
 		return
@@ -44,7 +47,18 @@ def diff(tree, component_id):
 	print("\n".join(lines) or "draft_blocks matches blocks")
 
 
-COMMANDS = {"dump": dump, "find": find, "diff": diff}
+# Committing a page whose draft_blocks is set commits builder state that Studio has not published,
+# and the builder would then show that draft instead of what the file's `blocks` say.
+def check(arguments):
+	drafted = [tree.path.name for tree in BlockTree.load_all(arguments.pages) if tree.draft]
+	if not drafted:
+		return 0
+	print(f"unpublished draft_blocks in: {', '.join(drafted)}")
+	print("Publish the page in the builder, or clear draft_blocks, before committing.")
+	return 1
+
+
+COMMANDS = {"dump": dump, "find": find, "diff": diff, "check": check}
 
 
 class BlockTree:
@@ -55,12 +69,19 @@ class BlockTree:
 		self.raw = path.read_text()
 		self.document = json.loads(self.raw)
 
+	# Takes a page name for a human, or a path for whatever pre-commit hands `check`.
 	@classmethod
-	def load(cls, page: str):
-		path = PAGES / page / f"{page}.json"
+	def load(cls, page):
+		path = Path(page)
+		if not path.suffix:
+			path = PAGES / page / f"{page}.json"
 		if not path.exists():
 			raise SystemExit(f"no such page: {path}")
 		return cls(path)
+
+	@classmethod
+	def load_all(cls, pages):
+		return [cls.load(page) for page in pages or sorted(PAGES.glob("*/*.json"))]
 
 	@property
 	def blocks(self):
@@ -110,14 +131,13 @@ class BlockTree:
 	def clip(value, width=70):
 		return value if len(value) <= width else value[:width] + "…"
 
-	# Studio's publish() copies draft_blocks over blocks, so leaving a stale draft in place would
-	# bury the edit made here.
-	def save(self, sync_draft=True):
-		if sync_draft and self.draft is not None:
-			self.document["draft_blocks"] = json.loads(json.dumps(self.blocks))
+	# Dropping draft_blocks is what Studio's own publish() does, and an exported page omits the key
+	# entirely. Keeping a draft would bury this edit: the builder renders the draft over `blocks`.
+	def save(self):
+		self.document.pop("draft_blocks", None)
 		text = json.dumps(self.document, indent=1)
 		self.path.write_text(text + "\n" if self.raw.endswith("\n") else text)
 
 
 if __name__ == "__main__":
-	main()
+	raise SystemExit(main())

@@ -42,6 +42,14 @@ repos:
 
     - repo: local
       hooks:
+          # A page whose draft_blocks is set carries builder edits Studio has not published, and
+          # the builder renders that draft instead of the file's `blocks`.
+          - id: studio-page-published
+            name: studio pages carry no unpublished draft
+            entry: python3 studio/crm_studio/tools/blocks.py check
+            language: system
+            files: ^studio/crm_studio/studio_page/.*\.json$
+
           - id: eslint
             name: eslint
             entry: bash -c 'eslint --fix --config frontend/eslint.config.mjs frontend/src studio/crm_studio'

@@ -34,10 +34,11 @@ Two things the raw JSON will not tell you:
 - Blocks nest through `children` **and** through `componentSlots.<slot>.slotContent` — the page
   header lives in the app shell's `header` slot, so a walk over `children` alone misses it.
 - A page has both `blocks` and `draft_blocks`. `StudioPage.publish()` copies the draft over
-  `blocks` and clears it, so a page carrying a `draft_blocks` has unpublished builder edits and
-  **the builder shows the draft, not your hand-edit to `blocks`.** Mirror the edit into
-  `draft_blocks` or null it out; `BlockTree.save()` does the mirroring. A stale draft also
-  doubles the file, which makes an edit look far larger in `git diff` than it is.
+  `blocks` and drops it, so a page carrying a `draft_blocks` has unpublished builder edits and
+  **the builder shows the draft, not your hand-edit to `blocks`.** An exported page omits the key
+  entirely; `BlockTree.save()` drops it for you, and a pre-commit hook (`blocks.py check`) refuses
+  a commit that would carry one. A stale draft also doubles the file, which makes an edit look far
+  larger in `git diff` than it is.
 
 ## Agent Guidelines & Code Conventions
 
