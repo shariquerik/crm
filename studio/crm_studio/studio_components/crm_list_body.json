@@ -188,7 +188,7 @@
            "description": "Nothing to show here yet.",
            "title": "No records"
           },
-          "onRowClick": "(row) => router.push(`/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`)",
+          "onRowClick": "(row) => router.push({ path: `/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(row.name)}`, query: route.params.viewName ? { view: route.params.viewName } : {} })",
           "showTooltip": true
          },
          "pageLengthOptions": [
@@ -582,7 +582,7 @@
  },
  "component_id": "crm_list_body",
  "component_name": "CRM List Body",
- "creation": "2026-07-22 13:46:47.774719",
+ "creation": "2026-07-22 19:08:58.387942",
  "docstatus": 0,
  "doctype": "Studio Component",
  "idx": 0,

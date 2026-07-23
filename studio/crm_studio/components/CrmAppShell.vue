@@ -152,6 +152,7 @@
             <ViewSidebar
               :key="`${activeDoctype}:${sidebarRefreshToken}`"
               :doctype="activeDoctype"
+              :activeView="activeView"
               :refreshToken="countsRefreshToken"
               @changed="savedViewsChanged"
             />
@@ -230,6 +231,7 @@ const props = withDefaults(
   defineProps<{
     activeDoctype?: string
     appName?: string
+    activeView?: string
   }>(),
   {
     activeDoctype: '',

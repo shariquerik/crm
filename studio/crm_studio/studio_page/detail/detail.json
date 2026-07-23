@@ -464,6 +464,7 @@
      "componentName": "CrmAppShell",
      "componentProps": {
       "activeDoctype": "{{ route.params.doctype }}",
+      "activeView": "{{ route.query.view }}",
       "appName": "CRM"
      },
      "componentSlots": {

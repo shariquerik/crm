@@ -1,5 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { call, toast } from 'frappe-ui'
+import { useSavedViews } from '@framework/ui/components/SavedViews'
 import { doctypeLabel, guardDoctype } from '@app/data/doctypes'
 import { errorMessage } from '@app/data/errors'
 
@@ -17,6 +18,9 @@ export default function setup(ctx: any) {
   const taskDueDate = ref('')
   const addingTask = ref(false)
 
+  const viewId = typeof route.query.view === 'string' ? route.query.view : ''
+  const views = viewId ? useSavedViews(route.params.doctype, viewId) : null
+
   guardDoctype(
     ctx,
     () => {
@@ -25,12 +29,17 @@ export default function setup(ctx: any) {
       notes.fetch()
       tasks.fetch()
     },
-    `/${encodeURIComponent(route.params.id)}`,
+    `/${encodeURIComponent(route.params.id)}${
+      viewId ? `?view=${encodeURIComponent(viewId)}` : ''
+    }`,
   )
 
   const doctype = computed(() => route.params.doctype)
   const doctypeLink = computed(
     () => `/${encodeURIComponent(route.params.doctype)}`,
+  )
+  const viewLink = computed(() =>
+    viewId ? `${doctypeLink.value}/view/${encodeURIComponent(viewId)}` : '',
   )
 
   const reference = computed(() => ({
@@ -47,13 +56,23 @@ export default function setup(ctx: any) {
     { immediate: true },
   )
 
-  const breadcrumbs = computed(() => [
-    {
-      label: doctypeLabel(doctype.value),
-      route: doctypeLink.value,
-    },
-    { label: doc.value?.name || route.params.id },
-  ])
+  // The crumb waits for the sidebar fetch to name the view; a stale `?view=`
+  // (deleted view) never resolves, so the trail degrades to doctype / record.
+  const viewCrumb = computed(() => {
+    const label = views?.activeView.value?.label
+    return label ? { label, route: viewLink.value } : null
+  })
+
+  const breadcrumbs = computed(() =>
+    [
+      {
+        label: doctypeLabel(doctype.value),
+        route: doctypeLink.value,
+      },
+      viewCrumb.value,
+      { label: doc.value?.name || route.params.id },
+    ].filter(Boolean),
+  )
 
   function changedFields() {
     const stored = record.data || {}
@@ -146,7 +165,7 @@ export default function setup(ctx: any) {
   }
 
   function goToList() {
-    router.push(doctypeLink.value)
+    router.push(viewLink.value || doctypeLink.value)
   }
 
   return {
