@@ -49,7 +49,7 @@
         </div>
 
         <div class="flex w-full shrink-0 flex-col items-center gap-1">
-          <RailItem
+          <!-- <RailItem
             label="Search"
             icon="lucide-search"
             variant="ghost"
@@ -61,7 +61,7 @@
             variant="ghost"
             :badge="unreadCount"
             badgeStyle="dot"
-          />
+          /> -->
           <RailItem
             label="Help"
             icon="lucide-circle-help"
