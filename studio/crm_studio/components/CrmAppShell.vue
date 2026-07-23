@@ -212,6 +212,7 @@ import { Icon } from 'frappe-ui/icons'
 import { ViewSidebar } from '@framework/ui/components/SavedViews'
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
+import { useLocalStorage } from '@vueuse/core'
 
 import CrmAboutDialog from '@app/components/CrmAboutDialog.vue'
 import CrmRailEditor from '@app/components/CrmRailEditor.vue'
@@ -242,7 +243,7 @@ const logoUrl = '/assets/crm/images/logo.svg'
 
 const SIDEBAR_WIDTH = '14rem'
 
-const collapsed = ref(false)
+const collapsed = useLocalStorage('crm-sidebar-collapsed', false)
 
 const railHovered = ref(false)
 
