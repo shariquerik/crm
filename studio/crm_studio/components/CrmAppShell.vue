@@ -78,7 +78,7 @@
             label="Settings"
             icon="lucide-settings"
             variant="ghost"
-            @click="go('/settings')"
+            @click="openSettings()"
           />
         </div>
 
@@ -197,6 +197,7 @@
     </div>
 
     <CrmRailEditor v-model="editingRail" />
+    <CrmSettingsDialog />
   </DesktopShell>
 </template>
 
@@ -218,7 +219,9 @@ import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 
 import CrmRailEditor from '@app/components/CrmRailEditor.vue'
+import CrmSettingsDialog from '@app/components/CrmSettingsDialog.vue'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
+import { useSettingsDialog } from '@app/composables/useSettingsDialog'
 import { countsRefreshToken } from '@app/data/countsRefresh'
 import { doctypeIcon, doctypeLabel } from '@app/data/doctypes'
 import { addableDoctypes, addToRail, railItems } from '@app/data/railLayout'
@@ -298,7 +301,7 @@ const appMenuOptions = [
   {
     icon: 'lucide-settings',
     label: 'Settings',
-    onClick: () => go('/settings'),
+    onClick: () => openSettings(),
   },
 ]
 
@@ -318,6 +321,8 @@ const unreadCount = ref(3)
 
 const { currentUser, userLabel, userMenuOptions, loadCurrentUser } =
   useAccountMenu()
+
+const { openSettings } = useSettingsDialog()
 
 onMounted(loadCurrentUser)
 </script>

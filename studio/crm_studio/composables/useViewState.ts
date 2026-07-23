@@ -147,7 +147,9 @@ export function useViewState(options: {
       ? { ...preserved, ...queryFromState(liveSnapshot()) }
       : preserved
     if (stableQuery(query) === stableQuery(current)) return
-    router.replace({ query })
+    // A location naming only `query` resolves with an empty hash, which would
+    // close the settings dialog (#settings/…) as a side effect of a list tweak.
+    router.replace({ query, hash: liveRoute()?.hash || '' })
   }
 
   let landingTimer: ReturnType<typeof setTimeout> | undefined
@@ -231,9 +233,12 @@ export function useViewState(options: {
     },
   ])
 
+  function liveRoute() {
+    return (router.currentRoute?.value ?? router.currentRoute) as any
+  }
+
   function currentQuery() {
-    const live = (router.currentRoute?.value ?? router.currentRoute) as any
-    return (live?.query || {}) as Record<string, string>
+    return (liveRoute()?.query || {}) as Record<string, string>
   }
 
   return {

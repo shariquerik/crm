@@ -38,6 +38,16 @@ export async function loadCurrentUser(): Promise<void> {
   }
 }
 
+export async function saveFullName(fullName: string): Promise<void> {
+  await call('frappe.client.set_value', {
+    doctype: 'User',
+    name: currentUser.value.email,
+    fieldname: 'full_name',
+    value: fullName,
+  })
+  currentUser.value = { ...currentUser.value, full_name: fullName }
+}
+
 export async function logout(): Promise<void> {
   try {
     await call('logout')
