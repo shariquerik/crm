@@ -31,3 +31,4 @@ crm.patches.v1_0.set_persona_captured_for_existing_sites
 crm.patches.v1_0.seed_and_migrate_saved_views
 crm.patches.v1_0.seed_more_saved_view_doctypes
 crm.patches.v1_0.seed_all_view_for_rail_doctypes
+crm.patches.v1_0.repoint_pipeline_dots_to_custom_icons

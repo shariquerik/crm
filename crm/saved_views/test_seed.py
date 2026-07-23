@@ -85,7 +85,9 @@ class TestSeed(IntegrationTestCase):
 		self.assertEqual(view_labels(group), [status.name for status in statuses])
 		for row, status in zip(group.views, statuses, strict=True):
 			view = frappe.get_doc("Saved View", row.view)
-			self.assertEqual(view.icon, status.color)
+			# The colour rides on a dot Custom Icon, seeded on demand, not a bare token.
+			self.assertEqual(view.icon, f"custom:dot-{status.color}")
+			self.assertTrue(frappe.db.exists("Custom Icon", f"dot-{status.color}"))
 			self.assertEqual(json.loads(view.filters), [["status", "=", status.name]])
 			self.assertEqual(view.user, "")
 
@@ -105,8 +107,8 @@ class TestSeed(IntegrationTestCase):
 
 	def test_select_pipeline_colours_options_from_the_palette(self):
 		group = shared_group("CRM Task", "Pipeline")
-		self.assertEqual(view_by_label(group, "Done").icon, "green")
-		self.assertEqual(view_by_label(group, "Canceled").icon, "red")
+		self.assertEqual(view_by_label(group, "Done").icon, "custom:dot-green")
+		self.assertEqual(view_by_label(group, "Canceled").icon, "custom:dot-red")
 
 	def test_organization_and_note_get_an_all_and_a_mine_view_only(self):
 		self.assertEqual(view_labels(shared_group("CRM Organization", "Views")), ["All", "My organizations"])

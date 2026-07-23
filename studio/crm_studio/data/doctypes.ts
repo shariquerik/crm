@@ -1,5 +1,6 @@
 import { watch } from 'vue'
 
+import { isCustomIconName } from '@framework/ui/components/IconPicker'
 import { isIconName } from '@app/data/icons'
 import { railItems } from '@app/data/railLayout'
 
@@ -35,7 +36,7 @@ export function doctypeIcon(doctype: string, saved?: string | null) {
   // — CRM's seeded layout still names the icons Lucide has since renamed
   // (`home` -> `house`, `check-square` -> `square-check`, `edit` -> `square-pen`).
   const picked = (saved ?? '').replace(/^lucide-/, '').trim()
-  if (picked && isIconName(picked)) return picked
+  if (picked && (isIconName(picked) || isCustomIconName(picked))) return picked
   return DOCTYPES[doctype]?.icon || 'file'
 }
 

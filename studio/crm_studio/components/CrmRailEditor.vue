@@ -15,11 +15,21 @@
               class="rail-drag-handle lucide-grip-vertical size-3.5 shrink-0 cursor-grab text-ink-gray-4"
               aria-hidden="true"
             />
-            <CrmIconPicker
+            <IconPicker
               :modelValue="doctypeIcon(element.dt, element.icon)"
-              :label="element.label"
+              :sections="iconSections"
               @update:modelValue="(icon: string) => (element.icon = icon)"
-            />
+            >
+              <template #trigger="{ value }">
+                <button
+                  type="button"
+                  class="grid size-6 shrink-0 place-content-center rounded text-ink-gray-7 transition hover:bg-surface-gray-3 focus-visible:focus-ring"
+                  :aria-label="`Change icon for ${element.label}`"
+                >
+                  <IconGlyph :name="value ?? ''" class="size-4" />
+                </button>
+              </template>
+            </IconPicker>
             <!-- The label is what the rail shows on hover. It reads as text
               until asked for: the pencil, or a double-click on it. -->
             <input
@@ -105,7 +115,11 @@ import { computed, nextTick, ref, watch } from 'vue'
 // @ts-expect-error — vuedraggable ships no bundled types
 import Draggable from 'vuedraggable'
 
-import CrmIconPicker from '@app/components/CrmIconPicker.vue'
+import {
+  IconGlyph,
+  IconPicker,
+  useCustomIcons,
+} from '@framework/ui/components/IconPicker'
 import { doctypeIcon } from '@app/data/doctypes'
 import {
   addableDoctypes,
@@ -124,6 +138,10 @@ const error = ref('')
 const editing = ref('')
 const labelBeforeEdit = ref('')
 const picked = ref<string | null>(null)
+
+// The picker itself is source-agnostic; the site's Custom Icons ride in as a
+// titled section above the Lucide grid, each carrying its stored SVG.
+const { sections: iconSections } = useCustomIcons()
 
 watch(show, (open) => {
   if (!open) return

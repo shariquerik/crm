@@ -21,7 +21,7 @@
             :active="item.dt === activeDoctype"
             @click="go(`/${encodeSegment(item.dt)}`)"
           >
-            <Icon :name="doctypeIcon(item.dt, item.icon)" class="size-4" />
+            <IconGlyph :name="doctypeIcon(item.dt, item.icon)" class="size-4" />
           </RailItem>
           <!-- Not a RailItem: this tile is a slot waiting to be filled, not a place
             you can go, and it says so by being the one outlined tile in a rail of
@@ -43,7 +43,7 @@
                 class="absolute -left-[11px] top-1/2 h-7 w-1 -translate-y-1/2 rounded-r bg-surface-gray-8"
                 aria-hidden="true"
               />
-              <Icon :name="doctypeIcon(unlistedDoctype)" class="size-4" />
+              <IconGlyph :name="doctypeIcon(unlistedDoctype)" class="size-4" />
             </button>
           </Tooltip>
         </div>
@@ -208,7 +208,7 @@ import {
   Sidebar,
   Tooltip,
 } from 'frappe-ui'
-import { Icon } from 'frappe-ui/icons'
+import { IconGlyph } from '@framework/ui/components/IconPicker'
 import { ViewSidebar } from '@framework/ui/components/SavedViews'
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'

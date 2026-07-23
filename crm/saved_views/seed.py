@@ -19,10 +19,30 @@ import frappe
 # A view whose status type is one of these is closed; every other type is "open".
 CLOSED_STATUS_TYPES = ("Won", "Lost")
 
-# Palette tokens the CRM sidebar renders as status dots (see ViewSidebarItem's
-# DOT_CLASS). Cycled through a Select field's options in order, since a Select — unlike
-# a status *doctype* — carries no colour of its own.
+# Palette tokens a status carries, each seeded as a filled-dot Custom Icon (see
+# `status_dot`). Cycled through a Select field's options in order, since a Select —
+# unlike a status *doctype* — carries no colour of its own.
 SELECT_PALETTE = ("gray", "blue", "amber", "green", "red", "purple", "cyan", "orange")
+
+# The espresso 500 hex for each palette token, baked into the dot svg. Not
+# `currentColor`: ViewIcon draws a custom icon in ink-gray, which would grey the dot
+# out. Kept in sync with frappe-ui's colour palette. Wider than SELECT_PALETTE: a
+# status *doctype*'s `color` can be any of these, while a Select only cycles the eight.
+DOT_HEX = {
+	"gray": "#999999",
+	"blue": "#0289f7",
+	"amber": "#e79913",
+	"green": "#59ba8b",
+	"red": "#e03636",
+	"pink": "#e34aa6",
+	"orange": "#e86c13",
+	"yellow": "#edba13",
+	"cyan": "#3bbde5",
+	"teal": "#36baad",
+	"violet": "#6846e3",
+	"purple": "#9c45e3",
+	"black": "#171717",
+}
 
 # Where an option's name suggests a colour, use it so a pipeline reads right at a
 # glance; the palette fills in the rest by position.
@@ -141,10 +161,13 @@ def views_section(status_doctype, owner_field, closing_field):
 
 def pipeline_section(status_doctype):
 	"""One view per status, in board order, coloured with the status. The colour rides
-	on `icon`, the only per-view marker a Saved View carries; the CRM sidebar renders
-	it as a dot."""
+	on `icon`, the only per-view marker a Saved View carries; it names a dot Custom Icon
+	the CRM sidebar renders inline (see `status_dot`)."""
 	statuses = frappe.get_all(status_doctype, fields=["name", "color"], order_by="position asc")
-	return [view_def(status.name, [["status", "=", status.name]], icon=status.color) for status in statuses]
+	return [
+		view_def(status.name, [["status", "=", status.name]], icon=status_dot(status.color))
+		for status in statuses
+	]
 
 
 def select_pipeline_section(doctype, fieldname):
@@ -153,9 +176,34 @@ def select_pipeline_section(doctype, fieldname):
 	the dot comes from the option's name where we know it and its position otherwise."""
 	options = select_options(doctype, fieldname)
 	return [
-		view_def(option, [[fieldname, "=", option]], icon=color_for(option, index))
+		view_def(option, [[fieldname, "=", option]], icon=status_dot(color_for(option, index)))
 		for index, option in enumerate(options)
 	]
+
+
+def status_dot(color):
+	"""The `custom:<name>` icon for a status colour, seeding the dot Custom Icon on
+	first use. A view's dot is thus an ordinary custom icon — aligned like every other
+	and re-pickable from the icon picker — rather than a bespoke render branch. An
+	unknown token falls through unchanged, as it did when it rode straight on `icon`."""
+	color_hex = DOT_HEX.get(color)
+	if not color_hex:
+		return color
+	name = f"dot-{color}"
+	if not frappe.db.exists("Custom Icon", name):
+		frappe.get_doc({"doctype": "Custom Icon", "icon_name": name, "svg": dot_svg(color_hex)}).insert(
+			ignore_permissions=True
+		)
+	return f"custom:{name}"
+
+
+def dot_svg(color_hex):
+	# An 8px dot centred in the 16px icon box, so it reads like the old marker while
+	# aligning with the Lucide icons beside it.
+	return (
+		'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">'
+		f'<circle cx="8" cy="8" r="4" fill="{color_hex}"/></svg>'
+	)
 
 
 def select_options(doctype, fieldname):
