@@ -1,6 +1,7 @@
 import { useTheme } from 'frappe-ui'
 import { computed } from 'vue'
 
+import { useSettingsDialog } from '@app/composables/useSettingsDialog'
 import {
   currentUser,
   loadCurrentUser,
@@ -10,8 +11,14 @@ import {
 
 export function useAccountMenu() {
   const { currentTheme, setTheme } = useTheme()
+  const { openSettings } = useSettingsDialog()
 
   const userMenuOptions = computed(() => [
+    {
+      icon: 'lucide-circle-user',
+      label: 'My profile',
+      onClick: () => openSettings('profile'),
+    },
     {
       icon: 'lucide-moon',
       label: 'Toggle theme',

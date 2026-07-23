@@ -74,12 +74,6 @@
             variant="ghost"
             @click="editingRail = true"
           />
-          <RailItem
-            label="Settings"
-            icon="lucide-settings"
-            variant="ghost"
-            @click="openSettings()"
-          />
         </div>
 
         <div class="mt-2 flex shrink-0 justify-center">
@@ -297,11 +291,12 @@ const knownDoctype = computed(
     Boolean(unlistedDoctype.value),
 )
 
+// No general app settings yet, so this lands on the first workspace tab we have.
 const appMenuOptions = [
   {
     icon: 'lucide-settings',
     label: 'Settings',
-    onClick: () => openSettings(),
+    onClick: () => openSettings('users'),
   },
 ]
 
