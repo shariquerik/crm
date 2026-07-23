@@ -192,6 +192,7 @@
 
     <CrmRailEditor v-model="editingRail" />
     <CrmSettingsDialog />
+    <CrmAboutDialog v-model="showAbout" />
   </DesktopShell>
 </template>
 
@@ -209,13 +210,14 @@ import {
 } from 'frappe-ui'
 import { Icon } from 'frappe-ui/icons'
 import { ViewSidebar } from '@framework/ui/components/SavedViews'
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 
+import CrmAboutDialog from '@app/components/CrmAboutDialog.vue'
 import CrmRailEditor from '@app/components/CrmRailEditor.vue'
 import CrmSettingsDialog from '@app/components/CrmSettingsDialog.vue'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
-import { useSettingsDialog } from '@app/composables/useSettingsDialog'
+import { useAppMenu } from '@app/composables/useAppMenu'
 import { countsRefreshToken } from '@app/data/countsRefresh'
 import { doctypeIcon, doctypeLabel } from '@app/data/doctypes'
 import { addableDoctypes, addToRail, railItems } from '@app/data/railLayout'
@@ -291,14 +293,7 @@ const knownDoctype = computed(
     Boolean(unlistedDoctype.value),
 )
 
-// No general app settings yet, so this lands on the first workspace tab we have.
-const appMenuOptions = [
-  {
-    icon: 'lucide-settings',
-    label: 'Settings',
-    onClick: () => openSettings('users'),
-  },
-]
+const { appMenuOptions, showAbout, onKeydown } = useAppMenu()
 
 function encodeSegment(value: string) {
   return encodeURIComponent(value)
@@ -317,9 +312,12 @@ const unreadCount = ref(3)
 const { currentUser, userLabel, userMenuOptions, loadCurrentUser } =
   useAccountMenu()
 
-const { openSettings } = useSettingsDialog()
+onMounted(() => {
+  loadCurrentUser()
+  window.addEventListener('keydown', onKeydown)
+})
 
-onMounted(loadCurrentUser)
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <style scoped>

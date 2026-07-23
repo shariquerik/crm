@@ -5,7 +5,11 @@
       <SettingsNavGroup label="Personal">
         <SettingsNavItem value="profile">
           <template #prefix>
-            <Icon name="lucide-circle-user" class="size-4" />
+            <Avatar
+              :image="currentUser.user_image"
+              :label="userLabel"
+              size="xs"
+            />
           </template>
           Profile
         </SettingsNavItem>
@@ -13,7 +17,7 @@
       <SettingsNavGroup label="Workspace">
         <SettingsNavItem value="users">
           <template #prefix>
-            <Icon name="lucide-users" class="size-4" />
+            <Icon name="users" class="size-4" />
           </template>
           Users
         </SettingsNavItem>
@@ -32,6 +36,7 @@
 
 <script setup lang="ts">
 import {
+  Avatar,
   SettingsContent,
   SettingsDialog,
   SettingsNavGroup,
@@ -44,6 +49,7 @@ import { Icon } from 'frappe-ui/icons'
 import CrmSettingsProfile from '@app/components/CrmSettingsProfile.vue'
 import CrmSettingsUsers from '@app/components/CrmSettingsUsers.vue'
 import { useSettingsDialog } from '@app/composables/useSettingsDialog'
+import { currentUser, userLabel } from '@app/data/session'
 
 const { open, tab } = useSettingsDialog()
 </script>
