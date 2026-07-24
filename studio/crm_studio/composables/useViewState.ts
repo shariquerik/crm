@@ -164,12 +164,13 @@ export function useViewState(options: {
 
   // The plain list route opens the user's default, so it carries that view's own
   // label — an empty one (no default yet) leaves the breadcrumb at the doctype.
-  const viewLabel = computed(() => {
-    const view = viewName
+  const activeView = computed(() =>
+    viewName
       ? views.activeView.value
-      : findView(views.groups.value, views.defaultView.value)
-    return view?.label || ''
-  })
+      : findView(views.groups.value, views.defaultView.value),
+  )
+  const viewLabel = computed(() => activeView.value?.label || '')
+  const viewIcon = computed(() => activeView.value?.icon || '')
 
   // A personal view is editable only by its owner; a shared one only by a manager.
   const canEditActiveView = computed(() => {
@@ -243,6 +244,7 @@ export function useViewState(options: {
 
   return {
     viewLabel,
+    viewIcon,
     viewDirty: dirty,
     canEditActiveView,
     resetView,

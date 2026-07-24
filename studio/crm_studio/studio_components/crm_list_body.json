@@ -462,11 +462,12 @@
           "classes": [],
           "componentEvents": {},
           "componentId": "list-breadcrumbs",
-          "componentName": "Breadcrumbs",
+          "componentName": "CrmBreadcrumbs",
           "componentProps": {
            "items": "{{ breadcrumbs }}"
           },
           "componentSlots": {},
+          "isCustomVueComponent": true,
           "mobileStyles": {},
           "rawStyles": {},
           "tabletStyles": {}

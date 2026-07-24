@@ -59,8 +59,10 @@ export default function setup(ctx: any) {
   // The crumb waits for the sidebar fetch to name the view; a stale `?view=`
   // (deleted view) never resolves, so the trail degrades to doctype / record.
   const viewCrumb = computed(() => {
-    const label = views?.activeView.value?.label
-    return label ? { label, route: viewLink.value } : null
+    const view = views?.activeView.value
+    return view?.label
+      ? { label: view.label, icon: view.icon, route: viewLink.value }
+      : null
   })
 
   const breadcrumbs = computed(() =>

@@ -97,7 +97,9 @@ export function useListPage(ctx: any) {
         label: doctypeLabel(doctype),
         route: `/${encodeURIComponent(route.params.doctype)}`,
       },
-      viewState.viewLabel.value ? { label: viewState.viewLabel.value } : null,
+      viewState.viewLabel.value
+        ? { label: viewState.viewLabel.value, icon: viewState.viewIcon.value }
+        : null,
     ].filter(Boolean),
   )
 
