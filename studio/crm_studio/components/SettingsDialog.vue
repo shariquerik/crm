@@ -25,10 +25,10 @@
     </SettingsSidebar>
     <SettingsContent>
       <SettingsPanel value="profile">
-        <CrmSettingsProfile />
+        <SettingsProfile />
       </SettingsPanel>
       <SettingsPanel value="users">
-        <CrmSettingsUsers />
+        <SettingsUsers />
       </SettingsPanel>
     </SettingsContent>
   </SettingsDialog>
@@ -46,8 +46,8 @@ import {
 } from 'frappe-ui'
 import { Icon } from 'frappe-ui/icons'
 
-import CrmSettingsProfile from '@app/components/CrmSettingsProfile.vue'
-import CrmSettingsUsers from '@app/components/CrmSettingsUsers.vue'
+import SettingsProfile from '@app/components/SettingsProfile.vue'
+import SettingsUsers from '@app/components/SettingsUsers.vue'
 import { useSettingsDialog } from '@app/composables/useSettingsDialog'
 import { currentUser, userLabel } from '@app/data/session'
 

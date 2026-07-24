@@ -6,7 +6,7 @@
 <template>
   <Breadcrumbs :items="items">
     <template #prefix="{ item }">
-      <ViewIcon v-if="'icon' in item" :icon="item.icon" class="mr-1" />
+      <ViewIcon v-if="'icon' in item" :icon="item.icon" class="mr-1.5" />
     </template>
   </Breadcrumbs>
 </template>

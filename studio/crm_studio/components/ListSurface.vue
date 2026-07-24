@@ -104,7 +104,7 @@
       </List>
     </ScrollArea>
 
-    <CrmListFooter
+    <ListFooter
       v-if="rows.length || loading"
       v-model:pageSize="pageSize"
       :rowCount="rowCount"
@@ -116,7 +116,7 @@
       @page-size="emit('page-size', $event)"
     />
 
-    <CrmListBulkBar v-model:selection="selection" :actions="bulkActions" />
+    <ListBulkBar v-model:selection="selection" :actions="bulkActions" />
   </div>
 </template>
 
@@ -133,8 +133,8 @@ import {
 import 'frappe-ui/list-style.css'
 import { computed, toRef, watch } from 'vue'
 
-import CrmListBulkBar from '@app/components/CrmListBulkBar.vue'
-import CrmListFooter from '@app/components/CrmListFooter.vue'
+import ListBulkBar from '@app/components/ListBulkBar.vue'
+import ListFooter from '@app/components/ListFooter.vue'
 import { useColumnResize } from '@app/composables/useColumnResize'
 import { useListSnapshot } from '@app/composables/useListSnapshot'
 import { useRowSelection } from '@app/composables/useRowSelection'

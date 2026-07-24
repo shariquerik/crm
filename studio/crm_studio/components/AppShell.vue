@@ -190,9 +190,9 @@
       <slot />
     </div>
 
-    <CrmRailEditor v-model="editingRail" />
-    <CrmSettingsDialog />
-    <CrmAboutDialog v-model="showAbout" />
+    <RailEditor v-model="editingRail" />
+    <SettingsDialog />
+    <AboutDialog v-model="showAbout" />
   </DesktopShell>
 </template>
 
@@ -214,9 +214,9 @@ import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 
-import CrmAboutDialog from '@app/components/CrmAboutDialog.vue'
-import CrmRailEditor from '@app/components/CrmRailEditor.vue'
-import CrmSettingsDialog from '@app/components/CrmSettingsDialog.vue'
+import AboutDialog from '@app/components/AboutDialog.vue'
+import RailEditor from '@app/components/RailEditor.vue'
+import SettingsDialog from '@app/components/SettingsDialog.vue'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
 import { useAppMenu } from '@app/composables/useAppMenu'
 import { countsRefreshToken } from '@app/data/countsRefresh'

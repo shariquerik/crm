@@ -12,7 +12,7 @@
     {
      "blockName": "crm-list-body-ref",
      "componentId": "crm-list-body-ref",
-     "componentName": "crm_list_body",
+     "componentName": "list_body",
      "isStudioComponent": true,
      "children": [],
      "classes": [],

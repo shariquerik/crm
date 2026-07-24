@@ -20,7 +20,7 @@
      "children": [],
      "classes": [],
      "componentId": "crm-list-body-ref",
-     "componentName": "crm_list_body",
+     "componentName": "list_body",
      "isStudioComponent": true
     }
    ],

@@ -461,7 +461,7 @@
      ],
      "classes": [],
      "componentId": "crm-app-shell",
-     "componentName": "CrmAppShell",
+     "componentName": "AppShell",
      "componentProps": {
       "activeDoctype": "{{ route.params.doctype }}",
       "activeView": "{{ route.query.view }}",
@@ -491,7 +491,7 @@
            "classes": [],
            "componentEvents": {},
            "componentId": "detail-breadcrumbs",
-           "componentName": "CrmBreadcrumbs",
+           "componentName": "PageBreadcrumbs",
            "componentProps": {
             "items": "{{ breadcrumbs }}"
            },

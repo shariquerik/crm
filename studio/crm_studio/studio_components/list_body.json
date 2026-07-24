@@ -172,7 +172,7 @@
         "children": [],
         "classes": [],
         "componentId": "list-rows",
-        "componentName": "CrmListView",
+        "componentName": "ListSurface",
         "componentProps": {
          "bulkActions": "{{ bulkActions }}",
          "cacheKey": "{{ route.path }}",
@@ -421,7 +421,7 @@
   ],
   "classes": [],
   "componentId": "crm-app-shell",
-  "componentName": "CrmAppShell",
+  "componentName": "AppShell",
   "componentProps": {
    "activeDoctype": "{{ route.params.doctype }}"
   },
@@ -462,7 +462,7 @@
           "classes": [],
           "componentEvents": {},
           "componentId": "list-breadcrumbs",
-          "componentName": "CrmBreadcrumbs",
+          "componentName": "PageBreadcrumbs",
           "componentProps": {
            "items": "{{ breadcrumbs }}"
           },
@@ -581,9 +581,9 @@
   },
   "isCustomVueComponent": true
  },
- "component_id": "crm_list_body",
- "component_name": "CRM List Body",
- "creation": "2026-07-22 19:08:58.387942",
+ "component_id": "list_body",
+ "component_name": "List Body",
+ "creation": "2026-07-24 16:28:25.471910",
  "docstatus": 0,
  "doctype": "Studio Component",
  "idx": 0,
@@ -591,6 +591,6 @@
  "is_disabled": 0,
  "modified": "2026-07-22 13:46:47.774719",
  "modified_by": "Administrator",
- "name": "crm_list_body",
+ "name": "list_body",
  "owner": "Administrator"
 }
