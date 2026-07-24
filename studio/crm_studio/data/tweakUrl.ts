@@ -31,12 +31,10 @@ export function queryFromState(state: TweakState): Query {
   }
   const orderBy = serializeOrderBy(state.sort || [])
   if (orderBy) query[SORT_KEY] = orderBy
-  // Column width is a local resize, not a tweak — dropped here so it never trips
-  // the modified indicator (which likewise ignores it) or writes to the URL.
-  const structural = (state.columns || []).map(
-    ({ width, ...rest }: any) => rest,
-  )
-  if (structural.length) query[COLS_KEY] = JSON.stringify(structural)
+  // A resized column's `width` travels with the columns so the tweak survives a
+  // reload or a shared link, matching the modified indicator (which counts it too).
+  const columns = state.columns || []
+  if (columns.length) query[COLS_KEY] = JSON.stringify(columns)
   return query
 }
 

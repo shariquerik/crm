@@ -54,9 +54,9 @@ export function useViewState(options: {
       filters: toFiltersDict(completeFilters(filters.value || [])),
       order_by:
         serializeOrderBy(sort.value || []) || serializeOrderBy(DEFAULT_SORT),
-      columns: serializeColumns(columns.value || [], metaFields.value).map(
-        ({ width, ...rest }) => rest,
-      ),
+      // A resize is part of the view: its px `width` diverges from the auto `fr`
+      // serializeColumns fills in, so it trips the modified indicator and saves.
+      columns: serializeColumns(columns.value || [], metaFields.value),
     })
   }
 
