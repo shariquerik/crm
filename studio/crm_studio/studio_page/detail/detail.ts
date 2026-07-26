@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { call, toast } from 'frappe-ui'
 import { useNavigation } from '@framework/ui/components/Navigation'
+import { APP_NAME } from '@app/data/apps'
 import { doctypeLabel, guardDoctype } from '@app/data/doctypes'
 import { errorMessage } from '@app/data/errors'
 
@@ -19,7 +20,9 @@ export default function setup(ctx: any) {
   const addingTask = ref(false)
 
   const viewId = typeof route.query.view === 'string' ? route.query.view : ''
-  const navigation = viewId ? useNavigation(route.params.doctype, viewId) : null
+  const navigation = viewId
+    ? useNavigation(route.params.doctype, viewId, { app: APP_NAME })
+    : null
 
   guardDoctype(
     ctx,

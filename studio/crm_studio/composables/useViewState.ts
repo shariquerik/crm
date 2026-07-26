@@ -3,6 +3,7 @@ import { useSavedViews } from '@framework/ui/components/SavedViews'
 import { findView, useNavigation } from '@framework/ui/components/Navigation'
 import { serializeColumns } from '@framework/ui/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/SortBy'
+import { APP_NAME } from '@app/data/apps'
 import { completeFilters, toFiltersDict } from '@app/data/listWire'
 import { currentUser } from '@app/data/session'
 import { refreshSidebar, savedViewsToken } from '@app/data/sidebarRefresh'
@@ -36,8 +37,11 @@ export function useViewState(options: {
   const { metaFields, seedColumns, submit, router } = options
   const route = ctx.route
 
-  const navigation = useNavigation(doctype, viewName || null)
+  const navigation = useNavigation(doctype, viewName || null, {
+    app: APP_NAME,
+  })
   const views = useSavedViews(doctype, {
+    app: APP_NAME,
     activeView: navigation.activeView,
     onChange: navigation.reload,
   })

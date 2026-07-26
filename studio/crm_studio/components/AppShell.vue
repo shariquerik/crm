@@ -147,6 +147,7 @@
             <NavigationSidebar
               :key="`${activeDoctype}:${sidebarRefreshToken}`"
               :doctype="activeDoctype"
+              :app="APP_NAME"
               :activeView="activeView"
               :refreshToken="countsRefreshToken"
               @changed="savedViewsChanged"
@@ -221,6 +222,7 @@ import SettingsDialog from '@app/components/SettingsDialog.vue'
 import { deriveShellChrome } from '@app/components/shellChrome'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
 import { useAppMenu } from '@app/composables/useAppMenu'
+import { APP_NAME } from '@app/data/apps'
 import { countsRefreshToken } from '@app/data/countsRefresh'
 import { doctypeIcon, doctypeLabel } from '@app/data/doctypes'
 import { addableDoctypes, addToRail, railItems } from '@app/data/railLayout'

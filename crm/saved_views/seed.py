@@ -15,6 +15,9 @@ change does not touch them.
 import json
 
 import frappe
+from frappe.desk.doctype.navigation_section.scope import Scope
+
+from crm.saved_views.scope import CRM_APP
 
 # A view whose status type is one of these is closed; every other type is "open".
 CLOSED_STATUS_TYPES = ("Won", "Lost")
@@ -240,7 +243,7 @@ def shared_section_exists(doctype, label):
 		frappe.db.exists(
 			"Navigation Section",
 			{
-				"reference_doctype": doctype,
+				**Scope(CRM_APP, doctype).filters(),
 				"label": label,
 				"user": ("in", ("", None)),
 				"overrides": ("in", ("", None)),
@@ -269,7 +272,7 @@ def create_shared_section(doctype, label, views):
 		{
 			"doctype": "Navigation Section",
 			"label": label,
-			"reference_doctype": doctype,
+			**Scope(CRM_APP, doctype).as_fields(),
 			"user": "",
 			"sequence": next_shared_sequence(doctype),
 			"views": [{"view": view.name} for view in views],
@@ -280,7 +283,7 @@ def create_shared_section(doctype, label, views):
 def next_shared_sequence(doctype):
 	highest = frappe.db.get_value(
 		"Navigation Section",
-		{"reference_doctype": doctype, "user": ("in", ("", None))},
+		{**Scope(CRM_APP, doctype).filters(), "user": ("in", ("", None))},
 		"sequence",
 		order_by="sequence desc",
 	)

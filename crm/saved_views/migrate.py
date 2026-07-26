@@ -17,7 +17,10 @@ fieldname-keyed dict to the framework's `[fieldname, operator, value]` list.
 import json
 
 import frappe
+from frappe.desk.doctype.navigation_section.scope import Scope
 from frappe.desk.doctype.saved_view.api import get_or_create_section
+
+from crm.saved_views.scope import CRM_APP
 
 # Copied verbatim: the legacy column/sort/kanban shapes are the framework's already.
 COPIED_FIELDS = (
@@ -96,7 +99,7 @@ def migrate_filters(raw):
 
 
 def place_in_section(doctype, label, user, view_name):
-	section = get_or_create_section(doctype, label, user)
+	section = get_or_create_section(Scope(CRM_APP, doctype), label, user)
 	if str(view_name) not in {str(row.view) for row in section.views}:
 		section.append("views", {"view": view_name})
 		section.save(ignore_permissions=True)

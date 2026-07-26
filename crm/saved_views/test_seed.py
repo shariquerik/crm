@@ -4,8 +4,10 @@
 import json
 
 import frappe
+from frappe.desk.doctype.navigation_section.navigation_section import get_sidebar
 from frappe.tests import IntegrationTestCase
 
+from crm.saved_views.scope import CRM_APP
 from crm.saved_views.seed import seed_saved_views
 
 
@@ -20,7 +22,7 @@ def clear_saved_views(*doctypes):
 def shared_section(doctype, label):
 	name = frappe.db.get_value(
 		"Navigation Section",
-		{"reference_doctype": doctype, "label": label, "user": ("in", ("", None))},
+		{"app": CRM_APP, "reference_doctype": doctype, "label": label, "user": ("in", ("", None))},
 		"name",
 	)
 	return frappe.get_doc("Navigation Section", name) if name else None
@@ -125,6 +127,16 @@ class TestSeed(IntegrationTestCase):
 			json.loads(view_by_label(section, "Open").filters),
 			[["status", "not in", ["Done", "Canceled"]]],
 		)
+
+	def test_a_seeded_section_belongs_to_the_crm_app(self):
+		self.assertEqual(shared_section("CRM Deal", "Views").app, CRM_APP)
+
+	def test_a_seeded_section_reaches_the_crm_sidebar(self):
+		"""The read is filtered by app, so seeding under another name would leave the
+		sidebar empty."""
+		sidebar = get_sidebar("CRM Deal", app=CRM_APP)["sections"]
+
+		self.assertIn("Views", [section["label"] for section in sidebar])
 
 	def test_views_section_sits_before_pipeline(self):
 		self.assertLess(
