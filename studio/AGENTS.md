@@ -68,6 +68,19 @@ Frappe's console errors are minified and generic, while the failing request name
 `sync_studio_apps()` treats every directory under `studio/` as a Studio app, so tooling and notes
 belong inside `crm_studio/`, not beside it.
 
+## Tests
+
+Vitest files live in a `tests/` folder beside the code they cover (`components/tests/`), and run
+from the crm frontend workspace — the only place vitest is installed:
+
+```
+cd ../frontend && yarn test:studio
+```
+
+Logic worth testing belongs in a plain module the component imports (see
+`components/shellChrome.ts`), not inside a `.vue` file: nothing here can mount a component,
+since `@vue/test-utils` is not installed.
+
 ## Agent Guidelines & Code Conventions
 
 ### Writing good code

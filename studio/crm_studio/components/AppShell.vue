@@ -29,7 +29,7 @@
             outline read as a second grey blob. The active bar still shows, because
             the list it would add is the list on screen. -->
           <Tooltip
-            v-if="unlistedDoctype"
+            v-if="chrome.unlistedDoctype"
             :text="`Add ${unlistedLabel} to sidebar`"
             placement="right"
           >
@@ -37,13 +37,16 @@
               type="button"
               class="relative flex size-7 shrink-0 items-center justify-center rounded-[7px] border border-dashed border-outline-gray-3 text-ink-gray-5 transition hover:border-outline-gray-4 hover:text-ink-gray-8 focus-visible:ring-0 focus-visible:focus-ring"
               :aria-label="`Add ${unlistedLabel} to sidebar`"
-              @click="addToRail(unlistedDoctype)"
+              @click="addToRail(chrome.unlistedDoctype)"
             >
               <span
                 class="absolute -left-[11px] top-1/2 h-7 w-1 -translate-y-1/2 rounded-r bg-surface-gray-8"
                 aria-hidden="true"
               />
-              <IconGlyph :name="doctypeIcon(unlistedDoctype)" class="size-4" />
+              <IconGlyph
+                :name="doctypeIcon(chrome.unlistedDoctype)"
+                class="size-4"
+              />
             </button>
           </Tooltip>
         </div>
@@ -105,9 +108,7 @@
     </template>
 
     <template #sidebar>
-      <!-- A URL naming no real doctype has no views to list and no list to head, so
-        it drops to the rail alone rather than framing an error in app chrome. -->
-      <div v-if="knownDoctype" class="group/sidebar flex h-full shrink-0">
+      <div v-if="chrome.showSidebar" class="group/sidebar flex h-full shrink-0">
         <Sidebar
           v-model:collapsed="collapsed"
           :width="SIDEBAR_WIDTH"
@@ -183,7 +184,7 @@
       </div>
     </template>
 
-    <PageHeader v-if="knownDoctype" class="shrink-0">
+    <PageHeader v-if="chrome.showHeader" class="shrink-0">
       <slot name="header" />
     </PageHeader>
     <div class="flex min-h-0 flex-1 flex-col">
@@ -217,6 +218,7 @@ import { useLocalStorage } from '@vueuse/core'
 import AboutDialog from '@app/components/AboutDialog.vue'
 import RailEditor from '@app/components/RailEditor.vue'
 import SettingsDialog from '@app/components/SettingsDialog.vue'
+import { deriveShellChrome } from '@app/components/shellChrome'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
 import { useAppMenu } from '@app/composables/useAppMenu'
 import { countsRefreshToken } from '@app/data/countsRefresh'
@@ -260,39 +262,23 @@ function goToFirstModule() {
 
 const editingRail = ref(false)
 
-const offRail = computed(
-  () =>
-    Boolean(props.activeDoctype) &&
-    railItems.value.length > 0 &&
-    !railItems.value.some((item) => item.dt === props.activeDoctype),
+const chrome = computed(() =>
+  deriveShellChrome(
+    props.activeDoctype,
+    railItems.value.map((item) => item.dt),
+    addableDoctypes.fetched ? addableDoctypes.data ?? [] : null,
+  ),
 )
 
 // addable_doctypes doubles as the validity gate for the hint tile, so a typo
 // URL ("/nonsense") never offers itself for the sidebar.
 watchEffect(() => {
-  if (offRail.value && !addableDoctypes.fetched && !addableDoctypes.loading) {
+  if (chrome.value.addableDoctypesUnknown && !addableDoctypes.loading) {
     addableDoctypes.fetch()
   }
 })
 
-const unlistedDoctype = computed(() =>
-  offRail.value && (addableDoctypes.data ?? []).includes(props.activeDoctype)
-    ? props.activeDoctype
-    : '',
-)
-
-const unlistedLabel = computed(() => doctypeLabel(unlistedDoctype.value))
-
-// A doctype on the rail is known without asking; anything else waits on the same
-// `addable_doctypes` answer the hint tile does. Unknown only once that has landed —
-// while it is in flight the chrome stays, since blinking it away on every load of a
-// perfectly good doctype is worse than a moment of it framing a page that is loading.
-const knownDoctype = computed(
-  () =>
-    !offRail.value ||
-    !addableDoctypes.fetched ||
-    Boolean(unlistedDoctype.value),
-)
+const unlistedLabel = computed(() => doctypeLabel(chrome.value.unlistedDoctype))
 
 const { appMenuOptions, showAbout, onKeydown } = useAppMenu()
 

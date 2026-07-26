@@ -10,7 +10,8 @@
     "serve": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:studio": "vitest run --root ../studio --config \"$PWD/vitest.studio.config.js\""
   },
   "dependencies": {
     "@framework/ui": "link:../../frappe/ui",
