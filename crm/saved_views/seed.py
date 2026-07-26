@@ -6,7 +6,7 @@
 Deals and Leads carry a full Views section and a Pipeline coloured from their status
 doctype; Tasks get a Pipeline off a Select field instead; Contacts, Organizations, and
 Notes get a Views section alone. Runs on install and, for existing sites, from the
-saved-views patches. Idempotent by gating on the section: once a shared group exists it is left
+saved-views patches. Idempotent by gating on the section: once a shared section exists it is left
 untouched, so re-running never duplicates a view and never resurrects one a manager
 deleted from it. Pipeline views are ordinary static views once seeded — a later status
 change does not touch them.
@@ -73,14 +73,14 @@ def seed_deal_and_lead():
 
 
 def seed_status_doctype(doctype, status_doctype, owner_field, closing_field=None):
-	seed_group(doctype, "Views", views_section(status_doctype, owner_field, closing_field))
-	seed_group(doctype, "Pipeline", pipeline_section(status_doctype))
+	seed_section(doctype, "Views", views_section(status_doctype, owner_field, closing_field))
+	seed_section(doctype, "Pipeline", pipeline_section(status_doctype))
 
 
 def seed_contact():
 	# A contact's organisation rides on `company_name` (a Data field CRM populates), so
 	# "No organization" reads off it, not a link.
-	seed_group(
+	seed_section(
 		"Contact",
 		"Views",
 		[
@@ -93,7 +93,7 @@ def seed_contact():
 
 
 def seed_organization():
-	seed_group(
+	seed_section(
 		"CRM Organization",
 		"Views",
 		[
@@ -107,7 +107,7 @@ def seed_task():
 	# Tasks are assigned rather than owned, and closed once Done or Cancelled — so "open"
 	# and "mine" read off different fields than the status-doctype doctypes above.
 	open_task = ["status", "not in", ["Done", "Canceled"]]
-	seed_group(
+	seed_section(
 		"CRM Task",
 		"Views",
 		[
@@ -117,11 +117,11 @@ def seed_task():
 			view_def("Overdue", [["due_date", "<", "now"], open_task], icon="calendar-clock"),
 		],
 	)
-	seed_group("CRM Task", "Pipeline", select_pipeline_section("CRM Task", "status"))
+	seed_section("CRM Task", "Pipeline", select_pipeline_section("CRM Task", "status"))
 
 
 def seed_note():
-	seed_group(
+	seed_section(
 		"FCRM Note",
 		"Views",
 		[
@@ -137,7 +137,7 @@ def seed_all_view(doctype):
 	what else is worth filtering for is that doctype's business, not ours. Without it
 	the sidebar falls back to a virtual All pointing at the plain list route, which
 	names no view and so leaves the breadcrumb reading only the doctype."""
-	seed_group(doctype, "Views", [view_def("All", [], icon="list")])
+	seed_section(doctype, "Views", [view_def("All", [], icon="list")])
 
 
 def views_section(status_doctype, owner_field, closing_field):
@@ -228,17 +228,17 @@ def open_status_names(status_doctype):
 	)
 
 
-def seed_group(doctype, label, view_defs):
-	if shared_group_exists(doctype, label):
+def seed_section(doctype, label, view_defs):
+	if shared_section_exists(doctype, label):
 		return
 	views = [create_shared_view(doctype, defn) for defn in view_defs]
-	create_shared_group(doctype, label, views)
+	create_shared_section(doctype, label, views)
 
 
-def shared_group_exists(doctype, label):
+def shared_section_exists(doctype, label):
 	return bool(
 		frappe.db.exists(
-			"Saved View Group",
+			"Navigation Section",
 			{
 				"reference_doctype": doctype,
 				"label": label,
@@ -264,10 +264,10 @@ def create_shared_view(doctype, defn):
 	).insert(ignore_permissions=True)
 
 
-def create_shared_group(doctype, label, views):
+def create_shared_section(doctype, label, views):
 	frappe.get_doc(
 		{
-			"doctype": "Saved View Group",
+			"doctype": "Navigation Section",
 			"label": label,
 			"reference_doctype": doctype,
 			"user": "",
@@ -279,7 +279,7 @@ def create_shared_group(doctype, label, views):
 
 def next_shared_sequence(doctype):
 	highest = frappe.db.get_value(
-		"Saved View Group",
+		"Navigation Section",
 		{"reference_doctype": doctype, "user": ("in", ("", None))},
 		"sequence",
 		order_by="sequence desc",

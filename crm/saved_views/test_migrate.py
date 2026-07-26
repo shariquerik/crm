@@ -8,7 +8,7 @@ from frappe.tests import IntegrationTestCase
 
 from crm.saved_views.migrate import migrate_crm_view_settings
 from crm.saved_views.seed import seed_saved_views
-from crm.saved_views.test_seed import clear_saved_views, shared_group
+from crm.saved_views.test_seed import clear_saved_views, shared_section
 
 
 def make_user(email):
@@ -30,23 +30,23 @@ def make_legacy(dt="CRM Deal", **kwargs):
 	)
 
 
-def personal_group(doctype, user):
+def personal_section(doctype, user):
 	name = frappe.db.get_value(
-		"Saved View Group",
+		"Navigation Section",
 		{"reference_doctype": doctype, "label": "Personal", "user": user, "overrides": ("in", ("", None))},
 		"name",
 	)
-	return frappe.get_doc("Saved View Group", name) if name else None
+	return frappe.get_doc("Navigation Section", name) if name else None
 
 
-def group_holds(group, label):
-	return group is not None and label in [
-		frappe.db.get_value("Saved View", row.view, "label") for row in group.views
+def section_holds(section, label):
+	return section is not None and label in [
+		frappe.db.get_value("Saved View", row.view, "label") for row in section.views
 	]
 
 
 def is_placed(view_name):
-	return bool(frappe.db.exists("Saved View Group Item", {"view": view_name}))
+	return bool(frappe.db.exists("Navigation Item", {"view": view_name}))
 
 
 def find_view(doctype, label, user):
@@ -68,7 +68,7 @@ class TestMigrate(IntegrationTestCase):
 
 		migrate_crm_view_settings()
 
-		self.assertTrue(group_holds(shared_group("CRM Deal", "Views"), "Team pipeline"))
+		self.assertTrue(section_holds(shared_section("CRM Deal", "Views"), "Team pipeline"))
 		self.assertTrue(find_view("CRM Deal", "Team pipeline", ""))
 
 	def test_a_pinned_view_joins_that_users_personal_section(self):
@@ -76,7 +76,7 @@ class TestMigrate(IntegrationTestCase):
 
 		migrate_crm_view_settings()
 
-		self.assertTrue(group_holds(personal_group("CRM Deal", self.user), "My deals"))
+		self.assertTrue(section_holds(personal_section("CRM Deal", self.user), "My deals"))
 
 	def test_an_unpinned_private_view_lands_in_the_pool(self):
 		make_legacy(label="Scratch", user=self.user)
@@ -162,7 +162,7 @@ class TestMigrate(IntegrationTestCase):
 			pluck="name",
 		)
 		self.assertEqual(len(migrated), 1)
-		self.assertTrue(group_holds(shared_group("CRM Deal", "Views"), "Open"))
+		self.assertTrue(section_holds(shared_section("CRM Deal", "Views"), "Open"))
 
 	def test_group_by_configuration_survives(self):
 		make_legacy(label="By status", user=self.user, pinned=1, type="group_by", group_by_field="status")
@@ -183,8 +183,8 @@ class TestMigrate(IntegrationTestCase):
 		self.assertEqual(
 			len(frappe.get_all("Saved View", {"reference_doctype": "CRM Deal", "label": "Team pipeline"})), 1
 		)
-		self.assertEqual(len(shared_group("CRM Deal", "Views").views), 1)
-		self.assertEqual(len(personal_group("CRM Deal", self.user).views), 1)
+		self.assertEqual(len(shared_section("CRM Deal", "Views").views), 1)
+		self.assertEqual(len(personal_section("CRM Deal", self.user).views), 1)
 
 	def test_a_view_without_a_doctype_is_skipped(self):
 		make_legacy(dt="", label="Orphan", user=self.user)

@@ -167,7 +167,7 @@ export function useViewState(options: {
   const activeView = computed(() =>
     viewName
       ? views.activeView.value
-      : findView(views.groups.value, views.defaultView.value),
+      : findView(views.sections.value, views.defaultView.value),
   )
   const viewLabel = computed(() => activeView.value?.label || '')
   const viewIcon = computed(() => activeView.value?.icon || '')

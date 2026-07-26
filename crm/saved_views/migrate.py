@@ -1,7 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
 # MIT License. See license.txt
 
-"""Migrate legacy CRM View Settings into framework Saved Views and Groups.
+"""Migrate legacy CRM View Settings into framework Saved Views and Sections.
 
 Each legacy record becomes one Saved View, placed by what its flags meant: a public
 view joins the shared "Views" section, a user's pinned view their Personal section,
@@ -17,7 +17,7 @@ fieldname-keyed dict to the framework's `[fieldname, operator, value]` list.
 import json
 
 import frappe
-from frappe.desk.doctype.saved_view.api import get_or_create_group
+from frappe.desk.doctype.saved_view.api import get_or_create_section
 
 # Copied verbatim: the legacy column/sort/kanban shapes are the framework's already.
 COPIED_FIELDS = (
@@ -48,7 +48,7 @@ def migrate_view(legacy):
 
 	view = create_view(legacy, user, is_default, filters)
 	if placement:
-		place_in_group(legacy.dt, placement, user, view.name)
+		place_in_section(legacy.dt, placement, user, view.name)
 
 
 def classify(legacy):
@@ -95,11 +95,11 @@ def migrate_filters(raw):
 	return json.dumps(wire)
 
 
-def place_in_group(doctype, label, user, view_name):
-	group = get_or_create_group(doctype, label, user)
-	if str(view_name) not in {str(row.view) for row in group.views}:
-		group.append("views", {"view": view_name})
-		group.save(ignore_permissions=True)
+def place_in_section(doctype, label, user, view_name):
+	section = get_or_create_section(doctype, label, user)
+	if str(view_name) not in {str(row.view) for row in section.views}:
+		section.append("views", {"view": view_name})
+		section.save(ignore_permissions=True)
 
 
 def migrated_view_exists(legacy, user, is_default, filters):
