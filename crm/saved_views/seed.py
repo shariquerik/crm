@@ -15,7 +15,7 @@ change does not touch them.
 import json
 
 import frappe
-from frappe.desk.doctype.navigation_section.scope import Scope
+from frappe.desk.doctype.navigation_section.scope import UNSET, Scope
 
 from crm.saved_views.scope import CRM_APP
 
@@ -245,8 +245,8 @@ def shared_section_exists(doctype, label):
 			{
 				**Scope(CRM_APP, doctype).filters(),
 				"label": label,
-				"user": ("in", ("", None)),
-				"overrides": ("in", ("", None)),
+				"user": UNSET,
+				"overrides": UNSET,
 			},
 		)
 	)
@@ -283,7 +283,7 @@ def create_shared_section(doctype, label, views):
 def next_shared_sequence(doctype):
 	highest = frappe.db.get_value(
 		"Navigation Section",
-		{**Scope(CRM_APP, doctype).filters(), "user": ("in", ("", None))},
+		{**Scope(CRM_APP, doctype).filters(), "user": UNSET},
 		"sequence",
 		order_by="sequence desc",
 	)

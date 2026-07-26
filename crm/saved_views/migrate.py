@@ -17,7 +17,7 @@ fieldname-keyed dict to the framework's `[fieldname, operator, value]` list.
 import json
 
 import frappe
-from frappe.desk.doctype.navigation_section.scope import Scope
+from frappe.desk.doctype.navigation_section.scope import UNSET, Scope
 from frappe.desk.doctype.saved_view.api import get_or_create_section
 
 from crm.saved_views.scope import CRM_APP
@@ -116,7 +116,7 @@ def migrated_view_exists(legacy, user, is_default, filters):
 			"Saved View",
 			{
 				"reference_doctype": legacy.dt,
-				"user": user or ("in", ("", None)),
+				"user": user or UNSET,
 				"label": legacy.label or "View",
 				"is_default": is_default,
 				"filters": filters,

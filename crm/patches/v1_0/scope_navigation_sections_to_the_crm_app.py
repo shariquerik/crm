@@ -1,4 +1,5 @@
 import frappe
+from frappe.desk.doctype.navigation_section.scope import UNSET
 
 from crm.saved_views.scope import CRM_APP
 
@@ -13,7 +14,7 @@ def execute():
 	"""
 	frappe.db.set_value(
 		"Navigation Section",
-		{"app": ("in", ("", None))},
+		{"app": UNSET},
 		"app",
 		CRM_APP,
 		update_modified=False,
