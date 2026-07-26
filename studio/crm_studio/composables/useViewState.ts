@@ -1,5 +1,6 @@
 import { computed, onScopeDispose, ref, watch, type Ref } from 'vue'
-import { findView, useSavedViews } from '@framework/ui/components/SavedViews'
+import { useSavedViews } from '@framework/ui/components/SavedViews'
+import { findView, useNavigation } from '@framework/ui/components/Navigation'
 import { serializeColumns } from '@framework/ui/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/SortBy'
 import { completeFilters, toFiltersDict } from '@app/data/listWire'
@@ -35,15 +36,19 @@ export function useViewState(options: {
   const { metaFields, seedColumns, submit, router } = options
   const route = ctx.route
 
-  const views = useSavedViews(doctype, viewName || null)
+  const navigation = useNavigation(doctype, viewName || null)
+  const views = useSavedViews(doctype, {
+    activeView: navigation.activeView,
+    onChange: navigation.reload,
+  })
 
   const started = ref(false)
   const baseline = ref('')
 
-  // The sidebar mutates views through its own useSavedViews instance, which leaves
-  // this one holding a stale sidebar — a renamed view, or a different one marked
+  // The sidebar mutates views through its own useNavigation instance, which leaves
+  // this one holding stale sections — a renamed view, or a different one marked
   // default, would otherwise only surface on reload.
-  watch(savedViewsToken, () => views.reload())
+  watch(savedViewsToken, () => navigation.reload())
 
   const dirty = computed(
     () => Boolean(viewName) && started.value && tweakKey() !== baseline.value,
@@ -95,7 +100,7 @@ export function useViewState(options: {
 
   if (viewName) {
     watch(
-      [metaFields, views.activeView],
+      [metaFields, navigation.activeView],
       ([fields, view]: [any[], any]) => {
         if (started.value || !fields.length || !view) return
         start(fields)
@@ -118,7 +123,7 @@ export function useViewState(options: {
     // Set-as-default rewrote the record this route reads, so the list on screen is
     // no longer what it stores: re-seed from the newly chosen view rather than leave
     // the sidebar marking one view while the rows and breadcrumb show another.
-    watch(views.defaultView, async (next: any, previous: any) => {
+    watch(navigation.defaultView, async (next: any, previous: any) => {
       if (!started.value || previous == null || next === previous) return
       await views.loadLanding()
       applyBase(metaFields.value)
@@ -166,19 +171,19 @@ export function useViewState(options: {
   // label — an empty one (no default yet) leaves the breadcrumb at the doctype.
   const activeView = computed(() =>
     viewName
-      ? views.activeView.value
-      : findView(views.sections.value, views.defaultView.value),
+      ? navigation.activeView.value
+      : findView(navigation.sections.value, navigation.defaultView.value),
   )
   const viewLabel = computed(() => activeView.value?.label || '')
   const viewIcon = computed(() => activeView.value?.icon || '')
 
   // A personal view is editable only by its owner; a shared one only by a manager.
   const canEditActiveView = computed(() => {
-    const view = views.activeView.value
+    const view = navigation.activeView.value
     if (!view) return false
     return view.user
       ? view.user === currentUser.value.email
-      : views.canManageShared.value
+      : navigation.canManageShared.value
   })
 
   function resetView() {
@@ -188,7 +193,7 @@ export function useViewState(options: {
   }
 
   async function saveActiveView() {
-    const view = views.activeView.value
+    const view = navigation.activeView.value
     if (!view) return
     await views.saveView(view.name, liveSnapshot())
     baseline.value = tweakKey()

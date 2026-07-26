@@ -1,4 +1,4 @@
-// Bump signals between the page and the sidebar, which run separate useSavedViews
+// Bump signals between the page and the sidebar, which run separate useNavigation
 // instances and so cannot see each other's writes. Module-scope refs, per the
 // no-Pinia rule.
 

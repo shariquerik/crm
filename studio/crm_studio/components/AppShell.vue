@@ -143,7 +143,7 @@
             </Dropdown>
           </div>
           <ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pt-0.5 pb-10">
-            <ViewSidebar
+            <NavigationSidebar
               :key="`${activeDoctype}:${sidebarRefreshToken}`"
               :doctype="activeDoctype"
               :activeView="activeView"
@@ -209,7 +209,7 @@ import {
   Tooltip,
 } from 'frappe-ui'
 import { IconGlyph } from '@framework/ui/components/IconPicker'
-import { ViewSidebar } from '@framework/ui/components/SavedViews'
+import { NavigationSidebar } from '@framework/ui/components/Navigation'
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'

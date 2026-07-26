@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { call, toast } from 'frappe-ui'
-import { useSavedViews } from '@framework/ui/components/SavedViews'
+import { useNavigation } from '@framework/ui/components/Navigation'
 import { doctypeLabel, guardDoctype } from '@app/data/doctypes'
 import { errorMessage } from '@app/data/errors'
 
@@ -19,7 +19,7 @@ export default function setup(ctx: any) {
   const addingTask = ref(false)
 
   const viewId = typeof route.query.view === 'string' ? route.query.view : ''
-  const views = viewId ? useSavedViews(route.params.doctype, viewId) : null
+  const navigation = viewId ? useNavigation(route.params.doctype, viewId) : null
 
   guardDoctype(
     ctx,
@@ -56,10 +56,10 @@ export default function setup(ctx: any) {
     { immediate: true },
   )
 
-  // The crumb waits for the sidebar fetch to name the view; a stale `?view=`
+  // The crumb waits for the navigation fetch to name the view; a stale `?view=`
   // (deleted view) never resolves, so the trail degrades to doctype / record.
   const viewCrumb = computed(() => {
-    const view = views?.activeView.value
+    const view = navigation?.activeView.value
     return view?.label
       ? { label: view.label, icon: view.icon, route: viewLink.value }
       : null
