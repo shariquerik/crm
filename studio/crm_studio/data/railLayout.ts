@@ -47,13 +47,14 @@ export async function addToRail(doctype: string) {
   })
 }
 
-/** The last rail section the caller may write — a shared one when they manage the
- *  shared area, their own otherwise — created on demand. */
+/** The last rail section, created on demand.
+ *
+ *  Any of them will do, whoever owns it: adding to a shared section writes the row to
+ *  the caller's own overlay of it unless they ask for everyone, which this never does
+ *  — putting a doctype on one's own rail is not a decision about anybody else's. */
 async function targetSection(): Promise<string> {
-  const writable = railNavigation.sections.value.filter(
-    (section) => section.user || railNavigation.canManageShared.value,
-  )
-  const last = writable[writable.length - 1]
+  const sections = railNavigation.sections.value
+  const last = sections[sections.length - 1]
   if (last) return last.name
   return railNavigation.createSection(
     RAIL_SECTION_LABEL,
