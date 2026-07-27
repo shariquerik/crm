@@ -7,15 +7,12 @@ An app-level section — one naming no doctype — is navigation that belongs to
 rather than to any one list, which is what a rail is. The rail reads every one of them
 and flattens them into a single ordered list, so a section's label never shows.
 
-Seeded once, on install, from the shared "App Sidebar" fixture. A real record, not a
-read-through view of the fixture: materializing it later would give every row a new
-name, and a row's name is the identity personal overlays point at. The copy is taken
-while nothing points at anything, which costs later fixture edits their reach — already
-true in practice, since a user who touched their rail stopped seeing shared changes at
-all.
+Seeded once, on install, and a real record from then on — not a read-through view of
+the defaults below. Materializing it later would give every row a new name, and a row's
+name is the identity personal overlays point at, so the copy is taken while nothing
+points at anything. The cost is that editing `DEFAULT_RAIL` no longer reaches a site
+already installed, which is the same trade the fixture this replaced made.
 """
-
-import json
 
 import frappe
 from frappe.desk.doctype.navigation_item.navigation_item import DOCTYPE
@@ -25,12 +22,22 @@ from crm.saved_views.scope import CRM_APP
 
 RAIL_SCOPE = Scope(CRM_APP, "")
 
-SHARED_SIDEBAR = "App Sidebar"
+DEFAULT_SECTION_LABEL = "CRM"
+
+# The rail a fresh site opens with, as `(label, doctype, icon)`. Icons are bare Lucide
+# sprite names — a name the sprite has retired draws nothing.
+DEFAULT_RAIL = (
+	("Leads", "CRM Lead", "users"),
+	("Deals", "CRM Deal", "handshake"),
+	("Contacts", "Contact", "contact-round"),
+	("Organizations", "CRM Organization", "building-2"),
+	("Tasks", "CRM Task", "list-checks"),
+	("Notes", "FCRM Note", "notebook-pen"),
+)
 
 
 def seed_rail():
-	"""The rail every fresh site opens with: the fixture's doctypes, in its order, with
-	its labels and icons.
+	"""The rail every fresh site opens with: `DEFAULT_RAIL`, in order.
 
 	Gated on the whole scope rather than on one section, so a site whose rail has been
 	arranged — or emptied — is left as its owner left it.
@@ -38,11 +45,9 @@ def seed_rail():
 	if shared_rail_exists():
 		return
 
-	for sequence, section in enumerate(shared_sidebar_layout(), start=1):
-		label = section.get("label") or section.get("name")
-		items = rail_items(section.get("items") or [])
-		if label and items:
-			create_rail_section(label, sequence, items)
+	items = rail_items(DEFAULT_RAIL)
+	if items:
+		create_rail_section(DEFAULT_SECTION_LABEL, 1, items)
 
 
 @frappe.whitelist()
@@ -56,22 +61,6 @@ def addable_doctypes() -> list[str]:
 	return [name for name in names if frappe.has_permission(name, "read")]
 
 
-def shared_sidebar_layout() -> list[dict]:
-	"""The shared "App Sidebar" layout, read off the fixture file rather than the record
-	`get_sidebar_layout` reads.
-
-	Two reasons, and either alone would decide it: `sync_fixtures` runs *after*
-	`after_install`, so on a fresh site the record does not exist yet; and it rewrites
-	the record from this file on every migrate, so the file is what the record says.
-	"""
-	path = frappe.get_app_path("crm", "fixtures", "crm_ui_customization.json")
-	records = json.loads(frappe.read_file(path) or "[]")
-	for record in records:
-		if record.get("type") == SHARED_SIDEBAR and not record.get("user"):
-			return json.loads(record.get("json") or "[]")
-	return []
-
-
 def shared_rail_exists() -> bool:
 	return bool(
 		frappe.db.exists(
@@ -81,19 +70,14 @@ def shared_rail_exists() -> bool:
 	)
 
 
-def rail_items(entries: list[dict]) -> list[dict]:
-	"""The fixture's entries as navigation rows. One naming a doctype the site does not
-	have is dropped rather than left to fail the Link check on insert — the fixture is
-	CRM's own, but a site may have removed one."""
-	rows = [entry for entry in entries if entry.get("dt") and frappe.db.exists("DocType", entry["dt"])]
+def rail_items(entries) -> list[dict]:
+	"""The defaults as navigation rows. One naming a doctype the site does not have is
+	dropped rather than left to fail the Link check on insert — these are CRM's own
+	doctypes, but a site may have removed one."""
 	return [
-		{
-			"type": DOCTYPE,
-			"label": entry.get("label") or entry["dt"],
-			"icon": entry.get("icon"),
-			"dt": entry["dt"],
-		}
-		for entry in rows
+		{"type": DOCTYPE, "label": label, "icon": icon, "dt": doctype}
+		for label, doctype, icon in entries
+		if frappe.db.exists("DocType", doctype)
 	]
 
 

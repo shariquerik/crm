@@ -7,11 +7,11 @@ from frappe.desk.doctype.navigation_section.scope import UNSET
 from frappe.tests import IntegrationTestCase
 
 from crm.navigation.rail import (
+	DEFAULT_RAIL,
 	RAIL_SCOPE,
 	addable_doctypes,
 	rail_items,
 	seed_rail,
-	shared_sidebar_layout,
 )
 from crm.saved_views.scope import CRM_APP
 
@@ -27,26 +27,27 @@ def rail_rows() -> list[dict]:
 	return [item for section in sidebar["sections"] for item in section["items"]]
 
 
-class TestSharedSidebarLayout(IntegrationTestCase):
-	def test_reads_the_fixture_file(self):
-		sections = shared_sidebar_layout()
-		self.assertTrue(sections)
-		self.assertTrue(all(item["dt"] for section in sections for item in section["items"]))
+class TestDefaultRail(IntegrationTestCase):
+	def test_every_default_names_a_doctype_this_site_has(self):
+		"""A typo here is a row silently missing from the rail of every fresh site."""
+		missing = [doctype for _, doctype, _ in DEFAULT_RAIL if not frappe.db.exists("DocType", doctype)]
+		self.assertEqual(missing, [])
+
+	def test_every_default_icon_is_a_bare_sprite_name(self):
+		"""A `lucide-` prefix or a stale name draws a blank tile in the editor."""
+		icons = [icon for _, _, icon in DEFAULT_RAIL]
+		self.assertTrue(all(icon and not icon.startswith("lucide-") for icon in icons))
 
 
 class TestRailItems(IntegrationTestCase):
-	def test_carries_the_label_and_icon_the_fixture_gives(self):
-		entry = {"dt": "CRM Lead", "label": "Leads", "icon": "user-plus", "type": "doctype"}
+	def test_carries_the_label_and_icon_the_default_gives(self):
 		self.assertEqual(
-			rail_items([entry]),
+			rail_items([("Leads", "CRM Lead", "user-plus")]),
 			[{"type": "doctype", "label": "Leads", "icon": "user-plus", "dt": "CRM Lead"}],
 		)
 
-	def test_falls_back_to_the_doctype_name_for_a_label(self):
-		self.assertEqual(rail_items([{"dt": "CRM Lead"}])[0]["label"], "CRM Lead")
-
 	def test_drops_an_entry_whose_doctype_the_site_does_not_have(self):
-		self.assertEqual(rail_items([{"dt": "No Such Doctype", "label": "Gone"}]), [])
+		self.assertEqual(rail_items([("Gone", "No Such Doctype", "file")]), [])
 
 
 class TestSeedRail(IntegrationTestCase):
@@ -56,7 +57,7 @@ class TestSeedRail(IntegrationTestCase):
 		self.addCleanup(seed_rail)
 		self.addCleanup(drop_rail)
 
-	def test_seeds_the_fixture_as_a_shared_app_level_section(self):
+	def test_seeds_a_single_shared_app_level_section(self):
 		seed_rail()
 
 		sections = frappe.get_all(
@@ -68,16 +69,11 @@ class TestSeedRail(IntegrationTestCase):
 		self.assertFalse(sections[0].reference_doctype)
 		self.assertFalse(sections[0].user)
 
-	def test_seeds_the_fixture_doctypes_in_order_with_their_labels_and_icons(self):
+	def test_seeds_the_defaults_in_order_with_their_labels_and_icons(self):
 		seed_rail()
 
-		expected = [
-			item for section in shared_sidebar_layout() for item in section["items"] if item.get("dt")
-		]
 		rows = rail_rows()
-		self.assertEqual([row["dt"] for row in rows], [item["dt"] for item in expected])
-		self.assertEqual([row["label"] for row in rows], [item["label"] for item in expected])
-		self.assertEqual([row["icon"] for row in rows], [item["icon"] for item in expected])
+		self.assertEqual([(row["label"], row["dt"], row["icon"]) for row in rows], list(DEFAULT_RAIL))
 		self.assertTrue(all(row["type"] == "doctype" for row in rows))
 
 	def test_every_seeded_item_resolves_to_its_list_route(self):

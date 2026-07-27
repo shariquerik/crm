@@ -93,15 +93,6 @@ website_route_rules = [
 setup_wizard_complete = "crm.demo.api.create_demo_data"
 # setup_wizard_test = "crm.setup.setup_wizard.test_setup_wizard.run_setup_wizard_test"
 
-# Fixtures
-# --------
-
-# The crm-studio Studio app renders its nav from this record. Studio's own export covers the
-# app's pages and components, but not a CRM DocType, so it ships as a fixture instead.
-fixtures = [
-	{"doctype": "CRM UI Customization", "filters": [["name", "=", "App Sidebar"]]},
-]
-
 # Installation
 # ------------
 
