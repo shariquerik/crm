@@ -220,6 +220,7 @@ doc_events = {
 	},
 	"Navigation Section": {
 		"validate": ["crm.navigation.page_items.validate_page_items"],
+		"on_update": ["crm.navigation.doctype_items.seed_views_for_new_doctype_items"],
 	},
 }
 

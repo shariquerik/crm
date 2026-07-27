@@ -1,5 +1,6 @@
 import { watch } from 'vue'
 
+import { railHomeRoute } from '@app/data/rail'
 import { railItems } from '@app/data/railLayout'
 
 export default function setup(ctx: any) {
@@ -8,9 +9,8 @@ export default function setup(ctx: any) {
   watch(
     railItems,
     (items) => {
-      const first = items[0]
-      if (!first?.dt) return
-      router.replace(`/${encodeURIComponent(first.dt)}`)
+      const route = railHomeRoute(items)
+      if (route) router.replace(route)
     },
     { immediate: true },
   )

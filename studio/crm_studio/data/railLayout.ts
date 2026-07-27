@@ -1,19 +1,29 @@
-// The session user's rail layout, shared by the app shell and the home
-// redirect. Module-scope refs per the no-Pinia rule.
+// The session user's rail, read from the same navigation model the sidebar reads —
+// at the scope that names no doctype, which is the app's own navigation. Module-scope
+// per the no-Pinia rule.
 
-import { call, createResource } from 'frappe-ui'
+import { createResource } from 'frappe-ui'
 import { computed } from 'vue'
 
-export type RailItem = { dt: string; label: string; icon?: string | null }
+import { useNavigation } from '@framework/ui/components/Navigation'
+import { APP_NAME } from '@app/data/apps'
+import { flattenRail, type RailItem } from '@app/data/rail'
 
-export const railLayout = createResource({
-  url: 'crm.api.app_sidebar.get_rail_layout',
-  auto: true,
-  cache: 'railLayout',
-})
+export type { RailItem }
 
-export const railItems = computed<RailItem[]>(
-  () => railLayout.data?.items ?? [],
+const RAIL_SECTION_LABEL = 'Sidebar'
+
+// The empty doctype is the scope: app-level navigation, which is what a rail is.
+export const railNavigation = useNavigation('', undefined, { app: APP_NAME })
+
+export const railItems = computed<RailItem[]>(() =>
+  flattenRail(railNavigation.visibleSections.value),
+)
+
+/** The rail including what the user has hidden — which is still placed, and so must
+ *  not be offered for adding a second time. */
+export const placedRailItems = computed<RailItem[]>(() =>
+  flattenRail(railNavigation.sections.value),
 )
 
 export const addableDoctypes = createResource({
@@ -21,16 +31,26 @@ export const addableDoctypes = createResource({
   cache: 'railAddableDoctypes',
 })
 
-export async function saveRailItems(items: RailItem[]) {
-  railLayout.data = await call('crm.api.app_sidebar.update_rail_layout', {
-    items: items.map(({ dt, label, icon }) => ({
-      dt,
-      label: label ?? '',
-      icon: icon ?? '',
-    })),
+/** Its All view is seeded server-side as the item lands, so the list it opens has the
+ *  sidebar every other list has. */
+export async function addToRail(doctype: string) {
+  await railNavigation.addItem(await targetSection(), {
+    type: 'doctype',
+    dt: doctype,
+    label: doctype,
   })
 }
 
-export function addToRail(doctype: string) {
-  return saveRailItems([...railItems.value, { dt: doctype, label: doctype }])
+/** The last rail section the caller may write — a shared one when they manage the
+ *  shared area, their own otherwise — created on demand. */
+async function targetSection(): Promise<string> {
+  const writable = railNavigation.sections.value.filter(
+    (section) => section.user || railNavigation.canManageShared.value,
+  )
+  const last = writable[writable.length - 1]
+  if (last) return last.name
+  return railNavigation.createSection(
+    RAIL_SECTION_LABEL,
+    railNavigation.canManageShared.value,
+  )
 }

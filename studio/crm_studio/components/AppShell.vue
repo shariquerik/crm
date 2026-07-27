@@ -16,10 +16,10 @@
         <div class="flex w-full flex-1 flex-col items-center gap-3">
           <RailItem
             v-for="item in railItems"
-            :key="item.dt"
+            :key="item.name"
             :label="item.label"
-            :active="item.dt === activeDoctype"
-            @click="go(`/${encodeSegment(item.dt)}`)"
+            :active="isActiveRailItem(item, activeDoctype, route.path)"
+            @click="openRailItem(item)"
           >
             <IconGlyph :name="doctypeIcon(item.dt, item.icon)" class="size-4" />
           </RailItem>
@@ -70,12 +70,6 @@
             icon="lucide-circle-help"
             variant="ghost"
             @click="openDocs"
-          />
-          <RailItem
-            label="Customize sidebar"
-            icon="lucide-settings-2"
-            variant="ghost"
-            @click="editingRail = true"
           />
         </div>
 
@@ -193,7 +187,6 @@
       <slot />
     </div>
 
-    <RailEditor v-model="editingRail" />
     <SettingsDialog />
     <AboutDialog v-model="showAbout" />
   </DesktopShell>
@@ -212,13 +205,15 @@ import {
   Tooltip,
 } from 'frappe-ui'
 import { IconGlyph } from '@framework/ui/components/IconPicker'
-import { NavigationSidebar } from '@framework/ui/components/Navigation'
+import {
+  itemTarget,
+  NavigationSidebar,
+} from '@framework/ui/components/Navigation'
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 
 import AboutDialog from '@app/components/AboutDialog.vue'
-import RailEditor from '@app/components/RailEditor.vue'
 import SettingsDialog from '@app/components/SettingsDialog.vue'
 import { deriveShellChrome } from '@app/components/shellChrome'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
@@ -227,7 +222,18 @@ import { APP_NAME } from '@app/data/apps'
 import { countsRefreshToken } from '@app/data/countsRefresh'
 import { doctypeIcon, doctypeLabel } from '@app/data/doctypes'
 import { ITEM_KINDS } from '@app/data/itemKinds'
-import { addableDoctypes, addToRail, railItems } from '@app/data/railLayout'
+// Aliased: `RailItem` is also frappe-ui's tile component, which the template draws.
+import {
+  isActiveRailItem,
+  railDoctypes,
+  type RailItem as RailEntry,
+} from '@app/data/rail'
+import {
+  addableDoctypes,
+  addToRail,
+  placedRailItems,
+  railItems,
+} from '@app/data/railLayout'
 import {
   savedViewsChanged,
   sidebarRefreshToken,
@@ -254,22 +260,34 @@ const collapsed = useLocalStorage('crm-sidebar-collapsed', false)
 const railHovered = ref(false)
 
 const router = useRouter()
+const route = useRoute()
 
 function go(path: string) {
   router.push(path)
 }
 
-function goToFirstModule() {
-  const first = railItems.value[0]
-  go(first ? `/${encodeSegment(first.dt)}` : '/')
+// `window.open(…, "_self")` is not the same as routing: an absolute URL the router
+// cannot take is followed by leaving the page, in the tab the server's `new_tab` says.
+function openRailItem(item: RailEntry) {
+  const target = itemTarget(item)
+  if (!('leave' in target)) {
+    go(target.path)
+    return
+  }
+  if (item.new_tab) window.open(target.leave, '_blank', 'noopener')
+  else window.location.assign(target.leave)
 }
 
-const editingRail = ref(false)
+function goToFirstModule() {
+  const first = railItems.value[0]
+  if (first) openRailItem(first)
+  else go('/')
+}
 
 const chrome = computed(() =>
   deriveShellChrome(
     props.activeDoctype,
-    railItems.value.map((item) => item.dt),
+    railDoctypes(placedRailItems.value),
     addableDoctypes.fetched ? addableDoctypes.data ?? [] : null,
   ),
 )
@@ -285,10 +303,6 @@ watchEffect(() => {
 const unlistedLabel = computed(() => doctypeLabel(chrome.value.unlistedDoctype))
 
 const { appMenuOptions, showAbout, onKeydown } = useAppMenu()
-
-function encodeSegment(value: string) {
-  return encodeURIComponent(value)
-}
 
 const DOCS_URL = 'https://docs.frappe.io/crm'
 
