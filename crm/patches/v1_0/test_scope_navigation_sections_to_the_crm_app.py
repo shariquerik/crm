@@ -30,7 +30,7 @@ def make_unscoped_section(label, views):
 			"label": label,
 			"app": CRM_APP,
 			"reference_doctype": DOCTYPE,
-			"views": [{"view": view.name} for view in views],
+			"items": [{"type": "view", "view": view.name} for view in views],
 		}
 	).insert(ignore_permissions=True)
 	frappe.db.set_value("Navigation Section", section.name, "app", "", update_modified=False)
@@ -43,7 +43,7 @@ def app_of(section):
 
 def placed(section):
 	section.reload()
-	return [str(row.view) for row in section.views]
+	return [str(row.view) for row in section.items]
 
 
 def names(*views):

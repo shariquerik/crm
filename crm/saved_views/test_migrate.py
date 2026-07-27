@@ -41,7 +41,7 @@ def personal_section(doctype, user):
 
 def section_holds(section, label):
 	return section is not None and label in [
-		frappe.db.get_value("Saved View", row.view, "label") for row in section.views
+		frappe.db.get_value("Saved View", row.view, "label") for row in section.items
 	]
 
 
@@ -183,8 +183,8 @@ class TestMigrate(IntegrationTestCase):
 		self.assertEqual(
 			len(frappe.get_all("Saved View", {"reference_doctype": "CRM Deal", "label": "Team pipeline"})), 1
 		)
-		self.assertEqual(len(shared_section("CRM Deal", "Views").views), 1)
-		self.assertEqual(len(personal_section("CRM Deal", self.user).views), 1)
+		self.assertEqual(len(shared_section("CRM Deal", "Views").items), 1)
+		self.assertEqual(len(personal_section("CRM Deal", self.user).items), 1)
 
 	def test_a_view_without_a_doctype_is_skipped(self):
 		make_legacy(dt="", label="Orphan", user=self.user)

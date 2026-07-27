@@ -29,11 +29,11 @@ def shared_section(doctype, label):
 
 
 def view_labels(section):
-	return [frappe.db.get_value("Saved View", row.view, "label") for row in section.views]
+	return [frappe.db.get_value("Saved View", row.view, "label") for row in section.items]
 
 
 def view_by_label(section, label):
-	for row in section.views:
+	for row in section.items:
 		view = frappe.get_doc("Saved View", row.view)
 		if view.label == label:
 			return view
@@ -85,7 +85,7 @@ class TestSeed(IntegrationTestCase):
 		section = shared_section("CRM Deal", "Pipeline")
 
 		self.assertEqual(view_labels(section), [status.name for status in statuses])
-		for row, status in zip(section.views, statuses, strict=True):
+		for row, status in zip(section.items, statuses, strict=True):
 			view = frappe.get_doc("Saved View", row.view)
 			# The colour rides on a dot Custom Icon, seeded on demand, not a bare token.
 			self.assertEqual(view.icon, f"custom:dot-{status.color}")
@@ -151,12 +151,12 @@ class TestSeed(IntegrationTestCase):
 			{"reference_doctype": "CRM Deal", "label": "Views", "user": ("in", ("", None))},
 		)
 		self.assertEqual(len(sections), 1)
-		self.assertEqual(len(shared_section("CRM Deal", "Views").views), 5)
+		self.assertEqual(len(shared_section("CRM Deal", "Views").items), 5)
 
 	def test_rerun_does_not_restore_a_manager_deleted_view(self):
 		section = shared_section("CRM Deal", "Views")
 		removed = view_by_label(section, "Open").name
-		section.views = [row for row in section.views if str(row.view) != str(removed)]
+		section.items = [row for row in section.items if str(row.view) != str(removed)]
 		section.save(ignore_permissions=True)
 		frappe.delete_doc("Saved View", removed, force=True, ignore_permissions=True)
 
@@ -164,4 +164,4 @@ class TestSeed(IntegrationTestCase):
 
 		section = shared_section("CRM Deal", "Views")
 		self.assertNotIn("Open", view_labels(section))
-		self.assertEqual(len(section.views), 4)
+		self.assertEqual(len(section.items), 4)

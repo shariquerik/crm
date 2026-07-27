@@ -100,8 +100,8 @@ def migrate_filters(raw):
 
 def place_in_section(doctype, label, user, view_name):
 	section = get_or_create_section(Scope(CRM_APP, doctype), label, user)
-	if str(view_name) not in {str(row.view) for row in section.views}:
-		section.append("views", {"view": view_name})
+	if str(view_name) not in {str(row.view) for row in section.items}:
+		section.append("items", {"type": "view", "view": view_name})
 		section.save(ignore_permissions=True)
 
 

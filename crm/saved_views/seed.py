@@ -275,7 +275,7 @@ def create_shared_section(doctype, label, views):
 			**Scope(CRM_APP, doctype).as_fields(),
 			"user": "",
 			"sequence": next_shared_sequence(doctype),
-			"views": [{"view": view.name} for view in views],
+			"items": [{"type": "view", "view": view.name} for view in views],
 		}
 	).insert(ignore_permissions=True)
 
