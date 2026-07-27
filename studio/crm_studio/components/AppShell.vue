@@ -71,6 +71,12 @@
             variant="ghost"
             @click="openDocs"
           />
+          <RailItem
+            label="Customize sidebar"
+            icon="lucide-settings-2"
+            variant="ghost"
+            @click="editingRail = true"
+          />
         </div>
 
         <div class="mt-2 flex shrink-0 justify-center">
@@ -187,6 +193,7 @@
       <slot />
     </div>
 
+    <RailEditorDialog v-model="editingRail" />
     <SettingsDialog />
     <AboutDialog v-model="showAbout" />
   </DesktopShell>
@@ -214,6 +221,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'
 
 import AboutDialog from '@app/components/AboutDialog.vue'
+import RailEditorDialog from '@app/components/RailEditorDialog.vue'
 import SettingsDialog from '@app/components/SettingsDialog.vue'
 import { deriveShellChrome } from '@app/components/shellChrome'
 import { useAccountMenu } from '@app/composables/useAccountMenu'
@@ -230,6 +238,7 @@ import {
 } from '@app/data/rail'
 import {
   addableDoctypes,
+  addableDoctypeState,
   addToRail,
   placedRailItems,
   railItems,
@@ -258,6 +267,8 @@ const SIDEBAR_WIDTH = '14rem'
 const collapsed = useLocalStorage('crm-sidebar-collapsed', false)
 
 const railHovered = ref(false)
+
+const editingRail = ref(false)
 
 const router = useRouter()
 const route = useRoute()
@@ -288,14 +299,14 @@ const chrome = computed(() =>
   deriveShellChrome(
     props.activeDoctype,
     railDoctypes(placedRailItems.value),
-    addableDoctypes.fetched ? addableDoctypes.data ?? [] : null,
+    addableDoctypeState.value,
   ),
 )
 
 // addable_doctypes doubles as the validity gate for the hint tile, so a typo
 // URL ("/nonsense") never offers itself for the sidebar.
 watchEffect(() => {
-  if (chrome.value.addableDoctypesUnknown && !addableDoctypes.loading) {
+  if (chrome.value.needsAddableDoctypes && !addableDoctypes.loading) {
     addableDoctypes.fetch()
   }
 })

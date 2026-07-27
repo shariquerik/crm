@@ -27,9 +27,15 @@ export const placedRailItems = computed<RailItem[]>(() =>
 )
 
 export const addableDoctypes = createResource({
-  url: 'crm.api.app_sidebar.addable_doctypes',
+  url: 'crm.navigation.rail.addable_doctypes',
   cache: 'railAddableDoctypes',
 })
+
+/** The addable list and whether it has landed, in the shape the shell reads. */
+export const addableDoctypeState = computed(() => ({
+  fetched: Boolean(addableDoctypes.fetched),
+  names: addableDoctypes.data ?? [],
+}))
 
 /** Its All view is seeded server-side as the item lands, so the list it opens has the
  *  sidebar every other list has. */

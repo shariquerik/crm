@@ -1,40 +1,45 @@
 // Which pieces of app chrome a route gets, derived from the doctype it is scoped to.
 
+/** The `addable_doctypes` answer, and whether it has arrived. */
+export type AddableDoctypes = {
+  fetched: boolean
+  names: string[]
+}
+
 export type ShellChrome = {
   showSidebar: boolean
   /** Stays for a route with no doctype: such a page has nothing to list in the
    *  sidebar, but its own title still belongs in the header. */
   showHeader: boolean
   unlistedDoctype: string
-  addableDoctypesUnknown: boolean
+  /** This route needs the addable list and does not have it yet. */
+  needsAddableDoctypes: boolean
 }
 
-/** `addableDoctypes` is null until the answer has landed. */
 export function deriveShellChrome(
   activeDoctype: string,
   railDoctypes: string[],
-  addableDoctypes: string[] | null,
+  addable: AddableDoctypes,
 ): ShellChrome {
-  const offRail =
+  const offRail = isOffRail(activeDoctype, railDoctypes)
+  const unlistedDoctype =
+    offRail && addable.names.includes(activeDoctype) ? activeDoctype : ''
+  // While the answer is in flight the chrome stays: blinking it away on every load of
+  // a perfectly good doctype is worse than a moment of it framing a page that is not.
+  const isReal = !offRail || !addable.fetched || Boolean(unlistedDoctype)
+
+  return {
+    showSidebar: Boolean(activeDoctype) && isReal,
+    showHeader: isReal,
+    unlistedDoctype,
+    needsAddableDoctypes: offRail && !addable.fetched,
+  }
+}
+
+function isOffRail(activeDoctype: string, railDoctypes: string[]) {
+  return (
     Boolean(activeDoctype) &&
     railDoctypes.length > 0 &&
     !railDoctypes.includes(activeDoctype)
-
-  const unlistedDoctype =
-    offRail && (addableDoctypes ?? []).includes(activeDoctype)
-      ? activeDoctype
-      : ''
-
-  // A doctype on the rail is known without asking; anything else waits on the same
-  // `addable_doctypes` answer the hint tile does. Unknown only once that has landed —
-  // while it is in flight the chrome stays, since blinking it away on every load of a
-  // perfectly good doctype is worse than a moment of it framing a page that is loading.
-  const known = !offRail || addableDoctypes === null || Boolean(unlistedDoctype)
-
-  return {
-    showSidebar: Boolean(activeDoctype) && known,
-    showHeader: known,
-    unlistedDoctype,
-    addableDoctypesUnknown: offRail && addableDoctypes === null,
-  }
+  )
 }

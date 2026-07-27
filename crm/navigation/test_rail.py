@@ -6,7 +6,13 @@ from frappe.desk.doctype.navigation_section.navigation_section import get_sideba
 from frappe.desk.doctype.navigation_section.scope import UNSET
 from frappe.tests import IntegrationTestCase
 
-from crm.navigation.rail import RAIL_SCOPE, rail_items, seed_rail, shared_sidebar_layout
+from crm.navigation.rail import (
+	RAIL_SCOPE,
+	addable_doctypes,
+	rail_items,
+	seed_rail,
+	shared_sidebar_layout,
+)
 from crm.saved_views.scope import CRM_APP
 
 
@@ -95,6 +101,22 @@ class TestSeedRail(IntegrationTestCase):
 
 		seed_rail()
 		self.assertEqual(len(rail_rows()), 2)
+
+
+class TestAddableDoctypes(IntegrationTestCase):
+	def test_offers_a_listable_doctype(self):
+		self.assertIn("CRM Deal", addable_doctypes())
+
+	def test_leaves_out_a_single_and_a_child_table(self):
+		offered = set(addable_doctypes())
+		self.assertNotIn("FCRM Settings", offered)
+		self.assertNotIn("Navigation Item", offered)
+
+	def test_leaves_out_a_doctype_the_session_user_cannot_read(self):
+		frappe.set_user("Guest")
+		self.addCleanup(frappe.set_user, "Administrator")
+
+		self.assertNotIn("CRM Deal", addable_doctypes())
 
 
 class TestRailFlattening(IntegrationTestCase):

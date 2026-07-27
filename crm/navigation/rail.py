@@ -45,6 +45,17 @@ def seed_rail():
 			create_rail_section(label, sequence, items)
 
 
+@frappe.whitelist()
+def addable_doctypes() -> list[str]:
+	"""Every doctype the rail may show: one the session user can read.
+
+	Also the shell's validity gate — a URL naming no real doctype is absent from this
+	list, which is how "/nonsense" is told from a list nobody has added yet.
+	"""
+	names = frappe.get_all("DocType", filters={"issingle": 0, "istable": 0}, pluck="name", order_by="name")
+	return [name for name in names if frappe.has_permission(name, "read")]
+
+
 def shared_sidebar_layout() -> list[dict]:
 	"""The shared "App Sidebar" layout, read off the fixture file rather than the record
 	`get_sidebar_layout` reads.
