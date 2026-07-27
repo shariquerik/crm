@@ -218,7 +218,20 @@ doc_events = {
 		"before_validate": ["crm.api.live_demo.validate_user"],
 		"validate_reset_password": ["crm.api.live_demo.validate_reset_password"],
 	},
+	"Navigation Section": {
+		"validate": ["crm.navigation.page_items.validate_page_items"],
+	},
 }
+
+# Navigation
+# ----------
+
+# CRM's frontend is a Studio app, so a navigation item can point at a Studio Page — a
+# type frappe cannot ship, being the base app a Studio Page is invisible to.
+navigation_item_targets = ["crm.navigation.page_items.page_targets"]
+
+# The type is only installable once studio is, which may be after CRM.
+after_app_install = "crm.navigation.page_items.install_page_item_type"
 
 # Scheduled Tasks
 # ---------------
