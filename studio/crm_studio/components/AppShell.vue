@@ -143,7 +143,14 @@
               </template>
             </Dropdown>
           </div>
-          <ScrollArea class="min-h-0 flex-1" viewportClass="px-2 pt-0.5 pb-10">
+          <!-- The `[&>div]` rules dress the viewport's own wrapper element, which
+               ScrollArea renders and takes no class for: a full-height flex column
+               carrying the sidebar's colour, so the sidebar inside it can put a footer
+               on the floor of the panel and have the rows scroll under it. -->
+          <ScrollArea
+            class="min-h-0 flex-1 bg-inherit"
+            viewportClass="flex flex-col bg-inherit px-2 pt-0.5 [&>div]:flex [&>div]:flex-1 [&>div]:flex-col [&>div]:bg-inherit"
+          >
             <NavigationSidebar
               :key="`${activeDoctype}:${sidebarRefreshToken}`"
               :doctype="activeDoctype"
