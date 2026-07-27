@@ -32,9 +32,8 @@ export function doctypeLabel(doctype: string) {
 /** The icon a doctype renders with: the one saved on its rail item, else this
  *  app's own default for it, else a generic glyph. */
 export function doctypeIcon(doctype: string, saved?: string | null) {
-  // A name the sprite no longer carries draws a blank tile, so it falls through
-  // — CRM's seeded layout still names the icons Lucide has since renamed
-  // (`home` -> `house`, `check-square` -> `square-check`, `edit` -> `square-pen`).
+  // A name the sprite no longer carries draws a blank tile, so it falls through —
+  // a stored icon outlives the Lucide release that named it.
   const picked = (saved ?? '').replace(/^lucide-/, '').trim()
   if (picked && (isIconName(picked) || isCustomIconName(picked))) return picked
   return DOCTYPES[doctype]?.icon || 'file'
