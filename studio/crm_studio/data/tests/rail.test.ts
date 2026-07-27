@@ -32,7 +32,7 @@ function section(
   items: NavigationItem[],
   user = '',
 ): NavigationSection {
-  return { name, label: name, user, items }
+  return { name, label: name, user, hidden: 0, items }
 }
 
 function railItem(overrides: Partial<NavigationItem>): RailItem {
