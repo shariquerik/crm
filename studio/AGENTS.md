@@ -98,10 +98,14 @@ since `@vue/test-utils` is not installed.
 - Build the minimum working code, then iterate towards your goals.
 - Don't add unnecessary dependencies unless required.
 - **DO NOT ADD UNNECESSARY COMMENTS.** A comment earns its place only where the code cannot
-  speak for itself: a short file-level note on what the file does, and a constraint a reader
-  would otherwise undo — a framework quirk, a build-time gotcha, a paint-order trap. Never
-  narrate the next line, restate a name, explain a feature, or record history and rationale;
-  those belong in the commit message.
+  speak for itself: a one-line note on what the file does, and a constraint a reader would
+  otherwise undo — a framework quirk, a build-time gotcha, a paint-order trap. Never narrate
+  the next line, restate a name, explain a feature, or record history and rationale.
+  Three hard limits, so this stays a rule and not a judgement call: **two lines maximum**
+  (a third line means it is an explanation — put it in the commit message), **one summary
+  line per docstring** (no rationale paragraphs, no "why not X"), and **no commented-out
+  code**. Watch for the phrase **"rather than"** — it is the signature of justifying your
+  choice against an alternative you did not take.
 
 ## Formatting
 
