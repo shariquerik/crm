@@ -24,6 +24,9 @@ add_to_apps_screen = [
 
 get_site_info = "crm.activation.get_site_info"
 
+# bundle the Studio apps under crm/studio/ — see crm/build.py for why crm owns this step
+after_build = "crm.build.after_build"
+
 export_python_type_annotations = True
 require_type_annotated_api_methods = True
 
