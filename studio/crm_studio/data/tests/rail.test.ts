@@ -22,6 +22,7 @@ function item(overrides: Partial<NavigationItem>): NavigationItem {
     url: '/CRM%20Lead',
     new_tab: 0,
     hidden: 0,
+    own: 0,
     view: null,
     ...overrides,
   }
