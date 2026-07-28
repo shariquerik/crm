@@ -198,8 +198,6 @@ const { selectAllState, toggle, toggleSelectAll } = useRowSelection({
   rowKey: toRef(props, 'rowKey'),
 })
 
-// Column metadata is a request behind `loading`; without stand-in columns the skeleton
-// rows have no cells and the list reads as blank.
 const skeletonColumns = computed(() => {
   if (columns.value.length) return columns.value
   return Array.from({ length: SKELETON_COLUMN_COUNT }, (_, index) => ({

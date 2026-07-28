@@ -5,8 +5,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-// Modifier tokens render as their Mac glyphs; any other token (a letter, a
-// comma) prints as-is. So `['cmd', 'shift', ',']` reads ⌘⇧,.
 const GLYPHS: Record<string, string> = {
   cmd: '⌘',
   mod: '⌘',

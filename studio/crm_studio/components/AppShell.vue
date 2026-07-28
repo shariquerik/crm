@@ -23,11 +23,6 @@
           >
             <IconGlyph :name="doctypeIcon(item.dt, item.icon)" class="size-4" />
           </RailItem>
-          <!-- Not a RailItem: this tile is a slot waiting to be filled, not a place
-            you can go, and it says so by being the one outlined tile in a rail of
-            filled ones. RailItem draws its own background, which stacked with an
-            outline read as a second grey blob. The active bar still shows, because
-            the list it would add is the list on screen. -->
           <Tooltip
             v-if="chrome.unlistedDoctype"
             :text="`Add ${unlistedLabel} to sidebar`"
@@ -52,19 +47,6 @@
         </div>
 
         <div class="flex w-full shrink-0 flex-col items-center gap-1">
-          <!-- <RailItem
-            label="Search"
-            icon="lucide-search"
-            variant="ghost"
-            @click="openSearch"
-          />
-          <RailItem
-            label="Notifications"
-            icon="lucide-bell"
-            variant="ghost"
-            :badge="unreadCount"
-            badgeStyle="dot"
-          /> -->
           <RailItem
             label="Help"
             icon="lucide-circle-help"
@@ -143,10 +125,6 @@
               </template>
             </Dropdown>
           </div>
-          <!-- The `[&>div]` rules dress the viewport's own wrapper element, which
-               ScrollArea renders and takes no class for: a full-height flex column
-               carrying the sidebar's colour, so the sidebar inside it can put a footer
-               on the floor of the panel and have the rows scroll under it. -->
           <ScrollArea
             class="min-h-0 flex-1 bg-inherit"
             viewportClass="flex flex-col bg-inherit px-2 pt-0.5 [&>div]:flex [&>div]:flex-1 [&>div]:flex-col [&>div]:bg-inherit"
@@ -237,7 +215,6 @@ import { APP_NAME } from '@app/data/apps'
 import { countsRefreshToken } from '@app/data/countsRefresh'
 import { doctypeIcon, doctypeLabel } from '@app/data/doctypes'
 import { ITEM_KINDS } from '@app/data/itemKinds'
-// Aliased: `RailItem` is also frappe-ui's tile component, which the template draws.
 import {
   isActiveRailItem,
   railDoctypes,
@@ -284,8 +261,6 @@ function go(path: string) {
   router.push(path)
 }
 
-// `window.open(…, "_self")` is not the same as routing: an absolute URL the router
-// cannot take is followed by leaving the page, in the tab the server's `new_tab` says.
 function openRailItem(item: RailEntry) {
   const target = itemTarget(item)
   if (!('leave' in target)) {
@@ -310,8 +285,6 @@ const chrome = computed(() =>
   ),
 )
 
-// addable_doctypes doubles as the validity gate for the hint tile, so a typo
-// URL ("/nonsense") never offers itself for the sidebar.
 watchEffect(() => {
   if (chrome.value.needsAddableDoctypes && !addableDoctypes.loading) {
     addableDoctypes.fetch()
@@ -327,10 +300,6 @@ const DOCS_URL = 'https://docs.frappe.io/crm'
 function openDocs() {
   window.open(DOCS_URL, '_blank', 'noopener')
 }
-
-function openSearch() {}
-
-const unreadCount = ref(3)
 
 const { currentUser, userLabel, userMenuOptions, loadCurrentUser } =
   useAccountMenu()

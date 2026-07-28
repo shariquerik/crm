@@ -1,7 +1,3 @@
-// The Lucide sprite is the only list of names `<Icon>` can actually draw — the
-// `.lucide-*` CSS classes exist only for names hard-coded in source, so anything
-// data-driven (a saved icon, a picker's grid) has to come from here.
-
 let names: string[] = []
 let lookup = new Set<string>()
 

@@ -47,8 +47,6 @@ def diff(arguments):
 	print("\n".join(lines) or "draft_blocks matches blocks")
 
 
-# Committing a page whose draft_blocks is set commits builder state that Studio has not published,
-# and the builder would then show that draft instead of what the file's `blocks` say.
 def check(arguments):
 	drafted = [tree.path.name for tree in BlockTree.load_all(arguments.pages) if tree.draft]
 	if not drafted:
@@ -69,7 +67,6 @@ class BlockTree:
 		self.raw = path.read_text()
 		self.document = json.loads(self.raw)
 
-	# Takes a page name for a human, or a path for whatever pre-commit hands `check`.
 	@classmethod
 	def load(cls, page):
 		path = Path(page)
@@ -104,8 +101,6 @@ class BlockTree:
 			lines.append("  " * depth + prefix + self.describe(block, detail))
 		return lines
 
-	# Blocks nest through `children` and through `componentSlots[<slot>].slotContent`; a walk that
-	# follows only `children` misses everything a page puts in the app shell's header slot.
 	def walk(self, blocks=None, depth=0, slot=None):
 		for block in self.blocks if blocks is None else blocks:
 			yield block, depth, slot
@@ -113,8 +108,6 @@ class BlockTree:
 			for name, content in (block.get("componentSlots") or {}).items():
 				yield from self.walk(content.get("slotContent", []), depth + 1, name)
 
-	# `dump` wants a scannable map, so it drops styles and clips props; `diff` needs every field
-	# it compares to be spelled out in full.
 	@classmethod
 	def describe(cls, block, detail=False):
 		parts = [f"{block.get('componentName')} #{block.get('componentId')}"]
@@ -131,8 +124,6 @@ class BlockTree:
 	def clip(value, width=70):
 		return value if len(value) <= width else value[:width] + "…"
 
-	# Dropping draft_blocks is what Studio's own publish() does, and an exported page omits the key
-	# entirely. Keeping a draft would bury this edit: the builder renders the draft over `blocks`.
 	def save(self):
 		self.document.pop("draft_blocks", None)
 		text = json.dumps(self.document, indent=1)

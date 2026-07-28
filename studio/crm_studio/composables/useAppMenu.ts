@@ -4,7 +4,6 @@ import KeyboardShortcut from '@app/components/KeyboardShortcut.vue'
 import { useSettingsDialog } from '@app/composables/useSettingsDialog'
 import { installedApps } from '@app/data/apps'
 
-// No general app settings yet, so Settings lands on the first workspace tab.
 const SETTINGS_TAB = 'users'
 const SETTINGS_KEYS = ['cmd', 'shift', ',']
 
@@ -42,8 +41,6 @@ export function useAppMenu() {
     },
   ])
 
-  // Cmd/Ctrl+Shift+Comma opens Settings. Matched on `code`, not `key`, because
-  // Shift rewrites the printed character (comma becomes `<`).
   function onKeydown(event: KeyboardEvent) {
     if (
       event.code === 'Comma' &&

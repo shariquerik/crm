@@ -17,10 +17,6 @@ import {
 const DEFAULT_SORT = [{ fieldname: 'modified', direction: 'desc' }]
 const LANDING_SAVE_DEBOUNCE_MS = 600
 
-// A view's saved definition is the baseline; tweaking filters, sort, or columns
-// diverges from it. On a `/…/view/<id>` route the divergence lives only in the URL
-// query and never rewrites the stored view. On the plain list route there is no view
-// to modify, so tweaks auto-save into the user's own default (a per-user scratchpad).
 export function useViewState(options: {
   ctx: any
   doctype: string
@@ -49,9 +45,6 @@ export function useViewState(options: {
   const started = ref(false)
   const baseline = ref('')
 
-  // The sidebar mutates views through its own useNavigation instance, which leaves
-  // this one holding stale sections — a renamed view, or a different one marked
-  // default, would otherwise only surface on reload.
   watch(savedViewsToken, () => navigation.reload())
 
   const dirty = computed(
@@ -63,8 +56,6 @@ export function useViewState(options: {
       filters: toFiltersDict(completeFilters(filters.value || [])),
       order_by:
         serializeOrderBy(sort.value || []) || serializeOrderBy(DEFAULT_SORT),
-      // A resize is part of the view: its px `width` diverges from the auto `fr`
-      // serializeColumns fills in, so it trips the modified indicator and saves.
       columns: serializeColumns(columns.value || [], metaFields.value),
     })
   }
@@ -124,9 +115,6 @@ export function useViewState(options: {
       },
       { immediate: true },
     )
-    // Set-as-default rewrote the record this route reads, so the list on screen is
-    // no longer what it stores: re-seed from the newly chosen view rather than leave
-    // the sidebar marking one view while the rows and breadcrumb show another.
     watch(navigation.defaultView, async (next: any, previous: any) => {
       if (!started.value || previous == null || next === previous) return
       await views.loadLanding()
@@ -135,10 +123,6 @@ export function useViewState(options: {
       submit()
     })
 
-    // Only a real divergence is a tweak. Seeding the list reassigns all three refs,
-    // which the deep watcher cannot tell from an edit — and an auto-save there would
-    // turn the default into a standalone scratchpad, dropping the `source_view` that
-    // marks which view the user chose as default.
     watch(
       [filters, sort, columns],
       () =>
@@ -156,8 +140,6 @@ export function useViewState(options: {
       ? { ...preserved, ...queryFromState(liveSnapshot()) }
       : preserved
     if (stableQuery(query) === stableQuery(current)) return
-    // A location naming only `query` resolves with an empty hash, which would
-    // close the settings dialog (#settings/…) as a side effect of a list tweak.
     router.replace({ query, hash: liveRoute()?.hash || '' })
   }
 
@@ -171,8 +153,6 @@ export function useViewState(options: {
   }
   onScopeDispose(() => clearTimeout(landingTimer))
 
-  // The plain list route opens the user's default, so it carries that view's own
-  // label — an empty one (no default yet) leaves the breadcrumb at the doctype.
   const activeView = computed(() =>
     viewName
       ? navigation.activeView.value
@@ -181,7 +161,6 @@ export function useViewState(options: {
   const viewLabel = computed(() => activeView.value?.label || '')
   const viewIcon = computed(() => activeView.value?.icon || '')
 
-  // A personal view is editable only by its owner; a shared one only by a manager.
   const canEditActiveView = computed(() => {
     const view = navigation.activeView.value
     if (!view) return false

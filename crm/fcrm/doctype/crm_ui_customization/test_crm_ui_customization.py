@@ -1,10 +1,6 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
-# The doctype is copied from PR frappe/crm#1524, commit
-# 51eb481c57b016c4d275e583d2bd0bc8e3bb6abb (see crm_ui_customization.py). The PR
-# ships only an empty test stub; these tests cover what this app relies on — the
-# sidebar-data API — plus the autoname contract get_sidebar_layout depends on.
 
 import json
 
@@ -46,8 +42,6 @@ class IntegrationTestCRMUICustomization(IntegrationTestCase):
 
 	def test_autonames_from_type_and_sets_title(self):
 		doc = self._make_sidebar()
-		# get_sidebar_layout() fetches by the literal name "App Sidebar", so a
-		# sidebar record with no dt/user must autoname to exactly that.
 		self.assertEqual(doc.name, "App Sidebar")
 		self.assertEqual(doc.title, "App Sidebar")
 

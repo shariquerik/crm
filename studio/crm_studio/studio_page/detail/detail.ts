@@ -59,8 +59,6 @@ export default function setup(ctx: any) {
     { immediate: true },
   )
 
-  // The crumb waits for the navigation fetch to name the view; a stale `?view=`
-  // (deleted view) never resolves, so the trail degrades to doctype / record.
   const viewCrumb = computed(() => {
     const view = navigation?.activeView.value
     return view?.label

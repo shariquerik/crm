@@ -87,7 +87,6 @@ class TestSeed(IntegrationTestCase):
 		self.assertEqual(view_labels(section), [status.name for status in statuses])
 		for row, status in zip(section.items, statuses, strict=True):
 			view = frappe.get_doc("Saved View", row.view)
-			# The colour rides on a dot Custom Icon, seeded on demand, not a bare token.
 			self.assertEqual(view.icon, f"custom:dot-{status.color}")
 			self.assertTrue(frappe.db.exists("Custom Icon", f"dot-{status.color}"))
 			self.assertEqual(json.loads(view.filters), [["status", "=", status.name]])

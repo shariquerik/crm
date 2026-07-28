@@ -19,11 +19,7 @@ def make_view(label):
 
 
 def make_unscoped_section(label, views):
-	"""A section as it stood before sections had an app.
-
-	`app` is mandatory now, so the pre-patch shape has to be written to the column
-	rather than inserted.
-	"""
+	"""A section as it stood before sections had an app."""
 	section = frappe.get_doc(
 		{
 			"doctype": "Navigation Section",

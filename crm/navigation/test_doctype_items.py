@@ -9,8 +9,6 @@ from crm.navigation.doctype_items import added_doctypes
 from crm.navigation.test_page_items import StudioPageTestCase, make_page
 from crm.saved_views.scope import CRM_APP
 
-# A doctype with no CRM views of its own, so a Views section beside it can only have
-# come from this hook.
 UNSEEDED_DOCTYPE = "Comment"
 
 

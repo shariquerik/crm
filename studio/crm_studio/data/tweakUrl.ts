@@ -1,8 +1,3 @@
-// Ephemeral list tweaks <-> the URL query string. On top of a `/…/view/<id>` route
-// the query carries only the divergence from the saved view: each filtered field
-// under its own key, the sort under `_sort`, the columns under `_cols`. Reserved
-// keys stay out of a field's namespace so a fieldname called `sort` cannot collide.
-
 import { getFilterableFields } from '@framework/ui/Filter'
 import { parseOrderBy, serializeOrderBy } from '@framework/ui/SortBy'
 import {
@@ -31,8 +26,6 @@ export function queryFromState(state: TweakState): Query {
   }
   const orderBy = serializeOrderBy(state.sort || [])
   if (orderBy) query[SORT_KEY] = orderBy
-  // A resized column's `width` travels with the columns so the tweak survives a
-  // reload or a shared link, matching the modified indicator (which counts it too).
   const columns = state.columns || []
   if (columns.length) query[COLS_KEY] = JSON.stringify(columns)
   return query

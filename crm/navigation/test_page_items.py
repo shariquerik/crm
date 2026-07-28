@@ -49,9 +49,6 @@ def make_other_app():
 
 class StudioPageTestCase(IntegrationTestCase):
 	def setUp(self):
-		# A page in a standard app is written out to `crm_studio/` on every save, and
-		# these throwaway ones would land in that hand-edited source tree. Developer
-		# mode is the switch the exporter itself checks.
 		developer_mode = patch.dict(frappe.conf, {"developer_mode": 0})
 		developer_mode.start()
 		self.addCleanup(developer_mode.stop)

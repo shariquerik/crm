@@ -8,15 +8,7 @@ import frappe
 
 
 def after_build():
-	"""Build CRM's exported Studio apps after `bench build`.
-
-	Studio ships its own `after_build` hook, but `run_after_build_hook` resolves hooks
-	per app, so `bench build --app crm` never fires it. Owning the step here also lets us
-	pass the Studio App's *document* name: `StudioAppBuilder` derives its output directory
-	from the name as given, while `get_app_folder()` scrubs it to find the source folder.
-	The renderer looks the assets up under the document name, so the folder name that
-	`studio.build.build_standard_apps` passes builds to the wrong path.
-	"""
+	"""Build CRM's exported Studio apps after `bench build`."""
 	try:
 		from studio.build import StudioAppBuilder
 	except ImportError:
@@ -29,11 +21,7 @@ def after_build():
 
 
 def get_studio_app_names() -> list[str]:
-	"""Return the document name of every Studio app exported to `crm/studio/`.
-
-	Reads the exported doc off disk rather than the DB — `bench build` runs without a site.
-	Folders with no `<folder>/<folder>.json` (`node_modules`, scratch dirs) are not apps.
-	"""
+	"""Return the document name of every Studio app exported to `crm/studio/`."""
 	studio_folder = frappe.get_app_source_path("crm", "studio")
 	if not os.path.isdir(studio_folder):
 		return []

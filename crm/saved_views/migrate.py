@@ -1,18 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
 # MIT License. See license.txt
 
-"""Migrate legacy CRM View Settings into framework Saved Views and Sections.
-
-Each legacy record becomes one Saved View, placed by what its flags meant: a public
-view joins the shared "Views" section, a user's pinned view their Personal section,
-an un-pinned private view the pool (no section), and a standard view that user's
-default record. Legacy rows are left in place as read-only history, and each produced
-view is keyed on its identity, so re-running the patch adds nothing.
-
-Type, sort, columns, rows and kanban configuration copy across untouched — the legacy
-column shape already matches the framework's. Only `filters` is reshaped, from CRM's
-fieldname-keyed dict to the framework's `[fieldname, operator, value]` list.
-"""
+"""Migrate legacy CRM View Settings into framework Saved Views and Sections."""
 
 import json
 
@@ -22,7 +11,6 @@ from frappe.desk.doctype.saved_view.api import get_or_create_section
 
 from crm.saved_views.scope import CRM_APP
 
-# Copied verbatim: the legacy column/sort/kanban shapes are the framework's already.
 COPIED_FIELDS = (
 	"order_by",
 	"columns",

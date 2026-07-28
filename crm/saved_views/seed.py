@@ -1,16 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
 # MIT License. See license.txt
 
-"""Seed each CRM doctype's sidebar with its shared Views and Pipeline sections.
-
-Deals and Leads carry a full Views section and a Pipeline coloured from their status
-doctype; Tasks get a Pipeline off a Select field instead; Contacts, Organizations, and
-Notes get a Views section alone. Runs on install and, for existing sites, from the
-saved-views patches. Idempotent by gating on the section: once a shared section exists it is left
-untouched, so re-running never duplicates a view and never resurrects one a manager
-deleted from it. Pipeline views are ordinary static views once seeded — a later status
-change does not touch them.
-"""
+"""Seed each CRM doctype's sidebar with its shared Views and Pipeline sections."""
 
 import json
 
@@ -19,18 +10,10 @@ from frappe.desk.doctype.navigation_section.scope import UNSET, Scope
 
 from crm.saved_views.scope import CRM_APP
 
-# A view whose status type is one of these is closed; every other type is "open".
 CLOSED_STATUS_TYPES = ("Won", "Lost")
 
-# Palette tokens a status carries, each seeded as a filled-dot Custom Icon (see
-# `status_dot`). Cycled through a Select field's options in order, since a Select —
-# unlike a status *doctype* — carries no colour of its own.
 SELECT_PALETTE = ("gray", "blue", "amber", "green", "red", "purple", "cyan", "orange")
 
-# The espresso 500 hex for each palette token, baked into the dot svg. Not
-# `currentColor`: ViewIcon draws a custom icon in ink-gray, which would grey the dot
-# out. Kept in sync with frappe-ui's colour palette. Wider than SELECT_PALETTE: a
-# status *doctype*'s `color` can be any of these, while a Select only cycles the eight.
 DOT_HEX = {
 	"gray": "#999999",
 	"blue": "#0289f7",
@@ -47,8 +30,6 @@ DOT_HEX = {
 	"black": "#171717",
 }
 
-# Where an option's name suggests a colour, use it so a pipeline reads right at a
-# glance; the palette fills in the rest by position.
 STATUS_COLORS = {
 	"backlog": "gray",
 	"todo": "blue",
@@ -81,8 +62,6 @@ def seed_status_doctype(doctype, status_doctype, owner_field, closing_field=None
 
 
 def seed_contact():
-	# A contact's organisation rides on `company_name` (a Data field CRM populates), so
-	# "No organization" reads off it, not a link.
 	seed_section(
 		"Contact",
 		"Views",
@@ -107,8 +86,6 @@ def seed_organization():
 
 
 def seed_task():
-	# Tasks are assigned rather than owned, and closed once Done or Cancelled — so "open"
-	# and "mine" read off different fields than the status-doctype doctypes above.
 	open_task = ["status", "not in", ["Done", "Canceled"]]
 	seed_section(
 		"CRM Task",
@@ -201,8 +178,6 @@ def status_dot(color):
 
 
 def dot_svg(color_hex):
-	# An 8px dot centred in the 16px icon box, so it reads like the old marker while
-	# aligning with the Lucide icons beside it.
 	return (
 		'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">'
 		f'<circle cx="8" cy="8" r="4" fill="{color_hex}"/></svg>'

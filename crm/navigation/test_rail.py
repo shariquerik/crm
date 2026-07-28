@@ -53,7 +53,6 @@ class TestRailItems(IntegrationTestCase):
 class TestSeedRail(IntegrationTestCase):
 	def setUp(self):
 		drop_rail()
-		# Cleanups run last-registered-first, so this reads bottom-up: drop, then reseed.
 		self.addCleanup(seed_rail)
 		self.addCleanup(drop_rail)
 
@@ -120,7 +119,6 @@ class TestRailFlattening(IntegrationTestCase):
 
 	def setUp(self):
 		drop_rail()
-		# Cleanups run last-registered-first, so this reads bottom-up: drop, then reseed.
 		self.addCleanup(seed_rail)
 		self.addCleanup(drop_rail)
 

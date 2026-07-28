@@ -56,8 +56,6 @@ def resolve_doctype(doctype: str) -> dict:
 	"still loading" (no data yet) from "resolved to nothing" (data.doctype is null) —
 	a bare null would look identical to a resource that hasn't answered yet.
 	"""
-	# MariaDB's collation is case-insensitive, so this also resolves "crm lead" -> the
-	# real "CRM Lead", and returns the STORED spelling either way.
 	name = frappe.db.get_value("DocType", doctype, "name")
 	if name and _is_listable(name):
 		return {"doctype": name}
@@ -67,9 +65,7 @@ def resolve_doctype(doctype: str) -> dict:
 		for candidate in frappe.get_all(
 			"DocType", filters={"issingle": 0, "istable": 0}, pluck="name", order_by="name"
 		):
-			if candidate.lower().replace(" ", "-") == wanted and frappe.has_permission(
-				candidate, "read"
-			):
+			if candidate.lower().replace(" ", "-") == wanted and frappe.has_permission(candidate, "read"):
 				return {"doctype": candidate}
 
 	return {"doctype": None}
@@ -387,13 +383,6 @@ def get_data(
 			columns = frappe.parse_json(list_view_settings.columns)
 			rows = frappe.parse_json(list_view_settings.rows)
 			is_default = False
-		# `default_list_data` is a CRM controller convention, so only CRM's own doctypes have
-		# it — the hasattr has to gate the CALL, not just one arm of the condition. Without it
-		# `not custom_view` short-circuits true on any first (column-less) fetch and this
-		# raises AttributeError for an ordinary doctype. Skipping it leaves the generic
-		# Name / Last Modified defaults set above, which is the right fallback.
-		# (For a doctype that HAS default_list_data the condition is unchanged:
-		# `not custom_view or (is_default and True)` == `not custom_view or is_default`.)
 		elif hasattr(_list, "default_list_data") and (not custom_view or is_default):
 			rows = default_rows
 			columns = _list.default_list_data().get("columns")

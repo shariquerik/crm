@@ -1,17 +1,6 @@
 # Copyright (c) 2023, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-# ---------------------------------------------------------------------------
-# Parts of this file are copied from PR frappe/crm#1524 ("feat: Doctypes in
-# sidebar"), commit 51eb481c57b016c4d275e583d2bd0bc8e3bb6abb; each is marked
-# with a "PR 1524" comment. Per docs/adr/0002 the PR's backend is copied once,
-# not merged — upstream drift must be re-copied by hand.
-#
-# The PR branched off an older develop than this app, so it was applied as the
-# PR's own diff rather than as a file copy: local code the PR never touched
-# (check_permission, clear_old_versions, fetch_and_update_kanban_columns, the
-# whitelisted-method type annotations) is deliberately preserved.
-# ---------------------------------------------------------------------------
 
 import json
 
@@ -176,14 +165,12 @@ def check_permission(doc):
 
 
 def remove_duplicates(l):
-	# PR 1524: drop Nones before de-duplicating
 	l = [item for item in l if item is not None]
 	return list(dict.fromkeys(l))
 
 
 def sync_default_rows(doctype, type="list"):
 	list = get_controller(doctype)
-	# PR 1524: was []
 	rows = ["name"]
 
 	if hasattr(list, "default_list_data"):
@@ -195,7 +182,6 @@ def sync_default_rows(doctype, type="list"):
 def sync_default_columns(view):
 	doctype = view.dt or view.doctype
 	list = get_controller(doctype)
-	# PR 1524: was []
 	columns = [
 		{"label": "Name", "type": "Data", "key": "name", "width": "16rem"},
 		{"label": "Last Updated On", "type": "Datetime", "key": "modified", "width": "8rem"},
@@ -338,12 +324,6 @@ def clear_old_versions(days=14):
 
 
 def get_route_name(view):
-	# Copied from PR 1524. NOTE: this replaced a version that derived a plural label
-	# from the doctype ("CRM Lead" -> "Leads"). It now reads view.is_standard, which
-	# create_or_update_standard_view does not set on its input dict — so views created
-	# through that path get the "... List View" name even though they are standard.
-	# Faithful to the PR; route_name is not load-bearing for the Studio app, which
-	# routes by doctype slug and view name.
 	name = view.doctype + " List"
 	if not view.is_standard:
 		name = name + " View"

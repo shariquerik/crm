@@ -1,14 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
 # MIT License. See license.txt
 
-"""The `page` navigation item type, which CRM adds to the three the framework ships.
-
-A page item points at a `Studio Page`: CRM's frontend is a Studio app, and frappe is the
-base app, which cannot Link at one. So the Link lives here as a custom field, and with it
-everything the framework cannot know — what a page item may not be saved without, and
-where it leads. The route is resolved from the page record on every read rather than
-stored, so renaming a page's route does not break the navigation pointing at it.
-"""
+"""The `page` navigation item type, which CRM adds to the three the framework ships."""
 
 import frappe
 from frappe import _
@@ -17,19 +10,12 @@ from frappe.custom.doctype.property_setter.property_setter import make_property_
 
 PAGE = "page"
 
-# CRM's own Studio app. A page's route is relative to the app it belongs to and unique
-# only within it, so a page from any other app resolves to an address this frontend
-# does not serve.
 STUDIO_APP = "crm-studio"
 
 
 def page_targets(names: list[str]) -> dict[str, str]:
 	"""Where each `page` row among `names` leads, keyed by row name — the shape the
 	`navigation_item_targets` hook answers in.
-
-	A row whose page has since been unpublished, or moved to another app, is answered
-	for with nothing and the framework drops it, so it is never drawn and then refused
-	on click.
 	"""
 	rows = frappe.get_all(
 		"Navigation Item",
@@ -55,9 +41,6 @@ def reachable_routes(pages: set[str]) -> dict[str, str]:
 def validate_page_items(doc, method=None):
 	"""What a page item cannot do without, checked from the section: the framework
 	requires nothing of a type it does not know, and runs no hooks on child rows.
-
-	An overlay row is exempt, as it is in the framework's own rules — it carries one
-	user's order and hidden flag for a shared row, and none of the content.
 	"""
 	for item in doc.items:
 		if not item.overrides and item.type == PAGE:
@@ -75,11 +58,7 @@ def validate_page_item(item):
 
 
 def validate_openable(page: str):
-	"""A page has to have one fixed address in this app for an item to lead there.
-
-	`validate` runs before link existence is checked, so a dangling page is left to
-	surface as the link error rather than as a missing route here.
-	"""
+	"""A page has to have one fixed address in this app for an item to lead there."""
 	studio_page = frappe.db.get_value("Studio Page", page, ["route", "studio_app"], as_dict=True)
 	if not studio_page:
 		return
@@ -91,12 +70,7 @@ def validate_openable(page: str):
 
 
 def install_page_item_type(app_name: str | None = None):
-	"""The custom field and the property setter that make `page` a type items can hold.
-
-	Idempotent, and run from three places: install, the patch that adds the type to an
-	existing site, and `after_app_install` — which is what reaches a CRM site that
-	installs studio later, where the other two have already been and gone.
-	"""
+	"""The custom field and the property setter that make `page` a type items can hold."""
 	if app_name and app_name != "studio":
 		return
 	if "studio" not in frappe.get_installed_apps():

@@ -24,7 +24,6 @@ add_to_apps_screen = [
 
 get_site_info = "crm.activation.get_site_info"
 
-# bundle the Studio apps under crm/studio/ — see crm/build.py for why crm owns this step
 after_build = "crm.build.after_build"
 
 export_python_type_annotations = True
@@ -218,14 +217,8 @@ doc_events = {
 	},
 }
 
-# Navigation
-# ----------
-
-# CRM's frontend is a Studio app, so a navigation item can point at a Studio Page — a
-# type frappe cannot ship, being the base app a Studio Page is invisible to.
 navigation_item_targets = ["crm.navigation.page_items.page_targets"]
 
-# The type is only installable once studio is, which may be after CRM.
 after_app_install = "crm.navigation.page_items.install_page_item_type"
 
 # Scheduled Tasks
@@ -355,14 +348,6 @@ standard_dropdown_items = [
 		"route": "#",
 		"is_standard": 1,
 	},
-	# Copied from PR frappe/crm#1524 ("feat: Doctypes in sidebar"),
-	# commit 51eb481c57b016c4d275e583d2bd0bc8e3bb6abb. Per docs/adr/0002 the PR's
-	# backend is copied once, not merged.
-	#
-	# INERT: the PR's frontend, which is what handles this entry, was deliberately not
-	# copied — so this renders a menu item in CRM's own frontend that goes nowhere.
-	# It is kept only because ticket 01 asks for the PR's hooks entries; drop it if a
-	# dead menu item in the shipping CRM UI is not wanted.
 	{
 		"name1": "edit_sidebar",
 		"label": "Edit Sidebar",

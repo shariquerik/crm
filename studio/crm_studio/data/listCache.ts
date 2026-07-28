@@ -1,5 +1,3 @@
-// Bounded caches that outlive Studio's teardown of a page's resources.
-
 const MAX_ENTRIES = 20
 
 class BoundedCache<Value> {

@@ -103,7 +103,6 @@ export function useListPage(ctx: any) {
     ].filter(Boolean),
   )
 
-  // `listData` still holds the previous doctype's rows until the new route resolves.
   const servingOtherDoctype = computed(
     () =>
       Boolean(routeDoctype?.data) &&

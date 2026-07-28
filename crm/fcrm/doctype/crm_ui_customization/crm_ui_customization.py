@@ -1,14 +1,6 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-# ---------------------------------------------------------------------------
-# Copied verbatim from PR frappe/crm#1524 ("feat: Doctypes in sidebar"),
-# commit 51eb481c57b016c4d275e583d2bd0bc8e3bb6abb.
-#
-# Per docs/adr/0002 the PR's backend is copied once, not merged: upstream drift
-# must be re-copied by hand. Only the backend is copied — none of the PR's
-# frontend files are.
-# ---------------------------------------------------------------------------
 
 import json
 

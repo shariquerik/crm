@@ -1,6 +1,3 @@
-<!-- The rail's half of the shared editor dialog: the app-scope navigation, drawn flat
-  because the rail shows no section boundaries. Everything else — the window, the error
-  line, the scope select — is the framework's, the same one the docked sidebar opens. -->
 <template>
   <NavigationEditorDialog
     v-model="open"

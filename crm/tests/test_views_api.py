@@ -1,8 +1,6 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
-# Covers the crm/api/views.py + crm_view_settings.py additions copied from PR
-# frappe/crm#1524, commit 51eb481c57b016c4d275e583d2bd0bc8e3bb6abb.
 
 import json
 
@@ -31,10 +29,7 @@ class IntegrationTestViewsAPI(IntegrationTestCase):
 			}
 		)
 
-	# --- crm/api/views.py -------------------------------------------------
-
 	def test_get_views_works_without_a_doctype(self):
-		# The PR made `doctype` optional so the sidebar can list every view at once.
 		self._make_view("Open Leads")
 		self.assertIsInstance(get_views(), list)
 
@@ -49,7 +44,6 @@ class IntegrationTestViewsAPI(IntegrationTestCase):
 	def test_get_doctype_list_excludes_single_and_child_doctypes(self):
 		names = {d["name"] for d in get_doctype_list()}
 		self.assertIn("CRM Lead", names)
-		# FCRM Settings is a Single; CRM Task is neither single nor child.
 		self.assertNotIn("FCRM Settings", names)
 
 	def test_get_current_view_returns_the_named_view(self):
@@ -58,8 +52,6 @@ class IntegrationTestViewsAPI(IntegrationTestCase):
 		self.assertEqual(current["label"], "Open Leads")
 
 	def test_get_current_view_hides_another_users_private_view(self):
-		# PR 1524 looked a view up by name with no user scoping, which let anyone read
-		# someone else's private view (filters included) by walking the numeric ids.
 		view = self._make_view("Someone Elses Leads")
 		frappe.db.set_value("CRM View Settings", view.name, "user", "someone.else@example.com")
 
@@ -68,13 +60,11 @@ class IntegrationTestViewsAPI(IntegrationTestCase):
 		self.assertIsNone(leaked)
 
 	def test_get_current_view_falls_back_to_a_standard_view_when_the_name_is_unknown(self):
-		# With a doctype in hand there is still something sensible to return.
 		view = get_current_view(doctype="CRM Lead", view_name=-1)
 		self.assertEqual(view["dt"], "CRM Lead")
 		self.assertEqual(view["is_standard"], 1)
 
 	def test_get_current_view_still_returns_a_public_view(self):
-		# Scoping must not lock users out of public views, which carry user == "".
 		view = self._make_view("Everyones Leads")
 		frappe.db.set_value("CRM View Settings", view.name, "user", "")
 
@@ -82,14 +72,12 @@ class IntegrationTestViewsAPI(IntegrationTestCase):
 		self.assertEqual(current["label"], "Everyones Leads")
 
 	def test_get_current_view_synthesizes_a_standard_view_when_none_exists(self):
-		# No CRM View Settings row for this doctype => a standard view is built from meta.
 		frappe.db.delete("CRM View Settings", {"dt": "CRM Task"})
 		view = get_current_view(doctype="CRM Task")
 
 		self.assertEqual(view["dt"], "CRM Task")
 		self.assertEqual(view["is_standard"], 1)
 		self.assertEqual(view["order_by"], "modified desc")
-		# name and modified are always present; the like column is prepended.
 		rows = json.loads(view["rows"])
 		self.assertIn("name", rows)
 		keys = [c["key"] for c in json.loads(view["columns"])]
@@ -97,9 +85,6 @@ class IntegrationTestViewsAPI(IntegrationTestCase):
 		self.assertIn("modified", keys)
 
 	def test_add_standard_view_does_not_leak_column_width_between_doctypes(self):
-		# PR 1524 mutated the module-level STANDARD_LIST_FIELDS in place, so once any
-		# titled doctype had been rendered, every later untitled one inherited its
-		# narrowed name column for the life of the worker.
 		titled = next(
 			(d for d in ("CRM Lead", "CRM Deal", "Contact") if frappe.get_meta(d).title_field), None
 		)
@@ -128,8 +113,6 @@ class IntegrationTestViewsAPI(IntegrationTestCase):
 			self.assertEqual(keys[1], title_field)
 		self.assertEqual(keys[-1], "modified")
 
-	# --- crm_view_settings.py --------------------------------------------
-
 	def test_create_or_update_view_creates_then_updates(self):
 		view = self._make_view("Open Leads")
 		self.assertEqual(view.label, "Open Leads")
@@ -157,12 +140,10 @@ class IntegrationTestViewsAPI(IntegrationTestCase):
 	def test_create_or_update_view_routes_standard_views_to_the_standard_upsert(self):
 		first = self._make_view("List", is_standard=1)
 		second = self._make_view("List", is_standard=1)
-		# The standard view for (dt, type, user) is upserted, never duplicated.
 		self.assertEqual(first.name, second.name)
 		self.assertTrue(second.is_standard)
 
 	def test_get_route_name_reads_the_view(self):
-		# PR 1524 changed this from get_route_name(doctype) -> get_route_name(view).
 		self.assertEqual(
 			get_route_name(frappe._dict({"doctype": "CRM Lead", "is_standard": 1})), "CRM Lead List"
 		)
