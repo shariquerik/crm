@@ -2,12 +2,7 @@ import { useTheme } from 'frappe-ui'
 import { computed } from 'vue'
 
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
-import {
-  currentUser,
-  loadCurrentUser,
-  logout,
-  userLabel,
-} from '@/data/session'
+import { logout } from '@/data/session'
 
 export function useAccountMenu() {
   const { currentTheme, setTheme } = useTheme()
@@ -50,5 +45,5 @@ export function useAccountMenu() {
     },
   ])
 
-  return { currentUser, userLabel, userMenuOptions, loadCurrentUser }
+  return { userMenuOptions }
 }

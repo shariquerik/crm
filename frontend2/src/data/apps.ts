@@ -3,6 +3,8 @@ import { computed } from 'vue'
 
 export const APP_NAME = 'crm'
 
+export const LOGO_URL = '/assets/crm/images/logo.svg'
+
 export type InstalledApp = {
   name: string
   logo: string
@@ -17,7 +19,7 @@ const DESK: InstalledApp = {
   route: '/app',
 }
 
-export const installedAppsResource = createResource({
+const installedAppsResource = createResource({
   url: 'frappe.apps.get_apps',
   cache: 'apps',
   auto: true,

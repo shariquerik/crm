@@ -9,24 +9,13 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": [
-      "vite/client"
-    ],
+    "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@framework/ui": [
-        "../../frappe/ui/src/index.ts"
-      ],
-      "@framework/ui/*": [
-        "../../frappe/ui/src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@framework/ui": ["../../frappe/ui/src/index.ts"],
+      "@framework/ui/*": ["../../frappe/ui/src/*"]
     }
   },
-  "include": [
-    "./src/**/*.ts",
-    "./src/**/*.vue"
-  ]
+  "include": ["./*.d.ts", "./src/**/*.ts", "./src/**/*.vue"]
 }

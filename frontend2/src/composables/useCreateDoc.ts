@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { call, toast } from 'frappe-ui'
 import { errorMessage } from '@/data/errors'
-import { refreshViewCounts } from '@/data/countsRefresh'
+import { refreshViewCounts } from '@/data/refreshTokens'
 
 export function useCreateDoc(options: {
   createLayout: any

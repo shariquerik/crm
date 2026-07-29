@@ -93,26 +93,15 @@
     </div>
   </div>
 
-  <div
+  <NotFoundPage
     v-else-if="routeDoctype.data && !routeDoctype.data.doctype"
-    class="flex h-full w-full flex-1 flex-col items-center justify-center gap-2 p-6"
-  >
-    <p class="text-xl font-semibold text-ink-gray-8">Page not found</p>
-    <p class="text-base text-ink-gray-6">
-      {{ route.params.doctype }} is not a doctype you can open here.
-    </p>
-    <Button
-      class="mt-2"
-      label="Go to home"
-      variant="subtle"
-      @click="router.push('/')"
-    />
-  </div>
+    :doctype="route.params.doctype as string"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import {
   Button,
   ErrorMessage,
@@ -122,6 +111,7 @@ import {
 } from 'frappe-ui'
 import { FormLayout } from '@framework/ui/components/FormLayout'
 
+import NotFoundPage from '@/components/NotFoundPage.vue'
 import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
 import PageHeaderPortal from '@/components/PageHeaderPortal.vue'
 import { detailResources } from '@/data/resources'
@@ -164,7 +154,6 @@ const TASK_OPTIONS = {
 }
 
 const route = useRoute()
-const router = useRouter()
 
 const resources = detailResources(
   route.params.doctype as string,

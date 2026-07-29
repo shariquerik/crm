@@ -30,9 +30,13 @@ Two constraints worth knowing:
 - `buildConfig.outDir` must be set inside the `frappeui()` plugin, not in `build`. The
   plugin's config hook overrides `build.outDir`, and the default would empty
   `frontend/`'s output dir.
-- `optimizeDeps.include` carries `socket.io-client`, which nothing here imports directly.
-  Reached only through frappe-ui, it never enters vite's entry scan and stays unbundled
-  CJS that fails ESM interop.
+- `optimizeDeps.include` carries `socket.io-client` and `feather-icons`, which nothing here
+  imports directly. Reached only through frappe-ui, they never enter vite's entry scan and
+  stay unbundled CJS that fails ESM interop.
+
+- `auto-imports.d.ts` and `components.d.ts` are generated at this folder's root by the
+  unplugin hooks, and are gitignored — a fresh clone has none until the first dev or build
+  run.
 
 `frameworkUI()` from `@framework/ui/vite` supplies the singleton dedupe (vue, vue-router,
 frappe-ui, reka-ui, dompurify) — do not hand-roll a `resolve.dedupe` list.
@@ -78,8 +82,9 @@ not resolve here.
 
 ## Formatting
 
-Prettier and ESLint use the crm repo's own configs (`.prettierrc.json` at the repo root,
-`frontend/eslint.config.mjs`): two-space indent, single quotes, no semicolons.
+Prettier reads this folder's own `.prettierrc.json`: two-space indent, single quotes, no
+semicolons. Never point it at `frontend/`'s config — running prettier with no config at all
+rewrites the tree to double quotes and semicolons.
 
 ## Frontend
 

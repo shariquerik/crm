@@ -9,7 +9,7 @@
             aria-label="Go to the first module"
             @click="goToFirstModule"
           >
-            <img :src="logoUrl" alt="" class="size-7 rounded-[7px]" />
+            <img :src="LOGO_URL" alt="" class="size-7 rounded-[7px]" />
           </button>
         </div>
 
@@ -210,8 +210,7 @@ import SettingsDialog from '@/components/SettingsDialog.vue'
 import { deriveShellChrome } from '@/components/shellChrome'
 import { useAccountMenu } from '@/composables/useAccountMenu'
 import { useAppMenu } from '@/composables/useAppMenu'
-import { APP_NAME } from '@/data/apps'
-import { countsRefreshToken } from '@/data/countsRefresh'
+import { APP_NAME, LOGO_URL } from '@/data/apps'
 import { doctypeIcon, doctypeLabel } from '@/data/doctypes'
 import {
   isActiveRailItem,
@@ -226,11 +225,14 @@ import {
   railItems,
 } from '@/data/railLayout'
 import { pageHeader } from '@/data/pageHeader'
-import { savedViewsChanged, sidebarRefreshToken } from '@/data/sidebarRefresh'
+import {
+  countsRefreshToken,
+  savedViewsChanged,
+  sidebarRefreshToken,
+} from '@/data/refreshTokens'
+import { currentUser, userLabel } from '@/data/session'
 
 const appName = 'CRM'
-
-const logoUrl = '/assets/crm/images/logo.svg'
 
 const SIDEBAR_WIDTH = '14rem'
 
@@ -294,13 +296,9 @@ function openDocs() {
   window.open(DOCS_URL, '_blank', 'noopener')
 }
 
-const { currentUser, userLabel, userMenuOptions, loadCurrentUser } =
-  useAccountMenu()
+const { userMenuOptions } = useAccountMenu()
 
-onMounted(() => {
-  loadCurrentUser()
-  window.addEventListener('keydown', onKeydown)
-})
+onMounted(() => window.addEventListener('keydown', onKeydown))
 
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>

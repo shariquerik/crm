@@ -3,7 +3,7 @@
     <template #body>
       <div class="p-4 pt-5">
         <div class="flex flex-col items-center">
-          <img :src="logoUrl" alt="" class="mb-3 size-12 rounded-xl" />
+          <img :src="LOGO_URL" alt="" class="mb-3 size-12 rounded-xl" />
           <h3 class="text-2xl-semibold text-ink-gray-9">Frappe CRM</h3>
         </div>
         <hr class="mx-2 my-3 border-t" />
@@ -31,9 +31,9 @@
 import { Dialog } from 'frappe-ui'
 import { Icon } from 'frappe-ui/icons'
 
-const open = defineModel<boolean>()
+import { LOGO_URL } from '@/data/apps'
 
-const logoUrl = '/assets/crm/images/logo.svg'
+const open = defineModel<boolean>()
 
 const links = [
   { label: 'Website', url: 'https://frappe.io/crm', icon: 'globe' },

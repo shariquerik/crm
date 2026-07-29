@@ -17,7 +17,7 @@ class BoundedCache<Value> {
   }
 }
 
-export interface ListSnapshot {
+interface ListSnapshot {
   rows: any[]
   columns: any[]
 }

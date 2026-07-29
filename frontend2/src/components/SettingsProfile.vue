@@ -49,6 +49,7 @@ import {
 } from 'frappe-ui'
 import { computed, ref } from 'vue'
 
+import { errorMessage } from '@/data/errors'
 import { currentUser, saveFullName, userLabel } from '@/data/session'
 
 const fullName = ref(currentUser.value.full_name || '')
@@ -68,7 +69,7 @@ async function save() {
   try {
     await saveFullName(fullName.value.trim())
   } catch (exception: any) {
-    error.value = exception?.messages?.[0] || 'Could not save your profile.'
+    error.value = errorMessage(exception)
   } finally {
     saving.value = false
   }

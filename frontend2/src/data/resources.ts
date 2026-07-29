@@ -5,7 +5,7 @@ import { toFieldsLayout } from '@/data/fieldsLayout'
 const FIELDS_LAYOUT_URL =
   'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout'
 
-export function resolveDoctype(doctype: string) {
+function resolveDoctype(doctype: string) {
   return createResource({
     url: 'crm.api.doc.resolve_doctype',
     method: 'GET',

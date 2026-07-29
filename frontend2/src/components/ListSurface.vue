@@ -111,7 +111,6 @@
       :totalCount="totalCount"
       :hasLiveCounts="hasLiveCounts"
       :pageLengthOptions="pageLengthOptions"
-      :gutter="gutter"
       @load-more="emit('load-more')"
       @page-size="emit('page-size', $event)"
     />

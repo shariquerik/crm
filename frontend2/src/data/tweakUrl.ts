@@ -1,10 +1,6 @@
 import { getFilterableFields } from '@framework/ui/components/Filter'
 import { parseOrderBy, serializeOrderBy } from '@framework/ui/components/SortBy'
-import {
-  completeFilters,
-  toConditions,
-  toFiltersDict,
-} from '@/data/listWire'
+import { completeFilters, toConditions, toFiltersDict } from '@/data/listWire'
 
 const SORT_KEY = '_sort'
 const COLS_KEY = '_cols'

@@ -13,7 +13,7 @@ export function useListSnapshot(props: {
   })
 
   const rows = computed(() =>
-    props.rows.length ? props.rows : snapshot.value?.rows ?? [],
+    props.rows.length ? props.rows : (snapshot.value?.rows ?? []),
   )
 
   const columns = computed(() => {

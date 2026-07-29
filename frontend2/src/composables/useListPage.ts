@@ -122,7 +122,7 @@ export function useListPage(resources: any) {
   )
 
   const listRows = computed(() =>
-    servingOtherDoctype.value ? [] : listData.data?.data ?? [],
+    servingOtherDoctype.value ? [] : (listData.data?.data ?? []),
   )
 
   return {

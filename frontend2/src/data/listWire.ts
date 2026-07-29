@@ -12,7 +12,7 @@ export function toFiltersDict(conditions: any[]) {
   return dict
 }
 
-export function isComplete(condition: any) {
+function isComplete(condition: any) {
   const value = condition?.value
   if (value === null || value === undefined || value === '') return false
   if (Array.isArray(value) && !value.length) return false

@@ -6,7 +6,7 @@ import { serializeOrderBy } from '@framework/ui/components/SortBy'
 import { APP_NAME } from '@/data/apps'
 import { completeFilters, toFiltersDict } from '@/data/listWire'
 import { currentUser } from '@/data/session'
-import { refreshSidebar, savedViewsToken } from '@/data/sidebarRefresh'
+import { refreshSidebar, savedViewsToken } from '@/data/refreshTokens'
 import {
   overridesFromQuery,
   preservedQuery,
@@ -233,9 +233,7 @@ export function useViewState(options: {
     viewLabel,
     viewIcon,
     viewDirty: dirty,
-    canEditActiveView,
     resetView,
-    saveActiveView,
     saveAsDialog,
     saveAsLabel,
     saveAsActions,

@@ -1,5 +1,8 @@
 import { computed, onScopeDispose, watch, type Ref } from 'vue'
-import { fetchFields, serializeColumns } from '@framework/ui/components/ColumnSettings'
+import {
+  fetchFields,
+  serializeColumns,
+} from '@framework/ui/components/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/components/SortBy'
 import { completeFilters, fetchKey, toFiltersDict } from '@/data/listWire'
 import { rowsByQuery } from '@/data/listCache'
@@ -82,7 +85,7 @@ export function useListQuery(options: {
   )
   onScopeDispose(() => clearTimeout(timer))
 
-  return { wireColumns, listParams, submit }
+  return { wireColumns, submit }
 }
 
 export function usePaging(pageSize: Ref<number>, pageLength: Ref<number>) {

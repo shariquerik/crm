@@ -27,8 +27,6 @@ export function useSettingsDialog() {
     set: (value) => write([String(value ?? DEFAULT_TAB)]),
   })
 
-  const subPath = computed(() => segments.value?.slice(1) ?? [])
-
   function openSettings(...path: string[]) {
     write(path.length ? path : [DEFAULT_TAB])
   }
@@ -38,5 +36,5 @@ export function useSettingsDialog() {
     router.push({ query: route.query, hash })
   }
 
-  return { open, tab, subPath, openSettings }
+  return { open, tab, openSettings }
 }
