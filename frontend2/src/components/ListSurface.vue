@@ -240,4 +240,10 @@ function alignClass(column: any) {
 :deep([data-slot='list-header']) {
   padding-inline-start: 0;
 }
+
+/* Size containment keeps cell text out of the list's max-content width: without it
+ * the `fr` tracks resize whenever virtual scrolling swaps the mounted rows. */
+:deep([data-slot='list-cell']) {
+  contain: inline-size;
+}
 </style>
