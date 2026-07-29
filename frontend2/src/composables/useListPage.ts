@@ -7,7 +7,7 @@ import {
   getDefaultColumns,
 } from '@framework/ui/components/ColumnSettings'
 import { doctypeLabel, routeDoctype } from '@/data/doctypes'
-import { listCache } from '@/data/cache/queryCache'
+import { firstRows, listCache } from '@/data/cache/queryCache'
 import { useBulkDelete } from '@/composables/useBulkDelete'
 import { useCreateDoc } from '@/composables/useCreateDoc'
 import { useListQuery, usePaging } from '@/composables/useListQuery'
@@ -78,7 +78,7 @@ export function useListPage(resources: any) {
     router,
   })
 
-  if (routeDoctype(doctype)) loadMeta(doctype)
+  if (routeDoctype(doctype) !== null) loadMeta(doctype)
 
   const createDoc = useCreateDoc({ createLayout, doctype, route, router })
   const bulkDelete = useBulkDelete({ listData, doctype, submit: query.submit })
@@ -105,32 +105,28 @@ export function useListPage(resources: any) {
     ].filter(Boolean),
   )
 
-  const listLoading = computed(
-    () => listData.loading || (!listData.fetched && !listData.error),
+  const cached = computed(() =>
+    listData.data ? undefined : listCache.readRoute(route.path),
   )
 
-  const liveRows = computed(() => listData.data?.data ?? [])
-
-  // What this route last rendered, for the span before the view's own query is assembled.
-  const repaint = computed(() =>
-    listLoading.value && !liveRows.value.length
-      ? listCache.readRoute(route.path)
-      : undefined,
+  /** An answer with no rows is an empty list, not a list still loading. */
+  const listLoading = computed(
+    () => !cached.value && !listData.data && !listData.error,
   )
 
   const listRows = computed(() =>
-    liveRows.value.length
-      ? liveRows.value
-      : (repaint.value?.response?.data ?? []),
+    cached.value
+      ? firstRows(cached.value.response, pageLength.value).data
+      : (listData.data?.data ?? []),
   )
 
   const listColumns = computed(() => {
-    if (repaint.value) return repaint.value.columns
+    if (cached.value) return cached.value.columns
     if (query.wireColumns.value.length) return query.wireColumns.value
     return listCache.readRoute(route.path)?.columns ?? []
   })
 
-  const hasLiveCounts = computed(() => liveRows.value.length > 0)
+  const hasLiveCounts = computed(() => !cached.value && listData.fetched)
 
   return {
     filters,

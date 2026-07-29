@@ -28,18 +28,17 @@ export function doctypeIcon(doctype: string, saved?: string | null) {
   return DOCTYPES[doctype]?.icon || 'file'
 }
 
-/** A URL segment already known to name a doctype, seeded with the ones this app ships. */
+/** What a URL segment names: a doctype, or null for nothing. Absent until resolved. */
 const resolvedDoctypes = new Map<string, string | null>(
   Object.keys(DOCTYPES).map((doctype) => [doctype, doctype]),
 )
 
-const pendingDoctypes = new Map<string, Promise<string | null>>()
+const pendingDoctypes = new Map<string, Promise<string | null | undefined>>()
 
-/**
- * The doctype a URL segment names, or null when it names none. Only the server can
- * turn a slug back into a name, so an unseen segment costs one round trip.
- */
-export function resolveRouteDoctype(segment: string): Promise<string | null> {
+/** Asks the server what a segment names; undefined when it could not be asked. */
+export function resolveRouteDoctype(
+  segment: string,
+): Promise<string | null | undefined> {
   const known = resolvedDoctypes.get(segment)
   if (known !== undefined) return Promise.resolve(known)
 
@@ -53,14 +52,14 @@ export function resolveRouteDoctype(segment: string): Promise<string | null> {
       if (doctype) resolvedDoctypes.set(doctype, doctype)
       return doctype
     })
-    .catch(() => null)
+    .catch(() => undefined)
     .finally(() => pendingDoctypes.delete(segment))
 
   pendingDoctypes.set(segment, request)
   return request
 }
 
-/** What the router guard resolved this segment to, for a page that has already mounted. */
-export function routeDoctype(segment: string): string | null {
-  return resolvedDoctypes.get(segment) ?? null
+/** What the guard resolved this segment to; undefined when the server never answered. */
+export function routeDoctype(segment: string): string | null | undefined {
+  return resolvedDoctypes.get(segment)
 }

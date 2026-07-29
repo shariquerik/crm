@@ -31,8 +31,7 @@ const router = createRouter({
 })
 
 // Pages read their doctype at setup, so a slug ("crm-lead") or the wrong case has to
-// become the canonical name before one mounts. A segment that names nothing is left
-// alone for the page to render as Not Found.
+// become the canonical name before one mounts.
 router.beforeResolve(async (to) => {
   const segment = to.params.doctype
   if (typeof segment !== 'string' || !segment) return true

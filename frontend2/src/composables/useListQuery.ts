@@ -5,7 +5,7 @@ import {
 } from '@framework/ui/components/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/components/SortBy'
 import { completeFilters, toFiltersDict } from '@/data/listWire'
-import { listCache } from '@/data/cache/queryCache'
+import { firstRows, listCache } from '@/data/cache/queryCache'
 import { cacheKey, fetchKey } from '@/data/cache/queryKey'
 
 const REFETCH_DEBOUNCE_MS = 250
@@ -67,14 +67,6 @@ export function useListQuery(options: {
         listCache.remember(routePath, key)
       },
     })
-  }
-
-  /** A cached answer can hold more rows than this page asks for; it never holds fewer. */
-  function firstRows(response: any, pageLength: number) {
-    const rows = response?.data ?? []
-    return rows.length > pageLength
-      ? { ...response, data: rows.slice(0, pageLength) }
-      : response
   }
 
   function submit() {

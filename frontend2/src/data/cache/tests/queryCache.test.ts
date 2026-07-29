@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { QueryCache } from '@/data/cache/queryCache'
+import { firstRows, QueryCache } from '@/data/cache/queryCache'
 
 describe('QueryCache', () => {
   it('reads back what a key was written with', () => {
@@ -81,5 +81,23 @@ describe('QueryCache', () => {
 
   it('has nothing for a route it never rendered', () => {
     expect(new QueryCache<string>().readRoute('/CRM Lead')).toBeUndefined()
+  })
+})
+
+describe('firstRows', () => {
+  it('cuts an answer down to the rows this page asks for', () => {
+    const answer = { data: [1, 2, 3], total_count: 3 }
+
+    expect(firstRows(answer, 2)).toEqual({ data: [1, 2], total_count: 3 })
+  })
+
+  it('leaves an answer that holds no more than was asked for', () => {
+    const answer = { data: [1, 2], total_count: 2 }
+
+    expect(firstRows(answer, 20)).toBe(answer)
+  })
+
+  it('treats an answer with no rows as the empty list it is', () => {
+    expect(firstRows({ data: [] }, 20).data).toEqual([])
   })
 })

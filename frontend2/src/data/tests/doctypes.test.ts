@@ -64,10 +64,10 @@ describe('resolveRouteDoctype', () => {
     expect(await resolveRouteDoctype('nonsense')).toBe(null)
   })
 
-  it('resolves to null when the request fails, and does not remember that', async () => {
+  it('answers undefined when it could not ask, which is not the same as nothing', async () => {
     callMock.mockRejectedValueOnce(new Error('offline'))
 
-    expect(await resolveRouteDoctype('flaky')).toBe(null)
+    expect(await resolveRouteDoctype('flaky')).toBeUndefined()
 
     callMock.mockResolvedValue({ doctype: 'Flaky' })
     expect(await resolveRouteDoctype('flaky')).toBe('Flaky')
@@ -83,7 +83,14 @@ describe('routeDoctype', () => {
     expect(routeDoctype('Comment')).toBe('Comment')
   })
 
-  it('reports null for a segment that names no doctype', () => {
-    expect(routeDoctype('never-resolved')).toBe(null)
+  it('reports null for a segment the server said names nothing', async () => {
+    callMock.mockResolvedValue({ doctype: null })
+    await resolveRouteDoctype('nothing-here')
+
+    expect(routeDoctype('nothing-here')).toBe(null)
+  })
+
+  it('reports undefined for a segment nothing has resolved, so it is not Not Found', () => {
+    expect(routeDoctype('never-resolved')).toBeUndefined()
   })
 })

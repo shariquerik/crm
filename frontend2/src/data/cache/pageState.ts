@@ -2,11 +2,7 @@ const MAX_ENTRIES = 30
 
 const bags = new Map<string, Record<string, unknown>>()
 
-/**
- * Where a page had got to — how far it had scrolled, how many rows it had paged in.
- * Keyed by history entry rather than by path, so going back restores what that visit
- * left behind while a fresh navigation to the same path starts clean.
- */
+/** Where a page had got to, held per history entry: how far scrolled, how many rows in. */
 export function pageState(): Record<string, unknown> {
   const key = historyKey()
   const existing = bags.get(key)

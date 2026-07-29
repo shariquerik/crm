@@ -8,11 +8,7 @@ interface Entry<Value> {
   fetchedAt: number
 }
 
-/**
- * What a request last answered, kept under two keys: the request itself, and the route
- * that rendered it. A page knows its route before it knows its query, so the second key
- * is what it repaints from while the first one is still being assembled.
- */
+/** What a request last answered, findable by the request and by the route it rendered. */
 export class QueryCache<Value> {
   private entries = new Map<string, Entry<Value>>()
 
@@ -26,11 +22,7 @@ export class QueryCache<Value> {
   read(key: string): Value | undefined {
     const entry = this.entries.get(key)
     if (!entry) return undefined
-    if (Date.now() - entry.fetchedAt > this.maxAge) {
-      this.entries.delete(key)
-      return undefined
-    }
-    return entry.value
+    return Date.now() - entry.fetchedAt > this.maxAge ? undefined : entry.value
   }
 
   write(key: string, value: Value, tag: string) {
@@ -40,9 +32,12 @@ export class QueryCache<Value> {
       this.entries.delete(this.entries.keys().next().value as string)
   }
 
-  /** Points a route at the request it last rendered, so a revisit can find it. */
+  /** Points a route at the request it last rendered. */
   remember(route: string, key: string) {
+    this.keyByRoute.delete(route)
     this.keyByRoute.set(route, key)
+    if (this.keyByRoute.size > this.maxEntries)
+      this.keyByRoute.delete(this.keyByRoute.keys().next().value as string)
   }
 
   readRoute(route: string): Value | undefined {
@@ -70,3 +65,11 @@ export interface ListEntry {
 }
 
 export const listCache = new QueryCache<ListEntry>()
+
+/** The first `pageLength` rows of an answer, which may hold more than this page asks for. */
+export function firstRows(response: any, pageLength: number) {
+  const rows = response?.data ?? []
+  return rows.length > pageLength
+    ? { ...response, data: rows.slice(0, pageLength) }
+    : response
+}

@@ -28,7 +28,7 @@ export function useDetailPage(resources: any) {
     ? useNavigation(route.params.doctype as string, viewId, { app: APP_NAME })
     : null
 
-  if (routeDoctype(route.params.doctype as string)) {
+  if (routeDoctype(route.params.doctype as string) !== null) {
     record.fetch()
     fieldsLayout.fetch()
     notes.fetch()
