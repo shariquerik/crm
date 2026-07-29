@@ -61,10 +61,10 @@
         :columns="listColumns"
         :rows="listRows"
         :loading="listLoading"
-        :hasLiveCounts="hasLiveCounts"
+        :hasCounts="hasCounts"
         :bulkActions="bulkActions"
-        :rowCount="listData.data?.row_count ?? 0"
-        :totalCount="listData.data?.total_count ?? 0"
+        :rowCount="listCounts.rowCount"
+        :totalCount="listCounts.totalCount"
         :options="surfaceOptions"
         rowKey="name"
         gutter="12px"
@@ -164,7 +164,8 @@ const {
   listColumns,
   listLoading,
   listRows,
-  hasLiveCounts,
+  listCounts,
+  hasCounts,
   breadcrumbs,
   controlOptions,
   resizeColumn,

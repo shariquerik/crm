@@ -15,14 +15,14 @@
         />
       </div>
       <Button
-        v-if="hasLiveCounts && rowCount < totalCount"
+        v-if="hasCounts && rowCount < totalCount"
         variant="subtle"
         label="Load More"
         @click="emit('load-more')"
       />
     </div>
     <div class="flex items-center gap-2">
-      <span v-if="hasLiveCounts" class="text-sm text-ink-gray-5"
+      <span v-if="hasCounts" class="text-sm text-ink-gray-5"
         >{{ rowCount }} of {{ totalCount }}</span
       >
       <Skeleton v-else class="h-3 w-16 rounded" />
@@ -37,13 +37,13 @@ withDefaults(
   defineProps<{
     rowCount?: number
     totalCount?: number
-    hasLiveCounts?: boolean
+    hasCounts?: boolean
     pageLengthOptions?: number[]
   }>(),
   {
     rowCount: 0,
     totalCount: 0,
-    hasLiveCounts: false,
+    hasCounts: false,
     pageLengthOptions: () => [20, 100, 500, 2500],
   },
 )

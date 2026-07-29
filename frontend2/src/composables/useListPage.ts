@@ -126,7 +126,17 @@ export function useListPage(resources: any) {
     return listCache.readRoute(route.path)?.columns ?? []
   })
 
-  const hasLiveCounts = computed(() => !cached.value && listData.fetched)
+  /** The answer on screen, which is the cached one until the request lands. */
+  const painted = computed(() =>
+    cached.value ? cached.value.response : listData.data,
+  )
+
+  const listCounts = computed(() => ({
+    rowCount: painted.value?.row_count ?? 0,
+    totalCount: painted.value?.total_count ?? 0,
+  }))
+
+  const hasCounts = computed(() => Boolean(painted.value))
 
   return {
     filters,
@@ -139,7 +149,8 @@ export function useListPage(resources: any) {
     listColumns,
     listLoading,
     listRows,
-    hasLiveCounts,
+    listCounts,
+    hasCounts,
     breadcrumbs,
     controlOptions,
     resizeColumn,

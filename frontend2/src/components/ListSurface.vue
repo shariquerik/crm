@@ -110,7 +110,7 @@
       v-model:pageSize="pageSize"
       :rowCount="rowCount"
       :totalCount="totalCount"
-      :hasLiveCounts="hasLiveCounts"
+      :hasCounts="hasCounts"
       :pageLengthOptions="pageLengthOptions"
       @load-more="emit('load-more')"
       @page-size="emit('page-size', $event)"
@@ -155,7 +155,7 @@ const props = withDefaults(
     pageLengthOptions?: number[]
     rowHeight?: number
     loading?: boolean
-    hasLiveCounts?: boolean
+    hasCounts?: boolean
   }>(),
   {
     columns: () => [],
@@ -169,7 +169,7 @@ const props = withDefaults(
     pageLengthOptions: () => [20, 100, 500, 2500],
     rowHeight: 40,
     loading: false,
-    hasLiveCounts: false,
+    hasCounts: false,
   },
 )
 
