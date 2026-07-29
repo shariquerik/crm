@@ -1,6 +1,7 @@
 <template>
   <div class="relative isolate flex min-h-0 flex-1 flex-col">
     <ScrollArea
+      ref="scroller"
       orientation="both"
       viewportClass="overscroll-y-none"
       class="min-h-0 flex-1"
@@ -130,7 +131,7 @@ import {
   ListRows,
 } from 'frappe-ui/list'
 import 'frappe-ui/list-style.css'
-import { computed, toRef, watch } from 'vue'
+import { computed, ref, toRef } from 'vue'
 
 import ListBulkBar from '@/components/ListBulkBar.vue'
 import ListFooter from '@/components/ListFooter.vue'
@@ -187,6 +188,12 @@ const ROW_PADDING_X = '0.5rem'
 
 const SKELETON_ROW_COUNT = 10
 const SKELETON_COLUMN_COUNT = 4
+
+const scroller = ref<{ viewportElement: HTMLElement | null }>()
+
+defineExpose({
+  viewportElement: computed(() => scroller.value?.viewportElement ?? null),
+})
 
 const rows = toRef(props, 'rows')
 const columns = toRef(props, 'columns')

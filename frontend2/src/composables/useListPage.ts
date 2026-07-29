@@ -11,6 +11,7 @@ import { listCache } from '@/data/cache/queryCache'
 import { useBulkDelete } from '@/composables/useBulkDelete'
 import { useCreateDoc } from '@/composables/useCreateDoc'
 import { useListQuery, usePaging } from '@/composables/useListQuery'
+import { useRestoredRef } from '@/composables/usePageState'
 import { useViewState } from '@/composables/useViewState'
 
 const GENERIC_COLUMNS = [
@@ -27,8 +28,8 @@ export function useListPage(resources: any) {
   const sort = ref<any[]>([{ fieldname: 'modified', direction: 'desc' }])
   const columns = ref<any[]>([])
   const customizing = ref(false)
-  const pageSize = ref(20)
-  const pageLength = ref(20)
+  const pageSize = useRestoredRef('pageSize', 20)
+  const pageLength = useRestoredRef('pageLength', 20)
 
   const doctype = route.params.doctype
   const viewName = route.params.viewName

@@ -54,6 +54,7 @@
 
     <div class="flex w-full min-h-0 min-w-0 flex-1 flex-col pt-2">
       <ListSurface
+        ref="surface"
         v-model:selection="selection"
         v-model:pageSize="pageSize"
         class="w-full flex-1"
@@ -125,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button, Dialog, Dropdown, ErrorMessage, TextInput } from 'frappe-ui'
 import { Filter } from '@framework/ui/components/Filter'
@@ -141,6 +142,7 @@ import PageHeaderPortal from '@/components/PageHeaderPortal.vue'
 import { routeDoctype } from '@/data/doctypes'
 import { listResources } from '@/data/resources'
 import { useListPage } from '@/composables/useListPage'
+import { useScrollRestore } from '@/composables/usePageState'
 
 const route = useRoute()
 const router = useRouter()
@@ -187,6 +189,13 @@ const {
   bulkActions,
   deleteActions,
 } = useListPage(resources)
+
+const surface = ref<{ viewportElement: HTMLElement | null }>()
+
+useScrollRestore(
+  computed(() => surface.value?.viewportElement),
+  () => listRows.value.length > 0,
+)
 
 const surfaceOptions = computed(() => ({
   showTooltip: true,
