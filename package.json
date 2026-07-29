@@ -17,6 +17,8 @@
 		"postinstall": "cd frontend && yarn install --check-files",
 		"dev": "cd frontend && yarn dev",
 		"build": "cd frontend && yarn build",
+		"dev2": "cd frontend2 && yarn dev",
+		"build2": "cd frontend2 && yarn build",
 		"upgrade-frappeui": "cd frontend && yarn add frappe-ui@latest && cd ..",
 		"test:e2e": "playwright test",
 		"test:e2e:ui": "playwright test --ui",

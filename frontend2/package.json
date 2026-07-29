@@ -1,0 +1,33 @@
+{
+  "name": "crm-ui2",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "@framework/ui": "link:../../frappe/ui",
+    "@vueuse/core": "^11.3.0",
+    "dompurify": "^3.3.3",
+    "frappe-ui": "1.0.0-beta.24",
+    "reka-ui": "^2.9.6",
+    "socket.io-client": "^4.7.2",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.5",
+    "@vitejs/plugin-vue-jsx": "^5.1.5",
+    "autoprefixer": "^10.4.14",
+    "happy-dom": "^20.9.0",
+    "postcss": "^8.4.5",
+    "tailwindcss": "^3.4.15",
+    "vite": "^8.0.1",
+    "vitest": "^4.1.4"
+  }
+}

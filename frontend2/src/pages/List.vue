@@ -1,0 +1,219 @@
+<template>
+  <AppShell
+    class="h-full min-h-0 w-full"
+    :activeDoctype="route.params.doctype as string"
+    :activeView="route.params.viewName as string"
+  >
+    <template #header>
+      <div class="flex w-full shrink-0 items-center justify-between gap-2">
+        <div class="flex w-auto min-w-0 items-center gap-0.5">
+          <PageBreadcrumbs :items="breadcrumbs" />
+          <div v-if="viewDirty" class="ml-2 flex shrink-0 items-center gap-1.5">
+            <Button label="Reset" variant="ghost" @click="resetView" />
+            <Dropdown
+              :button="{
+                label: 'Save',
+                iconRight: 'chevron-down',
+                variant: 'subtle',
+              }"
+              :options="viewSaveOptions"
+              placement="left"
+            />
+          </div>
+        </div>
+        <Button
+          label="Create"
+          iconLeft="plus"
+          variant="solid"
+          @click="openCreate"
+        />
+      </div>
+    </template>
+
+    <div
+      v-if="!routeDoctype.data || !!routeDoctype.data.doctype"
+      class="flex w-full min-h-0 min-w-0 flex-1 flex-col"
+    >
+      <div
+        :key="route.path"
+        class="flex w-full shrink-0 items-start justify-between gap-2 px-5 pt-3.5"
+      >
+        <div class="flex min-w-0 flex-1 flex-col">
+          <QuickFilter
+            v-model:filters="filters"
+            v-model:customizing="customizing"
+            :doctype="(route.params.doctype as string)"
+          />
+        </div>
+        <div v-if="!customizing" class="flex shrink-0 items-center gap-2">
+          <Filter v-model="filters" :doctype="(route.params.doctype as string)" />
+          <SortBy v-model="sort" :doctype="(route.params.doctype as string)" />
+          <ColumnSettings
+            v-model="columns"
+            :doctype="(route.params.doctype as string)"
+          />
+          <Dropdown
+            :button="{ icon: 'more-horizontal', variant: 'subtle' }"
+            :options="controlOptions"
+            placement="right"
+          />
+        </div>
+      </div>
+
+      <div class="flex w-full min-h-0 min-w-0 flex-1 flex-col pt-2">
+        <ListSurface
+          v-model:selection="selection"
+          v-model:pageSize="pageSize"
+          class="w-full flex-1"
+          :cacheKey="route.path"
+          :columns="wireColumns"
+          :rows="listRows"
+          :loading="listLoading"
+          :bulkActions="bulkActions"
+          :rowCount="listData.data?.row_count ?? 0"
+          :totalCount="listData.data?.total_count ?? 0"
+          :options="surfaceOptions"
+          rowKey="name"
+          gutter="12px"
+          :rowHeight="40"
+          :pageLengthOptions="[20, 100, 500, 2500]"
+          @column-resize="resizeColumn($event.key, $event.width)"
+          @column-reset="resetColumnWidth($event.key)"
+          @load-more="loadMore"
+          @page-size="setPageSize"
+        />
+      </div>
+
+      <Dialog
+        v-model="saveAsDialog"
+        title="Save as new view"
+        size="sm"
+        :actions="saveAsActions"
+      >
+        <template #body-content>
+          <TextInput
+            v-model="saveAsLabel"
+            class="w-full"
+            size="md"
+            placeholder="e.g. My open deals"
+          />
+        </template>
+      </Dialog>
+
+      <Dialog
+        v-model="createDialog"
+        :title="createTitle"
+        size="xl"
+        :actions="createActions"
+      >
+        <template #body-content>
+          <FormLayout
+            v-if="createLayout.data?.length"
+            class="w-full"
+            :doc="newDoc"
+            :layout="createLayout.data || []"
+          />
+          <ErrorMessage v-if="createError" :message="createError" />
+        </template>
+      </Dialog>
+
+      <Dialog
+        v-model="deleteDialog"
+        :title="deleteTitle"
+        :actions="deleteActions"
+      >
+        <template #body-content>
+          <p class="text-base text-ink-gray-6">This cannot be undone.</p>
+          <ErrorMessage v-if="deleteError" :message="deleteError" />
+        </template>
+      </Dialog>
+    </div>
+
+    <div
+      v-else
+      class="flex h-full w-full flex-1 flex-col items-center justify-center gap-2 p-6"
+    >
+      <p class="text-xl font-semibold text-ink-gray-8">Page not found</p>
+      <p class="text-base text-ink-gray-6">
+        {{ route.params.doctype }} is not a doctype you can open here.
+      </p>
+      <Button
+        class="mt-2"
+        label="Go to home"
+        variant="subtle"
+        @click="router.push('/')"
+      />
+    </div>
+  </AppShell>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Button, Dialog, Dropdown, ErrorMessage, TextInput } from 'frappe-ui'
+import { Filter } from '@framework/ui/components/Filter'
+import { SortBy } from '@framework/ui/components/SortBy'
+import { ColumnSettings } from '@framework/ui/components/ColumnSettings'
+import { QuickFilter } from '@framework/ui/components/QuickFilter'
+import { FormLayout } from '@framework/ui/components/FormLayout'
+
+import AppShell from '@/components/AppShell.vue'
+import ListSurface from '@/components/ListSurface.vue'
+import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
+import { listResources } from '@/data/resources'
+import { useListPage } from '@/composables/useListPage'
+
+const route = useRoute()
+const router = useRouter()
+
+const resources = listResources(route.params.doctype as string)
+const { listData, routeDoctype, createLayout } = resources
+
+const {
+  filters,
+  sort,
+  columns,
+  customizing,
+  pageSize,
+  selection,
+  wireColumns,
+  listLoading,
+  listRows,
+  breadcrumbs,
+  controlOptions,
+  resizeColumn,
+  resetColumnWidth,
+  loadMore,
+  setPageSize,
+  viewDirty,
+  resetView,
+  viewSaveOptions,
+  saveAsDialog,
+  saveAsLabel,
+  saveAsActions,
+  createDialog,
+  newDoc,
+  createError,
+  createTitle,
+  createActions,
+  openCreate,
+  deleteDialog,
+  deleteError,
+  deleteTitle,
+  bulkActions,
+  deleteActions,
+} = useListPage(resources)
+
+const surfaceOptions = computed(() => ({
+  showTooltip: true,
+  emptyState: {
+    title: 'No records',
+    description: 'Nothing to show here yet.',
+  },
+  onRowClick: (row: any) =>
+    router.push({
+      path: `/${encodeURIComponent(route.params.doctype as string)}/${encodeURIComponent(row.name)}`,
+      query: route.params.viewName ? { view: route.params.viewName } : {},
+    }),
+}))
+</script>
