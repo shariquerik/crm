@@ -1,6 +1,11 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { firstRows, QueryCache } from '@/data/cache/queryCache'
+import {
+  docCache,
+  fetchCached,
+  firstRows,
+  QueryCache,
+} from '@/data/cache/queryCache'
 
 describe('QueryCache', () => {
   it('reads back what a key was written with', () => {
@@ -81,6 +86,48 @@ describe('QueryCache', () => {
 
   it('has nothing for a route it never rendered', () => {
     expect(new QueryCache<string>().readRoute('/CRM Lead')).toBeUndefined()
+  })
+})
+
+describe('fetchCached', () => {
+  function fakeResource() {
+    return {
+      setData: vi.fn(),
+      fetch: vi.fn((_params: unknown, options: any) =>
+        options.onSuccess({ name: 'CRM-LEAD-1' }),
+      ),
+    }
+  }
+
+  beforeEach(() => docCache.clear())
+
+  it('fetches with nothing to paint on a first visit', () => {
+    const resource = fakeResource()
+
+    fetchCached(resource, 'record:CRM Lead/1', 'CRM Lead')
+
+    expect(resource.setData).not.toHaveBeenCalled()
+    expect(resource.fetch).toHaveBeenCalled()
+  })
+
+  it('paints the last answer, and still fetches behind it', () => {
+    fetchCached(fakeResource(), 'record:CRM Lead/1', 'CRM Lead')
+    const resource = fakeResource()
+
+    fetchCached(resource, 'record:CRM Lead/1', 'CRM Lead')
+
+    expect(resource.setData).toHaveBeenCalledWith({ name: 'CRM-LEAD-1' })
+    expect(resource.fetch).toHaveBeenCalled()
+  })
+
+  it('has nothing to paint once a write to that doctype lands', () => {
+    fetchCached(fakeResource(), 'record:CRM Lead/1', 'CRM Lead')
+    docCache.invalidate('CRM Lead')
+    const resource = fakeResource()
+
+    fetchCached(resource, 'record:CRM Lead/1', 'CRM Lead')
+
+    expect(resource.setData).not.toHaveBeenCalled()
   })
 })
 

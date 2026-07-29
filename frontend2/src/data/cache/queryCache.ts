@@ -57,6 +57,20 @@ export class QueryCache<Value> {
   }
 }
 
+export const docCache = new QueryCache<unknown>()
+
+/**
+ * Fetches a resource, painting its last answer first so a return visit opens filled.
+ * The key is the caller's: a resource carries no params until something fetches it.
+ */
+export function fetchCached(resource: any, key: string, tag: string) {
+  const cached = docCache.read(key)
+  if (cached !== undefined) resource.setData(cached)
+  resource.fetch(undefined, {
+    onSuccess: (data: unknown) => docCache.write(key, data, tag),
+  })
+}
+
 export interface ListEntry {
   /** The `get_data` payload, as the server sent it. */
   response: any
