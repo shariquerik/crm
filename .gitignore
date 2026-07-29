@@ -8,6 +8,8 @@ tags
 node_modules
 crm/public/frontend
 crm/www/crm.html
+crm/public/frontend2
+crm/www/crm2.html
 crm/public/app_builds/crm-studio
 crm/public/app_builds/crm_studio
 build
