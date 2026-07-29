@@ -170,8 +170,8 @@
       </div>
     </template>
 
-    <PageHeader v-if="chrome.showHeader" class="shrink-0">
-      <slot name="header" />
+    <PageHeader v-if="chrome.showHeader && pageHeader" class="shrink-0">
+      <component :is="pageHeader.slot" />
     </PageHeader>
     <div class="flex min-h-0 flex-1 flex-col">
       <slot />
@@ -225,22 +225,10 @@ import {
   placedRailItems,
   railItems,
 } from '@/data/railLayout'
-import {
-  savedViewsChanged,
-  sidebarRefreshToken,
-} from '@/data/sidebarRefresh'
+import { pageHeader } from '@/data/pageHeader'
+import { savedViewsChanged, sidebarRefreshToken } from '@/data/sidebarRefresh'
 
-const props = withDefaults(
-  defineProps<{
-    activeDoctype?: string
-    appName?: string
-    activeView?: string
-  }>(),
-  {
-    activeDoctype: '',
-    appName: 'CRM',
-  },
-)
+const appName = 'CRM'
 
 const logoUrl = '/assets/crm/images/logo.svg'
 
@@ -254,6 +242,13 @@ const editingRail = ref(false)
 
 const router = useRouter()
 const route = useRoute()
+
+const activeDoctype = computed(() => (route.params.doctype as string) || '')
+
+// A saved view is a route param on the list, and a query param on a record.
+const activeView = computed(
+  () => (route.params.viewName as string) || (route.query.view as string) || '',
+)
 
 function go(path: string) {
   router.push(path)
@@ -277,7 +272,7 @@ function goToFirstModule() {
 
 const chrome = computed(() =>
   deriveShellChrome(
-    props.activeDoctype,
+    activeDoctype.value,
     railDoctypes(placedRailItems.value),
     addableDoctypeState.value,
   ),
