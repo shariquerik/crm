@@ -6,7 +6,6 @@ from frappe.desk.doctype.navigation_section.scope import UNSET, Scope
 from frappe.tests import IntegrationTestCase
 
 from crm.navigation.doctype_items import added_doctypes
-from crm.navigation.test_page_items import StudioPageTestCase, make_page
 from crm.saved_views.scope import CRM_APP
 
 UNSEEDED_DOCTYPE = "Comment"
@@ -92,31 +91,3 @@ class TestSeedViewsForNewDoctypeItems(IntegrationTestCase):
 			frappe.delete_doc, "Navigation Section", section.name, force=True, ignore_permissions=True
 		)
 		return section
-
-
-class TestPageItemsSeedNothing(StudioPageTestCase):
-	"""The type CRM adds carries no `dt`, so the hook has to pass it over the same way
-	it passes over a link."""
-
-	def setUp(self):
-		super().setUp()
-		drop_views_section(UNSEEDED_DOCTYPE)
-		self.addCleanup(drop_views_section, UNSEEDED_DOCTYPE)
-
-	def test_a_page_item_seeds_nothing(self):
-		page = make_page("/reports")
-		section = frappe.get_doc(
-			{
-				"doctype": "Navigation Section",
-				"label": "Rail",
-				"app": CRM_APP,
-				"user": "",
-				"items": [{"type": "page", "label": "Reports", "page": page.name}],
-			}
-		).insert(ignore_permissions=True)
-		self.addCleanup(
-			frappe.delete_doc, "Navigation Section", section.name, force=True, ignore_permissions=True
-		)
-
-		self.assertEqual(added_doctypes(section), [])
-		self.assertIsNone(views_section(UNSEEDED_DOCTYPE))

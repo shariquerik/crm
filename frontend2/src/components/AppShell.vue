@@ -133,7 +133,6 @@
               :key="`${activeDoctype}:${sidebarRefreshToken}`"
               :doctype="activeDoctype"
               :app="APP_NAME"
-              :itemKinds="ITEM_KINDS"
               :activeView="activeView"
               :refreshToken="countsRefreshToken"
               @changed="savedViewsChanged"
@@ -214,7 +213,6 @@ import { useAppMenu } from '@/composables/useAppMenu'
 import { APP_NAME } from '@/data/apps'
 import { countsRefreshToken } from '@/data/countsRefresh'
 import { doctypeIcon, doctypeLabel } from '@/data/doctypes'
-import { ITEM_KINDS } from '@/data/itemKinds'
 import {
   isActiveRailItem,
   railDoctypes,
