@@ -8,11 +8,12 @@ export function useRestoredRef<Value>(
   name: string,
   initial: Value,
 ): Ref<Value> {
+  const path = window.location.pathname
   const state = ref((pageState()[name] as Value) ?? initial) as Ref<Value>
-  // Read and written against whichever entry is current: a saved-view tweak rewrites
-  // the query, which is a new entry under the same live page.
+  // Follows a saved-view tweak, which rewrites the query into a new entry under the
+  // same live page, but drops a late write once another page owns the entry.
   watch(state, (value) => {
-    pageState()[name] = value
+    if (window.location.pathname === path) pageState()[name] = value
   })
   return state
 }
