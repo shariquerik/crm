@@ -5,19 +5,8 @@ import { toFieldsLayout } from '@/data/fieldsLayout'
 const FIELDS_LAYOUT_URL =
   'crm.fcrm.doctype.crm_fields_layout.crm_fields_layout.get_fields_layout'
 
-function resolveDoctype(doctype: string) {
-  return createResource({
-    url: 'crm.api.doc.resolve_doctype',
-    method: 'GET',
-    params: { doctype },
-    auto: true,
-    cache: ['routeDoctype', doctype],
-  })
-}
-
 export function listResources(doctype: string) {
   return {
-    routeDoctype: resolveDoctype(doctype),
     listData: createResource({
       url: 'crm.api.doc.get_data',
       method: 'POST',
@@ -44,7 +33,6 @@ export function detailResources(doctype: string, id: string) {
     reference_docname: id,
   }
   return {
-    routeDoctype: resolveDoctype(doctype),
     record: createResource({
       url: 'frappe.client.get',
       method: 'GET',

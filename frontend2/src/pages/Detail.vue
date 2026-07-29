@@ -1,7 +1,7 @@
 <template>
   <PageHeaderPortal>
     <div
-      v-if="servingRouteDoctype"
+      v-if="knownDoctype"
       class="flex w-full items-center justify-between gap-3"
     >
       <PageBreadcrumbs :items="breadcrumbs" />
@@ -10,7 +10,7 @@
   </PageHeaderPortal>
 
   <div
-    v-if="servingRouteDoctype"
+    v-if="knownDoctype"
     class="flex w-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-6"
   >
     <ErrorMessage v-if="saveError" :message="saveError" />
@@ -93,10 +93,7 @@
     </div>
   </div>
 
-  <NotFoundPage
-    v-else-if="routeDoctype.data && !routeDoctype.data.doctype"
-    :doctype="route.params.doctype as string"
-  />
+  <NotFoundPage v-else :doctype="route.params.doctype as string" />
 </template>
 
 <script setup lang="ts">
@@ -114,6 +111,7 @@ import { FormLayout } from '@framework/ui/components/FormLayout'
 import NotFoundPage from '@/components/NotFoundPage.vue'
 import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
 import PageHeaderPortal from '@/components/PageHeaderPortal.vue'
+import { routeDoctype } from '@/data/doctypes'
 import { detailResources } from '@/data/resources'
 import { useDetailPage } from '@/composables/useDetailPage'
 
@@ -159,7 +157,7 @@ const resources = detailResources(
   route.params.doctype as string,
   route.params.id as string,
 )
-const { routeDoctype, record, notes, tasks, fieldsLayout } = resources
+const { record, notes, tasks, fieldsLayout } = resources
 
 const {
   doc,
@@ -178,7 +176,7 @@ const {
   addTask,
 } = useDetailPage(resources)
 
-const servingRouteDoctype = computed(
-  () => routeDoctype.data && routeDoctype.data.doctype === route.params.doctype,
+const knownDoctype = computed(
+  () => routeDoctype(route.params.doctype as string) !== null,
 )
 </script>

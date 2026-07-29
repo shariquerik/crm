@@ -3,11 +3,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { call, toast } from 'frappe-ui'
 import { useNavigation } from '@framework/ui/components/Navigation'
 import { APP_NAME } from '@/data/apps'
-import { doctypeLabel, guardDoctype } from '@/data/doctypes'
+import { doctypeLabel, routeDoctype } from '@/data/doctypes'
 import { errorMessage } from '@/data/errors'
 
 export function useDetailPage(resources: any) {
-  const { record, notes, tasks, fieldsLayout, routeDoctype } = resources
+  const { record, notes, tasks, fieldsLayout } = resources
   const route = useRoute()
   const router = useRouter()
 
@@ -27,20 +27,12 @@ export function useDetailPage(resources: any) {
     ? useNavigation(route.params.doctype as string, viewId, { app: APP_NAME })
     : null
 
-  guardDoctype(
-    routeDoctype,
-    route,
-    router,
-    () => {
-      record.fetch()
-      fieldsLayout.fetch()
-      notes.fetch()
-      tasks.fetch()
-    },
-    `/${encodeURIComponent(route.params.id as string)}${
-      viewId ? `?view=${encodeURIComponent(viewId)}` : ''
-    }`,
-  )
+  if (routeDoctype(route.params.doctype as string)) {
+    record.fetch()
+    fieldsLayout.fetch()
+    notes.fetch()
+    tasks.fetch()
+  }
 
   const doctype = computed(() => route.params.doctype as string)
   const doctypeLink = computed(

@@ -6,7 +6,7 @@ import {
   clearColumnWidth,
   getDefaultColumns,
 } from '@framework/ui/components/ColumnSettings'
-import { doctypeLabel, guardDoctype } from '@/data/doctypes'
+import { doctypeLabel, routeDoctype } from '@/data/doctypes'
 import { useBulkDelete } from '@/composables/useBulkDelete'
 import { useCreateDoc } from '@/composables/useCreateDoc'
 import { useListQuery, usePaging } from '@/composables/useListQuery'
@@ -18,7 +18,7 @@ const GENERIC_COLUMNS = [
 ]
 
 export function useListPage(resources: any) {
-  const { listData, routeDoctype, createLayout } = resources
+  const { listData, createLayout } = resources
   const route = useRoute()
   const router = useRouter()
 
@@ -75,13 +75,7 @@ export function useListPage(resources: any) {
     router,
   })
 
-  guardDoctype(
-    routeDoctype,
-    route,
-    router,
-    () => loadMeta(doctype),
-    viewName ? `/view/${viewName}` : '',
-  )
+  if (routeDoctype(doctype)) loadMeta(doctype)
 
   const createDoc = useCreateDoc({ createLayout, doctype, route, router })
   const bulkDelete = useBulkDelete({ listData, doctype, submit: query.submit })
@@ -108,22 +102,11 @@ export function useListPage(resources: any) {
     ].filter(Boolean),
   )
 
-  const servingOtherDoctype = computed(
-    () =>
-      Boolean(routeDoctype?.data) &&
-      routeDoctype.data.doctype !== route.params.doctype,
-  )
-
   const listLoading = computed(
-    () =>
-      listData.loading ||
-      (!listData.fetched && !listData.error) ||
-      servingOtherDoctype.value,
+    () => listData.loading || (!listData.fetched && !listData.error),
   )
 
-  const listRows = computed(() =>
-    servingOtherDoctype.value ? [] : (listData.data?.data ?? []),
-  )
+  const listRows = computed(() => listData.data?.data ?? [])
 
   return {
     filters,

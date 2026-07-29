@@ -25,10 +25,7 @@
     </div>
   </PageHeaderPortal>
 
-  <div
-    v-if="!routeDoctype.data || !!routeDoctype.data.doctype"
-    class="flex w-full min-h-0 min-w-0 flex-1 flex-col"
-  >
+  <div v-if="knownDoctype" class="flex w-full min-h-0 min-w-0 flex-1 flex-col">
     <div
       :key="route.path"
       class="flex w-full shrink-0 items-start justify-between gap-2 px-5 pt-3.5"
@@ -141,14 +138,19 @@ import ListSurface from '@/components/ListSurface.vue'
 import NotFoundPage from '@/components/NotFoundPage.vue'
 import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
 import PageHeaderPortal from '@/components/PageHeaderPortal.vue'
+import { routeDoctype } from '@/data/doctypes'
 import { listResources } from '@/data/resources'
 import { useListPage } from '@/composables/useListPage'
 
 const route = useRoute()
 const router = useRouter()
 
+const knownDoctype = computed(
+  () => routeDoctype(route.params.doctype as string) !== null,
+)
+
 const resources = listResources(route.params.doctype as string)
-const { listData, routeDoctype, createLayout } = resources
+const { listData, createLayout } = resources
 
 const {
   filters,

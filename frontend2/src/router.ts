@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { resolveRouteDoctype } from '@/data/doctypes'
+
 const routes = [
   {
     path: '/',
@@ -23,7 +25,28 @@ const routes = [
   },
 ]
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory('/crm2'),
   routes,
 })
+
+// Pages read their doctype at setup, so a slug ("crm-lead") or the wrong case has to
+// become the canonical name before one mounts. A segment that names nothing is left
+// alone for the page to render as Not Found.
+router.beforeResolve(async (to) => {
+  const segment = to.params.doctype
+  if (typeof segment !== 'string' || !segment) return true
+
+  const doctype = await resolveRouteDoctype(segment)
+  if (!doctype || doctype === segment) return true
+
+  return {
+    name: to.name,
+    params: { ...to.params, doctype },
+    query: to.query,
+    hash: to.hash,
+    replace: true,
+  }
+})
+
+export default router

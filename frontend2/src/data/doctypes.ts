@@ -1,4 +1,4 @@
-import { watch } from 'vue'
+import { call } from 'frappe-ui'
 
 import { isCustomIconName } from '@framework/ui/components/IconPicker'
 import { isIconName } from '@/data/icons'
@@ -28,31 +28,39 @@ export function doctypeIcon(doctype: string, saved?: string | null) {
   return DOCTYPES[doctype]?.icon || 'file'
 }
 
-export function guardDoctype(
-  routeDoctype: any,
-  route: any,
-  router: any,
-  onResolved: () => void,
-  suffix = '',
-) {
-  if (DOCTYPES[route.params.doctype]) {
-    onResolved()
-    return
-  }
-  let done = false
-  watch(
-    () => routeDoctype.data,
-    (res: any) => {
-      if (done || !res) return
-      if (!res.doctype) return
-      if (res.doctype !== route.params.doctype) {
-        done = true
-        router.replace(`/${encodeURIComponent(res.doctype)}${suffix}`)
-        return
-      }
-      done = true
-      onResolved()
-    },
-    { immediate: true },
-  )
+/** A URL segment already known to name a doctype, seeded with the ones this app ships. */
+const resolvedDoctypes = new Map<string, string | null>(
+  Object.keys(DOCTYPES).map((doctype) => [doctype, doctype]),
+)
+
+const pendingDoctypes = new Map<string, Promise<string | null>>()
+
+/**
+ * The doctype a URL segment names, or null when it names none. Only the server can
+ * turn a slug back into a name, so an unseen segment costs one round trip.
+ */
+export function resolveRouteDoctype(segment: string): Promise<string | null> {
+  const known = resolvedDoctypes.get(segment)
+  if (known !== undefined) return Promise.resolve(known)
+
+  const pending = pendingDoctypes.get(segment)
+  if (pending) return pending
+
+  const request = call('crm.api.doc.resolve_doctype', { doctype: segment })
+    .then((response) => {
+      const doctype = (response as { doctype?: string | null })?.doctype ?? null
+      resolvedDoctypes.set(segment, doctype)
+      if (doctype) resolvedDoctypes.set(doctype, doctype)
+      return doctype
+    })
+    .catch(() => null)
+    .finally(() => pendingDoctypes.delete(segment))
+
+  pendingDoctypes.set(segment, request)
+  return request
+}
+
+/** What the router guard resolved this segment to, for a page that has already mounted. */
+export function routeDoctype(segment: string): string | null {
+  return resolvedDoctypes.get(segment) ?? null
 }
