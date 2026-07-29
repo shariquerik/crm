@@ -4,8 +4,8 @@ import { effectScope, nextTick } from 'vue'
 import { clearPageState } from '@/data/cache/pageState'
 import { useRestoredRef } from '@/composables/usePageState'
 
-function standOn(key: string, path = '/CRM Lead') {
-  window.history.replaceState({ key }, '', path)
+function standOn(position: number, path = '/CRM Lead') {
+  window.history.replaceState({ position }, '', path)
 }
 
 /** Mounting is what a page does; the ref has to survive that page going away. */
@@ -18,7 +18,7 @@ function onPage<Value>(run: () => Value): Value {
 describe('useRestoredRef', () => {
   beforeEach(() => {
     clearPageState()
-    standOn('entry-1')
+    standOn(1)
   })
 
   it('starts at the value it was given', () => {
@@ -37,7 +37,7 @@ describe('useRestoredRef', () => {
     const first = onPage(() => useRestoredRef('pageLength', 20))
     first.value = 60
     await nextTick()
-    standOn('entry-2')
+    standOn(2)
 
     expect(onPage(() => useRestoredRef('pageLength', 20)).value).toBe(20)
   })
@@ -55,7 +55,7 @@ describe('useRestoredRef', () => {
 
   it('follows a query rewrite, which is a new entry under the same page', async () => {
     const pageLength = onPage(() => useRestoredRef('pageLength', 20))
-    standOn('entry-2', '/CRM Lead')
+    standOn(2, '/CRM Lead')
     pageLength.value = 60
     await nextTick()
 
@@ -64,7 +64,7 @@ describe('useRestoredRef', () => {
 
   it('does not write into the entry of the page that replaced it', async () => {
     const scrollTop = onPage(() => useRestoredRef('scrollTop', 0))
-    standOn('entry-2', '/CRM Deal')
+    standOn(2, '/CRM Deal')
     scrollTop.value = 3000
     await nextTick()
 

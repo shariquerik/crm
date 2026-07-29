@@ -1,25 +1,32 @@
 const MAX_ENTRIES = 30
 
-const bags = new Map<string, Record<string, unknown>>()
+interface Bag {
+  path: string
+  values: Record<string, unknown>
+}
+
+const bags = new Map<string, Bag>()
 
 /** Where a page had got to, held per history entry: how far scrolled, how many rows in. */
 export function pageState(): Record<string, unknown> {
   const key = historyKey()
+  const path = window.location.pathname
   const existing = bags.get(key)
-  if (existing) return existing
+  // A forward entry that gets overwritten leaves its slot behind for another page.
+  if (existing?.path === path) return existing.values
 
-  const bag: Record<string, unknown> = {}
+  const bag: Bag = { path, values: {} }
   bags.set(key, bag)
   if (bags.size > MAX_ENTRIES) bags.delete(bags.keys().next().value as string)
-  return bag
+  return bag.values
 }
 
 export function clearPageState() {
   bags.clear()
 }
 
-/** Vue Router stamps every entry it pushes; the first load of a tab has none. */
+/** Vue Router numbers the entries it pushes and keeps the number across back and forward. */
 function historyKey(): string {
-  const state = window.history.state as { key?: string } | null
-  return state?.key ?? 'initial'
+  const state = window.history.state as { position?: number } | null
+  return typeof state?.position === 'number' ? `${state.position}` : 'initial'
 }
