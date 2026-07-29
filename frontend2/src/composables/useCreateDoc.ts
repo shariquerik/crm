@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { call, toast } from 'frappe-ui'
 import { errorMessage } from '@/data/errors'
-import { refreshViewCounts } from '@/data/refreshTokens'
+import { refreshViewCounts } from '@/data/navigation'
 
 export function useCreateDoc(options: {
   createLayout: any
@@ -35,7 +35,7 @@ export function useCreateDoc(options: {
       })
       createDialog.value = false
       toast.success(`${doctype} created`)
-      refreshViewCounts()
+      refreshViewCounts(doctype)
       router.push(
         `/${encodeURIComponent(route.params.doctype)}/${encodeURIComponent(doc.name)}`,
       )

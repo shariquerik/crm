@@ -130,12 +130,10 @@
             viewportClass="flex flex-col bg-inherit px-2 pt-0.5 [&>div]:flex [&>div]:flex-1 [&>div]:flex-col [&>div]:bg-inherit"
           >
             <NavigationSidebar
-              :key="`${activeDoctype}:${sidebarRefreshToken}`"
+              :key="activeDoctype"
               :doctype="activeDoctype"
               :app="APP_NAME"
               :activeView="activeView"
-              :refreshToken="countsRefreshToken"
-              @changed="savedViewsChanged"
             />
           </ScrollArea>
         </Sidebar>
@@ -225,11 +223,6 @@ import {
   railItems,
 } from '@/data/railLayout'
 import { pageHeader } from '@/data/pageHeader'
-import {
-  countsRefreshToken,
-  savedViewsChanged,
-  sidebarRefreshToken,
-} from '@/data/refreshTokens'
 import { currentUser, userLabel } from '@/data/session'
 
 const appName = 'CRM'

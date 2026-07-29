@@ -6,7 +6,6 @@ import { serializeOrderBy } from '@framework/ui/components/SortBy'
 import { APP_NAME } from '@/data/apps'
 import { completeFilters, toFiltersDict } from '@/data/listWire'
 import { currentUser } from '@/data/session'
-import { refreshSidebar, savedViewsToken } from '@/data/refreshTokens'
 import {
   overridesFromQuery,
   preservedQuery,
@@ -43,8 +42,6 @@ export function useViewState(options: {
 
   const started = ref(false)
   const baseline = ref('')
-
-  watch(savedViewsToken, () => navigation.reload())
 
   const dirty = computed(
     () => Boolean(viewName) && started.value && tweakKey() !== baseline.value,
@@ -195,7 +192,6 @@ export function useViewState(options: {
     if (!label) return
     const name = await views.saveAsNew(liveSnapshot(), { label })
     saveAsDialog.value = false
-    refreshSidebar()
     router.push(`/${encodeURIComponent(route.params.doctype)}/view/${name}`)
   }
 

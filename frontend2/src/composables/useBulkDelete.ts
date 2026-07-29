@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { call, toast } from 'frappe-ui'
 import { errorMessage } from '@/data/errors'
-import { refreshViewCounts } from '@/data/refreshTokens'
+import { refreshViewCounts } from '@/data/navigation'
 
 const BACKGROUND_DELETE_THRESHOLD = 10
 
@@ -37,7 +37,7 @@ export function useBulkDelete(options: {
       )
       selection.value = []
       submit()
-      refreshViewCounts()
+      refreshViewCounts(doctype)
     } catch (error: any) {
       deleteError.value = errorMessage(error)
     } finally {
