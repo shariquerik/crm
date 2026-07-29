@@ -73,6 +73,7 @@ doctype_js = {
 
 website_route_rules = [
 	{"from_route": "/crm/<path:app_path>", "to_route": "crm"},
+	{"from_route": "/crm2/<path:app_path>", "to_route": "crm2"},
 	{"from_route": "/crm-form/<route>", "to_route": "crm_form"},
 ]
 
@@ -213,7 +214,15 @@ doc_events = {
 		"before_validate": ["crm.api.live_demo.validate_user"],
 		"validate_reset_password": ["crm.api.live_demo.validate_reset_password"],
 	},
+	"Navigation Section": {
+		"validate": ["crm.navigation.page_items.validate_page_items"],
+		"on_update": ["crm.navigation.doctype_items.seed_views_for_new_doctype_items"],
+	},
 }
+
+navigation_item_targets = ["crm.navigation.page_items.page_targets"]
+
+after_app_install = "crm.navigation.page_items.install_page_item_type"
 
 # Scheduled Tasks
 # ---------------

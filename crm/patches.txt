@@ -30,3 +30,10 @@ crm.patches.v1_0.add_forecasting_section_in_quick_entry
 crm.patches.v1_0.set_persona_captured_for_existing_sites
 crm.patches.v1_0.add_enrichment_fields_to_layouts
 crm.patches.v1_0.reorder_address_quick_entry_layout
+crm.patches.v1_0.seed_and_migrate_saved_views
+crm.patches.v1_0.seed_more_saved_view_doctypes
+crm.patches.v1_0.repoint_pipeline_dots_to_custom_icons
+crm.patches.v1_0.scope_navigation_sections_to_the_crm_app
+crm.patches.v1_0.add_page_navigation_item_type
+crm.patches.v1_0.seed_the_rail_navigation_section
+crm.patches.v1_0.drop_personal_app_sidebar_records

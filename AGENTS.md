@@ -74,6 +74,32 @@ yarn test          # watch mode
 
 ---
 
+## Comments
+
+**DO NOT ADD UNNECESSARY COMMENTS.** A comment earns its place only where the code cannot
+speak for itself: a one-line note on what a file does, and a constraint a reader would
+otherwise undo — a framework quirk, a build-time gotcha, a paint-order trap.
+
+Three hard limits, so this stays a rule and not a judgement call:
+
+- **Two lines maximum.** A comment that needs a third line is not a constraint, it is an
+  explanation — put it in the commit message.
+- **One summary line per docstring.** No rationale paragraphs, no "why not X", no examples.
+- **No commented-out code.** Delete it; git remembers.
+
+Never narrate the next line, restate a name, explain a feature, or record history and
+rationale. Watch for the phrase **"rather than"** — it is the signature of justifying your
+choice against an alternative you did not take, and that belongs in the commit message.
+
+Leave generated scaffolding alone: license headers, the `# begin/end: auto-generated types`
+blocks in DocType controllers, `hooks.py` (mostly commented-out examples by design), and the
+commented-out `.js` stub beside a new DocType controller. That is generator output, not
+somebody's explanation.
+
+This applies to the whole repo — `crm/`, `frontend/` and `frontend2/` alike.
+
+---
+
 ## Commit style
 
 ```

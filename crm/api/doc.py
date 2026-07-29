@@ -21,6 +21,56 @@ COUNT_NAME = (
 )
 
 
+def _is_listable(doctype: str) -> bool:
+	"""Whether `doctype` is one a generic list page can show.
+
+	A SINGLE holds exactly one record and has no list; a CHILD TABLE's rows only exist
+	inside a parent, so it has no standalone list either. Everything else the user is
+	allowed to read does.
+	"""
+	meta = frappe.get_meta(doctype)
+	if meta.issingle or meta.istable:
+		return False
+	return bool(frappe.has_permission(doctype, "read"))
+
+
+@frappe.whitelist()
+def resolve_doctype(doctype: str) -> dict:
+	"""Resolve a URL segment to the doctype it names, for a generic `/:doctype` route.
+
+	The Studio CRM app puts the REAL doctype name in the route ("/CRM Lead") — the only
+	form that needs no lookup table, and so the only one that works for every doctype
+	without registering it first. This endpoint is what makes the other forms work anyway,
+	and what tells a typo apart from a real doctype:
+
+	    "CRM Lead" -> {"doctype": "CRM Lead"}   already canonical: render
+	    "crm-lead" -> {"doctype": "CRM Lead"}   a slug: the caller redirects to canonical
+	    "crm lead" -> {"doctype": "CRM Lead"}   wrong case: likewise
+	    "nonsense" -> {"doctype": None}         nothing to show: caller renders Not Found
+
+	Slug -> name can only be done HERE, on the server, because it is not a computable
+	inverse — `slug("ToDo")` is "todo", and no transform turns "todo" back into "ToDo".
+	The server is the only place that holds the real names, so it does the matching.
+
+	Wrapped in a dict rather than returning a bare `str | None` so the caller can tell
+	"still loading" (no data yet) from "resolved to nothing" (data.doctype is null) —
+	a bare null would look identical to a resource that hasn't answered yet.
+	"""
+	name = frappe.db.get_value("DocType", doctype, "name")
+	if name and _is_listable(name):
+		return {"doctype": name}
+
+	wanted = (doctype or "").strip().lower().replace(" ", "-")
+	if wanted:
+		for candidate in frappe.get_all(
+			"DocType", filters={"issingle": 0, "istable": 0}, pluck="name", order_by="name"
+		):
+			if candidate.lower().replace(" ", "-") == wanted and frappe.has_permission(candidate, "read"):
+				return {"doctype": candidate}
+
+	return {"doctype": None}
+
+
 @frappe.whitelist()
 def sort_options(doctype: str):
 	fields = frappe.get_meta(doctype).fields
@@ -333,7 +383,7 @@ def get_data(
 			columns = frappe.parse_json(list_view_settings.columns)
 			rows = frappe.parse_json(list_view_settings.rows)
 			is_default = False
-		elif not custom_view or (is_default and hasattr(_list, "default_list_data")):
+		elif hasattr(_list, "default_list_data") and (not custom_view or is_default):
 			rows = default_rows
 			columns = _list.default_list_data().get("columns")
 

@@ -9,8 +9,11 @@ tags
 node_modules
 crm/public/frontend
 crm/www/crm.html
+crm/public/frontend2
+crm/www/crm2.html
 build
 frontend/coverage
+frontend2/coverage
 
 e2e/.auth
 test-results
