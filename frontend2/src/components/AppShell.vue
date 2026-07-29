@@ -130,7 +130,6 @@
             viewportClass="flex flex-col bg-inherit px-2 pt-0.5 [&>div]:flex [&>div]:flex-1 [&>div]:flex-col [&>div]:bg-inherit"
           >
             <NavigationSidebar
-              :key="activeDoctype"
               :doctype="activeDoctype"
               :app="APP_NAME"
               :activeView="activeView"
