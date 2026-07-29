@@ -5,7 +5,7 @@ import { useNavigation } from '@framework/ui/components/Navigation'
 import { APP_NAME } from '@/data/apps'
 import { doctypeLabel, routeDoctype } from '@/data/doctypes'
 import { errorMessage } from '@/data/errors'
-import { listCache } from '@/data/cache/queryCache'
+import { doctypeChanged } from '@/data/doctypeChanged'
 
 export function useDetailPage(resources: any) {
   const { record, notes, tasks, fieldsLayout } = resources
@@ -101,7 +101,7 @@ export function useDetailPage(resources: any) {
         name: route.params.id,
         fieldname: changes,
       })
-      listCache.invalidate(doctype.value)
+      doctypeChanged(doctype.value)
       await record.reload()
       toast.success('Saved')
     } catch (error: any) {
@@ -156,7 +156,7 @@ export function useDetailPage(resources: any) {
     saveError.value = ''
     try {
       await call('frappe.client.insert', { doc: row })
-      listCache.invalidate(row.doctype)
+      doctypeChanged(row.doctype)
       await resource.reload()
       toast.success(`${row.doctype === 'CRM Task' ? 'Task' : 'Note'} added`)
     } catch (error: any) {
