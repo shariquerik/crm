@@ -4,14 +4,16 @@ import {
   serializeColumns,
 } from '@framework/ui/components/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/components/SortBy'
-import { completeFilters, fetchKey, toFiltersDict } from '@/data/listWire'
-import { rowsByQuery } from '@/data/listCache'
+import { completeFilters, toFiltersDict } from '@/data/listWire'
+import { listCache } from '@/data/cache/queryCache'
+import { cacheKey, fetchKey } from '@/data/cache/queryKey'
 
 const REFETCH_DEBOUNCE_MS = 250
 
 export function useListQuery(options: {
   listData: any
   doctype: string
+  routePath: string
   filters: Ref<any[]>
   sort: Ref<any[]>
   columns: Ref<any[]>
@@ -22,6 +24,7 @@ export function useListQuery(options: {
   const {
     listData,
     doctype,
+    routePath,
     filters,
     sort,
     columns,
@@ -54,18 +57,30 @@ export function useListQuery(options: {
 
   let sent = fetchKey(listParams())
 
-  function fetchRows(params: Record<string, unknown>, key: string) {
-    const cached = rowsByQuery.get(key)
-    if (cached !== undefined) listData.setData(cached)
+  function fetchRows(params: Record<string, unknown>) {
+    const key = cacheKey(params)
+    const cached = listCache.read(key)
+    if (cached) listData.setData(firstRows(cached.response, pageLength.value))
     listData.submit(params, {
-      onSuccess: (data: unknown) => rowsByQuery.set(key, data),
+      onSuccess: (response: unknown) => {
+        listCache.write(key, { response, columns: wireColumns.value }, doctype)
+        listCache.remember(routePath, key)
+      },
     })
+  }
+
+  /** A cached answer can hold more rows than this page asks for; it never holds fewer. */
+  function firstRows(response: any, pageLength: number) {
+    const rows = response?.data ?? []
+    return rows.length > pageLength
+      ? { ...response, data: rows.slice(0, pageLength) }
+      : response
   }
 
   function submit() {
     const params = listParams()
     sent = fetchKey(params)
-    fetchRows(params, sent)
+    fetchRows(params)
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -78,7 +93,7 @@ export function useListQuery(options: {
         const encoded = fetchKey(params)
         if (encoded === sent) return
         sent = encoded
-        fetchRows(params, encoded)
+        fetchRows(params)
       }, REFETCH_DEBOUNCE_MS)
     },
     { deep: true },

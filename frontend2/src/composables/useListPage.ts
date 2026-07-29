@@ -7,6 +7,7 @@ import {
   getDefaultColumns,
 } from '@framework/ui/components/ColumnSettings'
 import { doctypeLabel, routeDoctype } from '@/data/doctypes'
+import { listCache } from '@/data/cache/queryCache'
 import { useBulkDelete } from '@/composables/useBulkDelete'
 import { useCreateDoc } from '@/composables/useCreateDoc'
 import { useListQuery, usePaging } from '@/composables/useListQuery'
@@ -53,6 +54,7 @@ export function useListPage(resources: any) {
   const query = useListQuery({
     listData,
     doctype,
+    routePath: route.path,
     filters,
     sort,
     columns,
@@ -106,7 +108,28 @@ export function useListPage(resources: any) {
     () => listData.loading || (!listData.fetched && !listData.error),
   )
 
-  const listRows = computed(() => listData.data?.data ?? [])
+  const liveRows = computed(() => listData.data?.data ?? [])
+
+  // What this route last rendered, for the span before the view's own query is assembled.
+  const repaint = computed(() =>
+    listLoading.value && !liveRows.value.length
+      ? listCache.readRoute(route.path)
+      : undefined,
+  )
+
+  const listRows = computed(() =>
+    liveRows.value.length
+      ? liveRows.value
+      : (repaint.value?.response?.data ?? []),
+  )
+
+  const listColumns = computed(() => {
+    if (repaint.value) return repaint.value.columns
+    if (query.wireColumns.value.length) return query.wireColumns.value
+    return listCache.readRoute(route.path)?.columns ?? []
+  })
+
+  const hasLiveCounts = computed(() => liveRows.value.length > 0)
 
   return {
     filters,
@@ -116,9 +139,10 @@ export function useListPage(resources: any) {
     pageSize,
     pageLength,
 
-    wireColumns: query.wireColumns,
+    listColumns,
     listLoading,
     listRows,
+    hasLiveCounts,
     breadcrumbs,
     controlOptions,
     resizeColumn,

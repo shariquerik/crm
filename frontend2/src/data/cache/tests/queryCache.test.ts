@@ -1,0 +1,85 @@
+import { describe, expect, it, vi } from 'vitest'
+
+import { QueryCache } from '@/data/cache/queryCache'
+
+describe('QueryCache', () => {
+  it('reads back what a key was written with', () => {
+    const cache = new QueryCache<string>()
+    cache.write('a', 'rows', 'CRM Lead')
+
+    expect(cache.read('a')).toBe('rows')
+  })
+
+  it('has nothing for a key it was never given', () => {
+    expect(new QueryCache<string>().read('a')).toBeUndefined()
+  })
+
+  it('forgets an entry once it is older than the age it allows', () => {
+    const cache = new QueryCache<string>(20, 1000)
+    vi.useFakeTimers()
+    try {
+      cache.write('a', 'rows', 'CRM Lead')
+      vi.advanceTimersByTime(1001)
+
+      expect(cache.read('a')).toBeUndefined()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('drops the oldest entry once it is full', () => {
+    const cache = new QueryCache<string>(2)
+    cache.write('a', 'first', 'CRM Lead')
+    cache.write('b', 'second', 'CRM Lead')
+    cache.write('c', 'third', 'CRM Lead')
+
+    expect(cache.read('a')).toBeUndefined()
+    expect(cache.read('c')).toBe('third')
+  })
+
+  it('counts a rewrite as recent, so it is not the next to go', () => {
+    const cache = new QueryCache<string>(2)
+    cache.write('a', 'first', 'CRM Lead')
+    cache.write('b', 'second', 'CRM Lead')
+    cache.write('a', 'again', 'CRM Lead')
+    cache.write('c', 'third', 'CRM Lead')
+
+    expect(cache.read('a')).toBe('again')
+    expect(cache.read('b')).toBeUndefined()
+  })
+
+  it('invalidates every entry a write to that doctype could have changed', () => {
+    const cache = new QueryCache<string>()
+    cache.write('open', 'rows', 'CRM Lead')
+    cache.write('closed', 'rows', 'CRM Lead')
+    cache.write('deals', 'rows', 'CRM Deal')
+
+    cache.invalidate('CRM Lead')
+
+    expect(cache.read('open')).toBeUndefined()
+    expect(cache.read('closed')).toBeUndefined()
+    expect(cache.read('deals')).toBe('rows')
+  })
+
+  it('finds what a route last rendered', () => {
+    const cache = new QueryCache<string>()
+    cache.write('key', 'rows', 'CRM Lead')
+    cache.remember('/CRM Lead', 'key')
+
+    expect(cache.readRoute('/CRM Lead')).toBe('rows')
+  })
+
+  it('has nothing for a route whose entry was invalidated', () => {
+    const cache = new QueryCache<string>()
+    cache.write('key', 'rows', 'CRM Lead')
+    cache.remember('/CRM Lead', 'key')
+
+    cache.invalidate('CRM Lead')
+
+    expect(cache.readRoute('/CRM Lead')).toBeUndefined()
+  })
+
+  it('has nothing for a route it never rendered', () => {
+    expect(new QueryCache<string>().readRoute('/CRM Lead')).toBeUndefined()
+  })
+})

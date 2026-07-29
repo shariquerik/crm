@@ -57,10 +57,10 @@
         v-model:selection="selection"
         v-model:pageSize="pageSize"
         class="w-full flex-1"
-        :cacheKey="route.path"
-        :columns="wireColumns"
+        :columns="listColumns"
         :rows="listRows"
         :loading="listLoading"
+        :hasLiveCounts="hasLiveCounts"
         :bulkActions="bulkActions"
         :rowCount="listData.data?.row_count ?? 0"
         :totalCount="listData.data?.total_count ?? 0"
@@ -159,9 +159,10 @@ const {
   customizing,
   pageSize,
   selection,
-  wireColumns,
+  listColumns,
   listLoading,
   listRows,
+  hasLiveCounts,
   breadcrumbs,
   controlOptions,
   resizeColumn,

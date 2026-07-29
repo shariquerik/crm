@@ -135,7 +135,6 @@ import { computed, toRef, watch } from 'vue'
 import ListBulkBar from '@/components/ListBulkBar.vue'
 import ListFooter from '@/components/ListFooter.vue'
 import { useColumnResize } from '@/composables/useColumnResize'
-import { useListSnapshot } from '@/composables/useListSnapshot'
 import { useRowSelection } from '@/composables/useRowSelection'
 
 const props = withDefaults(
@@ -155,7 +154,7 @@ const props = withDefaults(
     pageLengthOptions?: number[]
     rowHeight?: number
     loading?: boolean
-    cacheKey?: string
+    hasLiveCounts?: boolean
   }>(),
   {
     columns: () => [],
@@ -169,7 +168,7 @@ const props = withDefaults(
     pageLengthOptions: () => [20, 100, 500, 2500],
     rowHeight: 40,
     loading: false,
-    cacheKey: '',
+    hasLiveCounts: false,
   },
 )
 
@@ -189,7 +188,8 @@ const ROW_PADDING_X = '0.5rem'
 const SKELETON_ROW_COUNT = 10
 const SKELETON_COLUMN_COUNT = 4
 
-const { rows, columns, hasLiveCounts } = useListSnapshot(props)
+const rows = toRef(props, 'rows')
+const columns = toRef(props, 'columns')
 
 const { selectAllState, toggle, toggleSelectAll } = useRowSelection({
   selection,
@@ -212,13 +212,6 @@ const { listColumns, resizingKey, startResize, resetColumn } = useColumnResize({
   columns: trackedColumns,
   emit,
 })
-
-watch(
-  () => props.cacheKey,
-  () => {
-    selection.value = []
-  },
-)
 
 function cellLabel(column: any, row: any) {
   const value = row[column.key]

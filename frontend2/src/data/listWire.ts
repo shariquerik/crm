@@ -41,11 +41,3 @@ export function toConditions(
       return wrapped ? { ...c, value: value.slice(1, -1) } : c
     })
 }
-
-export function fetchKey(params: Record<string, unknown>) {
-  const wire = (params.columns as { width?: unknown }[]) || []
-  return JSON.stringify({
-    ...params,
-    columns: wire.map(({ width, ...rest }) => rest),
-  })
-}

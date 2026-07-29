@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { call, toast } from 'frappe-ui'
 import { errorMessage } from '@/data/errors'
 import { refreshViewCounts } from '@/data/navigation'
+import { listCache } from '@/data/cache/queryCache'
 
 const BACKGROUND_DELETE_THRESHOLD = 10
 
@@ -36,6 +37,7 @@ export function useBulkDelete(options: {
           : `Deleted ${items.length} record${items.length === 1 ? '' : 's'}`,
       )
       selection.value = []
+      listCache.invalidate(doctype)
       submit()
       refreshViewCounts(doctype)
     } catch (error: any) {
