@@ -33,11 +33,20 @@ describe('useRestoredRef', () => {
     expect(onPage(() => useRestoredRef('pageLength', 20)).value).toBe(60)
   })
 
-  it('starts fresh on a history entry that has not held it', async () => {
+  it('opens a new entry on the same page where that page was left', async () => {
     const first = onPage(() => useRestoredRef('pageLength', 20))
     first.value = 60
     await nextTick()
     standOn(2)
+
+    expect(onPage(() => useRestoredRef('pageLength', 20)).value).toBe(60)
+  })
+
+  it('starts fresh on another page', async () => {
+    const first = onPage(() => useRestoredRef('pageLength', 20))
+    first.value = 60
+    await nextTick()
+    standOn(2, '/CRM Deal')
 
     expect(onPage(() => useRestoredRef('pageLength', 20)).value).toBe(20)
   })

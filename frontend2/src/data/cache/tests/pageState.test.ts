@@ -19,15 +19,23 @@ describe('pageState', () => {
     expect(pageState().pageLength).toBe(60)
   })
 
-  it('gives a different history entry its own bag, even on the same path', () => {
+  it('opens a new entry where that path was last left', () => {
     standOn(1)
     pageState().pageLength = 60
     standOn(2)
 
+    expect(pageState().pageLength).toBe(60)
+  })
+
+  it('does not carry one path onto another', () => {
+    standOn(1)
+    pageState().pageLength = 60
+    standOn(2, '/CRM Deal')
+
     expect(pageState().pageLength).toBeUndefined()
   })
 
-  it('still has the first entry when it is returned to', () => {
+  it('leaves an older entry alone when a newer one moves on', () => {
     standOn(1)
     pageState().pageLength = 60
     standOn(2)
@@ -43,6 +51,16 @@ describe('pageState', () => {
     standOn(1, '/CRM Deal')
 
     expect(pageState().pageLength).toBeUndefined()
+  })
+
+  it('keeps the paths of two views apart', () => {
+    standOn(1, '/CRM Lead/view/1')
+    pageState().scrollTop = 800
+    standOn(2, '/CRM Lead/view/2')
+    pageState().scrollTop = 40
+    standOn(3, '/CRM Lead/view/1')
+
+    expect(pageState().scrollTop).toBe(800)
   })
 
   it('keeps a bag across a replace, which stays on the same entry', () => {
