@@ -4,12 +4,16 @@ import { createApp } from 'vue'
 import { FrappeUI, frappeRequest, setConfig } from 'frappe-ui'
 import { spritePlugin } from 'frappe-ui/icons'
 
-import App from '@/App.vue'
 import router from '@/router'
+
+setConfig('resourceFetcher', frappeRequest)
+
+// Module-scope resources with `auto` fetch as they are created, so App.vue's
+// import graph must be pulled in after the fetcher is set.
+const { default: App } = await import('@/App.vue')
 
 const app = createApp(App)
 
-setConfig('resourceFetcher', frappeRequest)
 app.use(FrappeUI)
 app.use(spritePlugin)
 app.use(router)
