@@ -1,62 +1,45 @@
 <template>
-  <PageHeaderPortal>
-    <div
-      v-if="knownDoctype"
-      class="flex w-full items-center justify-between gap-3"
-    >
-      <PageBreadcrumbs :items="breadcrumbs" />
-      <Button label="Save" variant="solid" :loading="saving" @click="save" />
-    </div>
-  </PageHeaderPortal>
+  <!-- isolate: the page's z-10/z-20 layers beat a dialog overlay's z-index:auto
+       otherwise, and stay lit while the rest of the page dims. -->
+  <div v-if="knownDoctype" class="isolate flex w-full min-h-0 min-w-0 flex-1">
+    <RecordHeader
+      :breadcrumbs="breadcrumbs"
+      :isDirty="isDirty"
+      :saving="saving"
+      @save="save"
+    />
 
-  <div
-    v-if="knownDoctype"
-    ref="scroller"
-    class="flex w-full min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-6"
-  >
-    <ErrorMessage v-if="saveError" :message="saveError" />
-
-    <FormLayout
-      v-if="fieldsLayout.data?.length"
-      :doc="doc"
+    <RecordTabs
+      v-model:doc="doc"
+      :doctype="doctype"
+      :docname="docname"
       :layout="fieldsLayout.data || []"
     />
   </div>
 
-  <NotFoundPage v-else :doctype="route.params.doctype as string" />
+  <NotFoundPage v-else :doctype="doctype" />
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Button, ErrorMessage } from 'frappe-ui'
-import { FormLayout } from '@framework/ui/components/FormLayout'
 
 import NotFoundPage from '@/components/NotFoundPage.vue'
-import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
-import PageHeaderPortal from '@/components/PageHeaderPortal.vue'
+import RecordHeader from '@/components/record/RecordHeader.vue'
+import RecordTabs from '@/components/record/RecordTabs.vue'
 import { routeDoctype } from '@/data/doctypes'
 import { recordResources } from '@/data/resources'
 import { useRecordPage } from '@/composables/useRecordPage'
-import { useScrollRestore } from '@/composables/usePageState'
 
 const route = useRoute()
 
-const resources = recordResources(
-  route.params.doctype as string,
-  route.params.id as string,
-)
-const { docResource, fieldsLayout } = resources
+const doctype = route.params.doctype as string
+const docname = route.params.id as string
 
-const { doc, saving, saveError, breadcrumbs, save } = useRecordPage(resources)
+const resources = recordResources(doctype, docname)
+const { fieldsLayout } = resources
 
-const scroller = ref<HTMLElement | null>(null)
+const { doc, isDirty, saving, breadcrumbs, save } = useRecordPage(resources)
 
-useScrollRestore(scroller, () =>
-  Boolean(docResource.data && fieldsLayout.data?.length),
-)
-
-const knownDoctype = computed(
-  () => routeDoctype(route.params.doctype as string) !== null,
-)
+const knownDoctype = computed(() => routeDoctype(doctype) !== null)
 </script>
