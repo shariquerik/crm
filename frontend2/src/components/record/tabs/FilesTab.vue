@@ -1,6 +1,6 @@
 <!-- What is attached to the record, oldest first, each with who added it and when. -->
 <template>
-  <RecordFeed :name="item.name" :ready="activities.length > 0">
+  <RecordFeed v-bind="props" :doc="doc" :ready="activities.length > 0">
     <!-- RecordFeed restores this tab's own offset, so the timeline must not jump to newest. -->
     <ActivityTimeline
       v-if="activities.length || loading"
@@ -60,7 +60,7 @@ import { toFileActivities, type FileRow } from '@/data/files'
 import type { TabProps } from '@/data/tabTypes'
 
 const props = defineProps<Omit<TabProps, 'doc'>>()
-defineModel<Record<string, any>>('doc', { required: true })
+const doc = defineModel<Record<string, any>>('doc', { required: true })
 
 const files = props.feeds.files
 

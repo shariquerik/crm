@@ -42,8 +42,7 @@ src/components/record/
   RecordAssignees.vue                   the stacked avatars and the assignment menu
   RecordTabs.vue                        the strip, the ?tab sync, <component :is="resolveTab()">
   RecordFeed.vue                        the scroller, both fades, the scroll button, the band
-  RecordComposer.vue                    collapsed pill / comment / + ; expanded editor
-  ComposerEmailFields.vue               To, Cc, Bcc
+  RecordComposer.vue                    collapsed pill / comment / + ; the framework's composers
   RecordPanel.vue                       PanelEdge + the aside; owns usePanelState
   PanelEdge.vue                         w-resize, drag, collapse, reopen, the round chevron
   RecordIdentity.vue                    avatar, title, subtitle, tags, actions — never scrolls
@@ -59,17 +58,19 @@ src/components/list/
 src/composables/
   useRecordPage.ts  useDocinfo.ts  usePanelState.ts  useScrollEdges.ts
 src/data/
-  resources.ts (recordResources)  tabTypes.ts  recordLayout.ts
+  resources.ts (recordResources)  tabTypes.ts  recordLayout.ts  composer.ts  users.ts
 ```
 
-Fourteen files and five, both inside AGENTS.md's fifteen. **`tabs/` earns its directory because
+Thirteen files and five, both inside AGENTS.md's fifteen. **`tabs/` earns its directory because
 `resolveTab`'s table is exactly that folder's contents** — the directory is the extension point.
 Nothing else in the tree is, so nothing else nests; grouping into `record/panel/` and `record/feed/`
 would buy headroom nobody needs and charge a judgement call on every new file.
 
 Three prototype files have no successor. `AvatarGroup.vue` and `PeopleControl.vue` collapse into
 `RecordAssignees.vue`, since frappe-ui's `Avatar` already stacks and the two only split because one
-was mock chrome. `dirtyState.ts` and `genericMock.ts` die with the prototype. `useScrollEdges.ts`
+was mock chrome. `dirtyState.ts` and `genericMock.ts` die with the prototype. `ComposerEmailFields.vue`
+and `ComposerField.vue` join them: `@framework/ui`'s `EmailComposer` ships the same To/Cc/Bcc rows,
+including the switch that clears a row on the way out. `useScrollEdges.ts`
 graduates to `src/composables/` unchanged.
 
 **The rename drags five names and one signature.**
@@ -339,6 +340,13 @@ label into the grid. Fieldtypes with no honest 130px row — `Table`, `Text Edit
 `Geolocation`, `Image`, `Attach` — keep the row shape but show a one-line summary with a trailing
 `↗` that switches to Details and scrolls to the field, so the panel stays uniform and "the panel
 holds every field" stays true.
+
+**The composer is `CommentComposer` and `EmailComposer` from `@framework/ui/components/Composer`**,
+one card over a shared editing core. They arrived after this plan was written and cover the whole
+expanded shape — the envelope rows, @-mentions, attachment upload, Discard and Submit — so
+`RecordComposer` owns only the collapsed band, the mode, the draft and the two send calls. They
+expose no in-flight state, so the card takes a spinner overlay instead of a submit button that
+becomes one.
 
 Everything else ADR 0001 needs from frappe — the Form Layout doctype, `surface` on
 `NavigationScope`, `registerRecordComponent` — is outside this plan. Slice 01 is the only branch

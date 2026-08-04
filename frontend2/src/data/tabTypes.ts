@@ -32,15 +32,38 @@ export type TabProps = {
   layout: FormLayoutSchema
 }
 
-type TabKind = { component: Component }
+/** What a create action can reach on the composer that offers it. */
+export type CreateContext = { attach: () => void }
+
+export type CreateAction = {
+  label: string
+  icon: string
+  run: (context: CreateContext) => void
+}
+
+type TabKind = { component: Component; create?: CreateAction }
 
 const TABS: Record<string, TabKind> = {
   activity: { component: ActivityTab },
   emails: { component: EmailsTab },
-  files: { component: FilesTab },
+  files: {
+    component: FilesTab,
+    create: {
+      label: 'Attach a file',
+      icon: 'lucide-paperclip',
+      run: (context) => context.attach(),
+    },
+  },
   details: { component: DetailsTab },
 }
 
 export function resolveTab(type: string): Component {
   return TABS[type]?.component ?? UnknownTab
+}
+
+/** The composer's `+` menu: what the tabs on the strip can create. */
+export function createActions(tabs: NavigationItem[]): CreateAction[] {
+  return tabs
+    .map((tab) => TABS[tab.type]?.create)
+    .filter((action): action is CreateAction => Boolean(action))
 }

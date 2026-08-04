@@ -23,13 +23,15 @@ back keeps a half-typed draft.
 **Created:**
 
 - `src/components/record/RecordComposer.vue`
-- `src/components/record/ComposerEmailFields.vue`
+- `src/data/composer.ts` — the draft, and the arguments each send call carries
+- `src/data/users.ts` — the @-mention list
 
 **Also edits:** `src/components/record/RecordFeed.vue`, which gains the band it shipped without in
-slice 05; `src/data/tabTypes.ts`, for the Files `create` entry the `+` menu reads.
+slice 05 and the four props the composer needs; `src/data/tabTypes.ts`, for the Files `create` entry
+the `+` menu reads; the three feed tabs, which pass those props through.
 
-The prototype's `ComposerField.vue` has no successor as a file — its one labelled line folds into
-`ComposerEmailFields.vue`.
+`ComposerEmailFields.vue` was not created. `EmailComposer`'s own header rows are the same To/Cc/Bcc
+block, so both it and the prototype's `ComposerField.vue` have no successor as a file.
 
 ## Decisions it implements
 
@@ -53,7 +55,8 @@ The prototype's `ComposerField.vue` has no successor as a file — its one label
 
 ## Framework surface
 
-None.
+`CommentComposer` and `EmailComposer` from `@framework/ui/components/Composer`, consumed unchanged.
+They landed after the plan was written; see its **What the framework supplies** section.
 
 ## Traps
 
@@ -62,5 +65,10 @@ None.
   Wrap the tooltipped `+` button in an element that takes the trigger props, and **give that element
   a box** — a `display: contents` wrapper measures as zero and anchors the menu at 0,0.
   `GenericComposer.vue:25-38` is the working shape.
+- **The framework composers expose no in-flight state.** Submitting therefore covers the card with
+  a spinner overlay and sets the editor read-only through the tiptap instance they expose, instead
+  of turning the submit button into a spinner.
+- **A kept draft is its text.** Attachments live inside the framework editor, so a tab switch drops
+  them; the body, the subject and the recipients survive in page state.
 - **No pending row.** The feed shows nothing extra while a post is in flight — no placeholder, no
   skeleton. A skeleton reintroduces exactly what push-only exists to avoid.

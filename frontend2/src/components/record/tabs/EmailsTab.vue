@@ -1,6 +1,6 @@
 <!-- The record's email conversation, oldest first, paging back as it is read. -->
 <template>
-  <RecordFeed :name="item.name" :ready="emails.length > 0">
+  <RecordFeed v-bind="props" :doc="doc" :ready="emails.length > 0">
     <!-- RecordFeed restores this tab's own offset, so the timeline must not jump to newest. -->
     <ActivityTimeline
       v-if="emails.length || loading"
@@ -27,7 +27,7 @@ import RecordFeed from '@/components/record/RecordFeed.vue'
 import type { TabProps } from '@/data/tabTypes'
 
 const props = defineProps<Omit<TabProps, 'doc'>>()
-defineModel<Record<string, any>>('doc', { required: true })
+const doc = defineModel<Record<string, any>>('doc', { required: true })
 
 // Cached per record: this is the resource Activity reads, not a second one.
 const { activities, loading, paginate } = useActivityTimeline(
