@@ -1,68 +1,8 @@
 from collections.abc import Iterable
 
 import frappe
-from bs4 import BeautifulSoup
-from frappe import _
 from frappe.desk.form.utils import add_comment as frappe_add_comment
 from frappe.utils import get_fullname
-
-from crm.fcrm.doctype.crm_notification.crm_notification import notify_user
-
-
-def on_update(self, method):
-	notify_mentions(self)
-
-
-def notify_mentions(doc):
-	"""
-	Extract mentions from `content`, and notify.
-	`content` must have `HTML` content.
-	"""
-	content = getattr(doc, "content", None)
-	if not content:
-		return
-	mentions = extract_mentions(content)
-	reference_doc = frappe.get_doc(doc.reference_doctype, doc.reference_name)
-	for mention in mentions:
-		owner = frappe.get_cached_value("User", doc.owner, "full_name")
-		doctype = doc.reference_doctype
-		if doctype.startswith("CRM "):
-			doctype = doctype[4:].lower()
-		name = (
-			reference_doc.lead_name
-			if doctype == "lead"
-			else reference_doc.organization or reference_doc.lead_name
-		)
-		notification_text = f"""
-            <div class="mb-2 leading-5 text-ink-gray-5">
-                <span class="font-medium text-ink-gray-9">{owner}</span>
-                <span>{_("mentioned you in {0}").format(doctype)}</span>
-                <span class="font-medium text-ink-gray-9">{name}</span>
-            </div>
-        """
-		notify_user(
-			{
-				"owner": doc.owner,
-				"assigned_to": mention.email,
-				"notification_type": "Mention",
-				"message": doc.content,
-				"notification_text": notification_text,
-				"reference_doctype": "Comment",
-				"reference_docname": doc.name,
-				"redirect_to_doctype": doc.reference_doctype,
-				"redirect_to_docname": doc.reference_name,
-			}
-		)
-
-
-def extract_mentions(html):
-	if not html:
-		return []
-	soup = BeautifulSoup(html, "html.parser")
-	mentions = []
-	for d in soup.find_all("span", attrs={"data-type": "mention"}):
-		mentions.append(frappe._dict(full_name=d.get("data-label"), email=d.get("data-id")))
-	return mentions
 
 
 @frappe.whitelist()

@@ -22,10 +22,11 @@
       v-if="notifications.data?.length"
       class="divide-y divide-outline-gray-1 overflow-y-auto text-base"
     >
-      <RouterLink
+      <component
+        :is="n.route_name ? RouterLink : 'div'"
         v-for="n in notifications.data"
-        :key="n.comment"
-        :to="getRoute(n)"
+        :key="n.name"
+        :to="n.route_name ? getRoute(n) : undefined"
         class="flex cursor-pointer items-start gap-3 px-2.5 py-3 hover:bg-surface-gray-2"
         @click="mark_doc_as_read(n.comment || n.notification_type_doc)"
       >
@@ -57,7 +58,7 @@
             {{ __(timeAgo(n.creation)) }}
           </div>
         </div>
-      </RouterLink>
+      </component>
     </div>
     <div v-else class="flex flex-1 flex-col items-center justify-center gap-2">
       <NotificationsIcon class="h-20 w-20 text-ink-gray-2" />
@@ -78,33 +79,37 @@ import { globalStore } from '@/stores/global'
 import { timeAgo, sanitizeHTML } from '@/utils'
 import { Breadcrumbs } from 'frappe-ui'
 import { onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const { $socket } = globalStore()
 const { mark_as_read, mark_doc_as_read } = notificationsStore()
 
 onBeforeUnmount(() => {
   $socket.off('crm_notification')
+  $socket.off('notification')
 })
 
 onMounted(() => {
   $socket.on('crm_notification', () => {
     notifications.reload()
   })
+  // Mentions are Notification Log rows now, which publish `notification`, not `crm_notification`.
+  $socket.on('notification', () => {
+    notifications.reload()
+  })
 })
 
+// A mention can point at any doctype, so the route comes from the payload.
+// `route_name` is null for a doctype this app has no page for.
 function getRoute(notification) {
-  let params = {
-    leadId: notification.reference_name,
-  }
-  if (notification.route_name === 'Deal') {
-    params = {
-      dealId: notification.reference_name,
-    }
-  }
+  if (!notification.route_name) return ''
+
+  const paramKey = notification.route_name.toLowerCase() + 'Id'
+
   return {
     name: notification.route_name,
-    params: params,
-    hash: '#' + notification.comment || notification.notification_type_doc,
+    params: { [paramKey]: notification.reference_name },
+    hash: notification.hash,
   }
 }
 </script>

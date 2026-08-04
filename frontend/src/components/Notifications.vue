@@ -36,10 +36,11 @@
           v-if="notifications.data?.length"
           class="divide-y divide-outline-elevation-2 overflow-auto text-base"
         >
-          <RouterLink
+          <component
+            :is="n.route_name ? RouterLink : 'div'"
             v-for="n in notifications.data"
-            :key="n.comment"
-            :to="getRoute(n)"
+            :key="n.name"
+            :to="n.route_name ? getRoute(n) : undefined"
             class="flex cursor-pointer items-start gap-2.5 px-4 py-2.5 hover:bg-surface-gray-2"
             @click="markAsRead(n.comment || n.notification_type_doc)"
           >
@@ -71,7 +72,7 @@
                 {{ __(timeAgo(n.creation)) }}
               </div>
             </div>
-          </RouterLink>
+          </component>
         </div>
         <EmptyState
           v-else
@@ -107,6 +108,7 @@ import { onClickOutside } from '@vueuse/core'
 import { useTelemetry } from 'frappe-ui/frappe'
 import { TabButtons } from 'frappe-ui'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const { $socket } = globalStore()
 const { mark_as_read, toggle, mark_doc_as_read } = notificationsStore()
@@ -143,27 +145,27 @@ function markAllAsRead() {
 
 onBeforeUnmount(() => {
   $socket.off('crm_notification')
+  $socket.off('notification')
   $socket.off('event_notification')
 })
 
 onMounted(() => {
   $socket.on('crm_notification', () => notifications.reload())
+  // Mentions are Notification Log rows now, which publish `notification`, not `crm_notification`.
+  $socket.on('notification', () => notifications.reload())
   $socket.on('event_notification', (data) => handleEventNotification(data))
 })
 
+// A mention can point at any doctype, so the route comes from the payload.
+// `route_name` is null for a doctype this app has no page for.
 function getRoute(notification) {
-  let params = {
-    leadId: notification.reference_name,
-  }
-  if (notification.route_name === 'Deal') {
-    params = {
-      dealId: notification.reference_name,
-    }
-  }
+  if (!notification.route_name) return ''
+
+  const paramKey = notification.route_name.toLowerCase() + 'Id'
 
   return {
     name: notification.route_name,
-    params: params,
+    params: { [paramKey]: notification.reference_name },
     hash: notification.hash,
   }
 }
