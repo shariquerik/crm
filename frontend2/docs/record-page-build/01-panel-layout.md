@@ -60,7 +60,12 @@ layout logic of its own.
 `PanelSection.vue`, `PanelField.vue`, a pure `displayValue.ts` with its tests, and `types.ts`;
 `./PanelLayout` joins the export map beside `./FormLayout`. `FormLayout` is untouched.
 
-Three things the ticket left open, which slice 08 consumes:
+**`v-model:openSections` is controlled with no floor.** A key the map does not carry renders that
+section closed, so `usePanelState` must supply an effective boolean for **every** section, resolving
+the layout's `opened` itself. The key is `section.name`, falling back to `section.label` where a
+layout has none; never an index, which could not match a name-keyed store.
+
+Three more things the ticket left open, which slice 08 consumes:
 
 - **`expand` is an emit, carrying the `FieldNode`.** A summary fieldtype's `↗` cannot switch tabs
   itself, so the host answers it — `RecordPanel` sets `?tab=` to Details and scrolls to
