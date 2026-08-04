@@ -234,6 +234,7 @@ def get_default_layout(doctype: str):
 			tabs.append(
 				{
 					"name": "tab_" + str(random_string(4)),
+					"label": field.label,
 					"sections": [
 						{
 							"name": "section_" + str(random_string(4)),
@@ -246,6 +247,7 @@ def get_default_layout(doctype: str):
 			tabs[-1]["sections"].append(
 				{
 					"name": "section_" + str(random_string(4)),
+					"label": field.label,
 					"columns": [{"name": "column_" + str(random_string(4)), "fields": []}],
 				}
 			)
