@@ -1,7 +1,9 @@
 <!-- The whole form, as a tab: the panel's overflow surface. -->
 <template>
   <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto p-6">
-    <FormLayout v-if="layout.length" v-model:doc="doc" :layout="layout" />
+    <div class="mx-auto w-full max-w-3xl">
+      <FormLayout v-if="layout.length" v-model:doc="doc" :layout="layout" />
+    </div>
   </div>
 </template>
 
