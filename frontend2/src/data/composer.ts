@@ -28,6 +28,30 @@ export type ComposerRecord = {
 
 export type Sender = { email: string; fullName: string }
 
+/** Where a drag started: the card's height then, and the pointer's y. */
+export type ResizeStart = { height: number; y: number }
+
+export const DEFAULT_COMPOSER_HEIGHT = 320
+const MIN_COMPOSER_HEIGHT = 180
+const MAX_COMPOSER_VIEWPORT_RATIO = 0.72
+
+/** Dragging the handle up grows the card, down shrinks it. */
+export function resizedHeight(
+  start: ResizeStart,
+  pointerY: number,
+  viewportHeight: number,
+) {
+  return clampHeight(start.height + start.y - pointerY, viewportHeight)
+}
+
+export function clampHeight(height: number, viewportHeight: number) {
+  const ceiling = Math.floor(viewportHeight * MAX_COMPOSER_VIEWPORT_RATIO)
+  return Math.min(
+    Math.max(height, MIN_COMPOSER_HEIGHT),
+    Math.max(ceiling, MIN_COMPOSER_HEIGHT),
+  )
+}
+
 export function emptyDraft(): Draft {
   return {
     open: false,

@@ -43,11 +43,15 @@ export default defineConfig({
       '@framework/ui': path.resolve(__dirname, '../../frappe/ui/src'),
     },
   },
-  // Neither is imported by this app directly, so vite's entry scan never finds
-  // them and they stay unbundled CJS, which then fails ESM interop. Other frappe
-  // apps get these for free because they init a socket in their own code.
   optimizeDeps: {
+    // Neither is imported by this app directly, so vite's entry scan never finds
+    // them and they stay unbundled CJS, which then fails ESM interop. Other frappe
+    // apps get these for free because they init a socket in their own code.
     include: ['feather-icons', 'socket.io-client'],
+    // Prebundled, frappe-ui inlines prosemirror while @framework/ui's raw source
+    // imports frappe-ui/editor and loads it again: the editor then mixes two
+    // DecorationSet classes and throws on mount and on unmount, dev only.
+    exclude: ['frappe-ui'],
   },
   define: {
     __SOCKETIO_PORT__: JSON.stringify(benchSocketioPort()),

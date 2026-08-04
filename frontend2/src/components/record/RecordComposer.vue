@@ -46,8 +46,22 @@
 
     <div
       v-else
+      ref="card"
       class="pointer-events-auto relative flex flex-col rounded-xl border border-outline-gray-2 bg-surface-base shadow-lg"
+      :style="{ height: `${height}px` }"
     >
+      <button
+        type="button"
+        class="absolute left-1/2 top-0 z-10 flex h-5 w-24 -translate-x-1/2 cursor-ns-resize touch-none items-center justify-center opacity-60 transition-opacity hover:opacity-100"
+        aria-label="Resize the composer"
+        @pointerdown="startResize"
+        @pointermove="resize"
+        @pointerup="endResize"
+        @pointercancel="endResize"
+      >
+        <span class="h-1 w-10 rounded-full bg-surface-gray-4" />
+      </button>
+
       <div class="flex items-center gap-2 px-3 pt-3">
         <template v-if="draft.mode === 'comment'">
           <Avatar
@@ -74,6 +88,7 @@
       <EmailComposer
         v-if="draft.mode === 'reply'"
         ref="composer"
+        class="min-h-0 flex-1"
         v-model="body"
         v-model:subject="subject"
         v-model:recipients="recipients"
@@ -86,6 +101,7 @@
       <CommentComposer
         v-else
         ref="composer"
+        class="min-h-0 flex-1"
         v-model="body"
         :mentions="mentionOptions"
         :upload-function="uploadAttachment"
@@ -113,6 +129,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
+import { useEventListener, useLocalStorage } from '@vueuse/core'
 import {
   Avatar,
   Button,
@@ -134,13 +151,17 @@ import type { FormLayoutSchema } from '@framework/ui/components/FormLayout'
 
 import { useRestoredRef } from '@/composables/usePageState'
 import {
+  clampHeight,
   commentArgs,
+  DEFAULT_COMPOSER_HEIGHT,
   emailArgs,
   emptyDraft,
   openDraft,
+  resizedHeight,
   type ComposerMode,
   type ComposerRecord,
   type Draft,
+  type ResizeStart,
 } from '@/data/composer'
 import { errorMessage } from '@/data/errors'
 import { useRecordLayout } from '@/data/recordLayout'
@@ -255,6 +276,34 @@ function warnUnsent(response: any) {
   if (addresses) toast.warning(`The email was not sent to ${addresses}.`)
 }
 
+const height = useLocalStorage('crm-composer-height', DEFAULT_COMPOSER_HEIGHT)
+const card = useTemplateRef<HTMLElement>('card')
+
+let start: ResizeStart | null = null
+
+function startResize(event: PointerEvent) {
+  start = { height: card.value?.offsetHeight ?? height.value, y: event.clientY }
+  ;(event.target as HTMLElement).setPointerCapture(event.pointerId)
+  document.body.style.cursor = 'ns-resize'
+  document.body.style.userSelect = 'none'
+}
+
+function resize(event: PointerEvent) {
+  if (start)
+    height.value = resizedHeight(start, event.clientY, window.innerHeight)
+}
+
+function endResize() {
+  start = null
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+}
+
+// A window that shrinks under the card would otherwise leave it taller than the feed.
+useEventListener(window, 'resize', () => {
+  height.value = clampHeight(height.value, window.innerHeight)
+})
+
 const { upload } = useFileUpload()
 
 // Loose: `add_comment` and `email.make` link the File to whatever they create. A reply's
@@ -294,3 +343,11 @@ async function attachPicked(event: Event) {
   }
 }
 </script>
+
+<style scoped>
+/* The framework's editor caps its scroll area at 50vh, which would strand the card's
+   last 20vh as dead space; the drag handle owns the height here. */
+:deep(.max-h-\[50vh\]) {
+  max-height: none;
+}
+</style>

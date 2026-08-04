@@ -36,6 +36,11 @@ Two constraints worth knowing:
   imports directly. Reached only through frappe-ui, they never enter vite's entry scan and
   stay unbundled CJS that fails ESM interop.
 
+- `optimizeDeps.exclude` carries `frappe-ui`. Prebundled, it inlines prosemirror while
+  `@framework/ui`'s raw source imports `frappe-ui/editor` and loads it a second time; the
+  editor then mixes two `DecorationSet` classes and throws on mount and on unmount. Dev
+  only — the production build never splits it.
+
 - `auto-imports.d.ts` and `components.d.ts` are generated at this folder's root by the
   unplugin hooks, and are gitignored — a fresh clone has none until the first dev or build
   run.

@@ -44,3 +44,12 @@ const tabIndex = computed({
   },
 })
 </script>
+
+<style scoped>
+/* The panel is flex-col with no grow, so a feed shorter than the page would leave
+   the composer band floating under the last row instead of at the bottom. */
+:deep([role='tabpanel'][data-state='active']) {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+</style>
