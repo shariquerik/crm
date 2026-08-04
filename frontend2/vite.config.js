@@ -2,8 +2,20 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import path from 'path'
+import fs from 'fs'
 import frappeui from 'frappe-ui/vite'
 import frameworkUI from '@framework/ui/vite'
+
+// The built page carries window.socketio_port in its boot script, but the dev
+// server serves index.html raw and jinjaBootData skips dev, so read the bench.
+function benchSocketioPort() {
+  const config = path.resolve(
+    __dirname,
+    '../../../sites/common_site_config.json',
+  )
+  if (!fs.existsSync(config)) return 9000
+  return JSON.parse(fs.readFileSync(config, 'utf8')).socketio_port || 9000
+}
 
 // The second CRM frontend, served at /crm2. frappe-ui resolves through
 // node_modules, so its exports/imports maps drive resolution and no aliases are
@@ -36,6 +48,9 @@ export default defineConfig({
   // apps get these for free because they init a socket in their own code.
   optimizeDeps: {
     include: ['feather-icons', 'socket.io-client'],
+  },
+  define: {
+    __SOCKETIO_PORT__: JSON.stringify(benchSocketioPort()),
   },
   server: {
     // serve the linked @framework/ui source from the sibling app repo

@@ -17,6 +17,7 @@ export function useUserSearch(pinned: Ref<UserOption[]>) {
   const results = ref<UserOption[]>([])
   const loading = ref(false)
   const error = ref('')
+  const searched = ref(false)
 
   let latestRequest = 0
 
@@ -29,6 +30,7 @@ export function useUserSearch(pinned: Ref<UserOption[]>) {
       if (request !== latestRequest) return
       results.value = rows.map(toUserOption)
       error.value = ''
+      searched.value = true
     } catch (caught: any) {
       if (request !== latestRequest) return
       error.value = errorMessage(caught)
@@ -39,15 +41,16 @@ export function useUserSearch(pinned: Ref<UserOption[]>) {
 
   const searchSoon = useDebounceFn(search, 250)
 
-  /** Pinned first, so a picked user stays resolvable once the query narrows. */
+  // The server's order wins and pinned users only fill gaps, so picking someone
+  // already on the list never reorders it under the pointer.
   const options = computed(() => {
-    const shown = new Map(pinned.value.map((user) => [user.value, user]))
-    for (const user of results.value)
+    const shown = new Map(results.value.map((user) => [user.value, user]))
+    for (const user of pinned.value)
       if (!shown.has(user.value)) shown.set(user.value, user)
     return [...shown.values()]
   })
 
-  return { options, loading, error, search, searchSoon }
+  return { options, loading, error, searched, search, searchSoon }
 }
 
 function searchParams(query: string) {

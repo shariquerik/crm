@@ -5,7 +5,7 @@ with no Studio runtime. It is a port of `crm/studio/crm_studio/`, which it will 
 replace along with `frontend/`.
 
 It is a **separate workspace from `frontend/` on purpose**: its own `package.json` and
-lockfile let it run Vite 8 and frappe-ui beta.29 while `frontend/` stays on Vite 5 and
+lockfile let it run Vite 8 and frappe-ui beta.24 while `frontend/` stays on Vite 5 and
 beta.19. Never reach across into `frontend/`.
 
 ## Layout
@@ -49,8 +49,10 @@ resolve frappe-ui's `~icons/*` (unplugin-icons) or `#molecules/*` imports.
 ## Dependencies
 
 `@framework/ui` is linked from `apps/frappe/ui` and needs frappe-ui ≥ 1.0.0-beta.24
-(`frappe-ui/list`, `SidebarLabel`). beta.29 adds `MultiSelect`'s `filterable`, which a
-server-searched picker needs to stop the client re-filtering what the server matched. Its `Navigation`, `SavedViews` and `IconPicker` modules
+(`frappe-ui/list`, `SidebarLabel`). **Do not move past beta.24 yet**: from beta.25 on,
+`@vue/compiler-sfc` cannot resolve `CheckboxBaseProps` through frappe-ui's
+`InputLabelingProps`, which breaks `yarn dev` (the production build still passes, so the
+failure only shows up in the dev server). Its `Navigation`, `SavedViews` and `IconPicker` modules
 are not on frappe develop yet, so this app only builds against a frappe branch carrying them.
 
 Import framework subpaths as `@framework/ui/components/<Name>`: the alias points at the

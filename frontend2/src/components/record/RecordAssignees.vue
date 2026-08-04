@@ -5,13 +5,12 @@
     :options="options"
     :loading="loading"
     :empty-text="error || 'No users found'"
-    :filterable="false"
     placeholder="Assign to…"
     side="bottom"
     align="end"
     @update:modelValue="reassign"
     @update:query="searchSoon"
-    @update:open="(open: boolean) => open && search()"
+    @update:open="(open: boolean) => open && !searched && search()"
   >
     <template #trigger="{ open }">
       <button
@@ -87,7 +86,7 @@ const assigneeOptions = computed<UserOption[]>(() =>
   })),
 )
 
-const { options, loading, error, search, searchSoon } =
+const { options, loading, error, searched, search, searchSoon } =
   useUserSearch(assigneeOptions)
 
 const visible = computed(() => props.assignees.slice(0, MAX_AVATARS))
