@@ -53,3 +53,30 @@ layout logic of its own.
   constant.
 - That repo has **no test runner of its own** — run its vitest from a consuming app with aliases.
 - Running `npx prettier` there **reformats untouched lines**. Do not.
+
+## Landed
+
+`frappe@40a70f230c`, on `feat/saved-view-sidebar`. `PanelLayout/` holds `PanelLayout.vue`,
+`PanelSection.vue`, `PanelField.vue`, a pure `displayValue.ts` with its tests, and `types.ts`;
+`./PanelLayout` joins the export map beside `./FormLayout`. `FormLayout` is untouched.
+
+Three things the ticket left open, which slice 08 consumes:
+
+- **`expand` is an emit, carrying the `FieldNode`.** A summary fieldtype's `↗` cannot switch tabs
+  itself, so the host answers it — `RecordPanel` sets `?tab=` to Details and scrolls to
+  `[data-fieldname]`.
+- **A `section-action` scoped slot**, `{ section, index }`, is the prototype's per-section header
+  action. `GenericRecordPrototype.vue:44-51` hangs _Show all details_ off the first section.
+- **A control closes on `change`, on Escape, or on focus leaving the cell**, where a portalled
+  popover (`[role="dialog"]`, `[role="listbox"]`, `[role="menu"]`) does not count as leaving.
+  Closing on `change` alone would strand a row a user opened and clicked away from.
+
+`displayValue` covers the rest of the fieldtypes: numerics through `formatField` with the site's
+format defaults and a resolved currency, `Check` as `Yes`/`No` with no unset state, everything
+else its raw string. A `Link` renders its raw name — `_link_titles` is the page's, and no prop
+carries it into the framework.
+
+The acceptance render is deferred to slice 08: this branch of `crm/frontend` has no story
+infrastructure, so there is nowhere here to mount a `CRM Deal` at 380px. Verified instead by the
+13 `displayValue` tests, a clean `vite build` of `frontend2` against the new component, and the
+app's own 66 tests still passing.
