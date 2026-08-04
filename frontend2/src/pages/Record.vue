@@ -16,6 +16,7 @@
       v-model:doc="doc"
       :doctype="doctype"
       :docname="docname"
+      :docinfo="docinfo"
       :layout="fieldsLayout.data || []"
     />
   </div>
@@ -42,8 +43,17 @@ const docname = route.params.id as string
 const resources = recordResources(doctype, docname)
 const { fieldsLayout } = resources
 
-const { doc, isDirty, saving, breadcrumbs, save, assignees, assign, unassign } =
-  useRecordPage(resources)
+const {
+  doc,
+  isDirty,
+  saving,
+  breadcrumbs,
+  save,
+  docinfo,
+  assignees,
+  assign,
+  unassign,
+} = useRecordPage(resources)
 
 const knownDoctype = computed(() => routeDoctype(doctype) !== null)
 </script>

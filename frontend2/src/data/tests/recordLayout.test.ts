@@ -12,6 +12,10 @@ describe('RECORD_TABS', () => {
     }
   })
 
+  it('opens on Activity, the conversation surface', () => {
+    expect(RECORD_TABS[0]?.type).toBe('activity')
+  })
+
   it('ends on Details, the overflow surface', () => {
     expect(RECORD_TABS.at(-1)?.type).toBe('details')
   })

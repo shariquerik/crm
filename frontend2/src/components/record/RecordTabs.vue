@@ -9,6 +9,7 @@
         :item="current"
         :doctype="doctype"
         :docname="docname"
+        :docinfo="docinfo"
         :layout="layout"
       />
     </template>
