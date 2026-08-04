@@ -11,20 +11,6 @@ export function toFieldsLayout(tabs: any[]) {
   }))
 }
 
-/** What the layout calls each of its fields, for anything rendering a fieldname. */
-export function fieldLabels(tabs: any[] = []): Record<string, string> {
-  const fields = (tabs || []).flatMap((tab: any) =>
-    (tab.sections || []).flatMap((section: any) =>
-      (section.columns || []).flatMap((column: any) => column.fields || []),
-    ),
-  )
-  return Object.fromEntries(
-    fields
-      .filter((field: any) => field.label)
-      .map((field: any) => [field.fieldname, field.label]),
-  )
-}
-
 function toSection(section: any) {
   return {
     name: section.name,

@@ -1,7 +1,11 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { call, toast } from 'frappe-ui'
 import { useDebounceFn } from '@vueuse/core'
-import { getSocketInstance } from '@framework/ui/socket'
+import {
+  getSocketInstance,
+  resubscribeHeldDocs,
+  subscribeToDoc,
+} from '@framework/ui/socket'
 
 import {
   applyDocinfoUpdate,
@@ -42,13 +46,15 @@ export function useDocinfo(docResource: any, record: RecordRef) {
   function subscribe() {
     if (!socket) return
 
-    socket.emit('doc_subscribe', doctype, docname)
+    // Refcounted: the Activity tab holds this room too, and the server's doc_unsubscribe
+    // is a bare socket.leave that would deafen whichever of us unmounted last.
+    const release = subscribeToDoc(socket, doctype, docname)
     socket.on('docinfo_update', onDocinfoUpdate)
     socket.on('disconnect', onDisconnect)
     socket.on('connect', onConnect)
 
     onScopeDispose(() => {
-      socket.emit('doc_unsubscribe', doctype, docname)
+      release()
       // Pass the handler: a bare off('docinfo_update') kills every other listener.
       socket.off('docinfo_update', onDocinfoUpdate)
       socket.off('disconnect', onDisconnect)
@@ -73,9 +79,9 @@ export function useDocinfo(docResource: any, record: RecordRef) {
     missedDeltas = true
   }
 
-  /** Rejoins the document's room and repairs whatever the gap dropped. */
+  /** Rejoins every held room and repairs whatever the gap dropped. */
   function onConnect() {
-    socket?.emit('doc_subscribe', doctype, docname)
+    resubscribeHeldDocs(socket)
     if (!missedDeltas) return
     missedDeltas = false
     refetch()
