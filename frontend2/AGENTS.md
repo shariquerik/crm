@@ -11,11 +11,13 @@ beta.19. Never reach across into `frontend/`.
 ## Layout
 
 - `src/pages/` — one component per route. `List.vue` serves both `/:doctype` and
-  `/:doctype/view/:viewName`; `Detail.vue` serves `/:doctype/:id`.
+  `/:doctype/view/:viewName`; `Record.vue` serves `/:doctype/:id`.
+- `src/components/` — cross-page chrome only. A component one page owns lives under
+  `src/components/<page>/`.
 - `src/composables/` — page logic. A page's `<script setup>` wires resources to a composable and
   binds the result; it does not hold logic.
 - `src/data/` — shared module-scope state and API wiring. `resources.ts` builds every page's
-  resources; `fieldsLayout.ts` holds the layout transform both the list and detail forms use.
+  resources; `fieldsLayout.ts` holds the layout transform both the list and record forms use.
 
 ## Build
 

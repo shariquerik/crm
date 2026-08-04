@@ -28,8 +28,8 @@ const routes = [
   },
   {
     path: '/:doctype/:id',
-    name: 'Detail',
-    component: () => import('@/pages/Detail.vue'),
+    name: 'Record',
+    component: () => import('@/pages/Record.vue'),
   },
 ]
 

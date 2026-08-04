@@ -135,7 +135,7 @@ import { ColumnSettings } from '@framework/ui/components/ColumnSettings'
 import { QuickFilter } from '@framework/ui/components/QuickFilter'
 import { FormLayout } from '@framework/ui/components/FormLayout'
 
-import ListSurface from '@/components/ListSurface.vue'
+import ListSurface from '@/components/list/ListSurface.vue'
 import NotFoundPage from '@/components/NotFoundPage.vue'
 import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
 import PageHeaderPortal from '@/components/PageHeaderPortal.vue'

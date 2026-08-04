@@ -24,8 +24,9 @@ export function useRestoredRef<Value>(
 export function useScrollRestore(
   element: Ref<HTMLElement | null | undefined>,
   ready: () => boolean,
+  name = 'scrollTop',
 ) {
-  const offset = useRestoredRef('scrollTop', 0)
+  const offset = useRestoredRef(name, 0)
   const { y } = useScroll(element, { throttle: 100 })
 
   let restored = false

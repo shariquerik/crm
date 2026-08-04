@@ -133,8 +133,8 @@ import {
 import 'frappe-ui/list-style.css'
 import { computed, ref, toRef } from 'vue'
 
-import ListBulkBar from '@/components/ListBulkBar.vue'
-import ListFooter from '@/components/ListFooter.vue'
+import ListBulkBar from '@/components/list/ListBulkBar.vue'
+import ListFooter from '@/components/list/ListFooter.vue'
 import { useColumnResize } from '@/composables/useColumnResize'
 import { useRowSelection } from '@/composables/useRowSelection'
 

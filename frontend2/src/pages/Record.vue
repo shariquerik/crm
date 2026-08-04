@@ -5,7 +5,7 @@
       class="flex w-full items-center justify-between gap-3"
     >
       <PageBreadcrumbs :items="breadcrumbs" />
-      <Button label="Save" variant="solid" :loading="saving" @click="saveDoc" />
+      <Button label="Save" variant="solid" :loading="saving" @click="save" />
     </div>
   </PageHeaderPortal>
 
@@ -36,25 +36,24 @@ import NotFoundPage from '@/components/NotFoundPage.vue'
 import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
 import PageHeaderPortal from '@/components/PageHeaderPortal.vue'
 import { routeDoctype } from '@/data/doctypes'
-import { detailResources } from '@/data/resources'
-import { useDetailPage } from '@/composables/useDetailPage'
+import { recordResources } from '@/data/resources'
+import { useRecordPage } from '@/composables/useRecordPage'
 import { useScrollRestore } from '@/composables/usePageState'
 
 const route = useRoute()
 
-const resources = detailResources(
+const resources = recordResources(
   route.params.doctype as string,
   route.params.id as string,
 )
-const { record, fieldsLayout } = resources
+const { docResource, fieldsLayout } = resources
 
-const { doc, saving, saveError, breadcrumbs, saveDoc } =
-  useDetailPage(resources)
+const { doc, saving, saveError, breadcrumbs, save } = useRecordPage(resources)
 
 const scroller = ref<HTMLElement | null>(null)
 
 useScrollRestore(scroller, () =>
-  Boolean(record.data && fieldsLayout.data?.length),
+  Boolean(docResource.data && fieldsLayout.data?.length),
 )
 
 const knownDoctype = computed(
