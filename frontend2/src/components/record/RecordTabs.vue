@@ -10,6 +10,7 @@
         :doctype="doctype"
         :docname="docname"
         :docinfo="docinfo"
+        :feeds="feeds"
         :layout="layout"
       />
     </template>

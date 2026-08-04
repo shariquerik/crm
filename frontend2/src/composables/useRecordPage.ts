@@ -18,7 +18,7 @@ import {
 const FIELDS_LAYOUT_TAG = 'CRM Fields Layout'
 
 export function useRecordPage(resources: any) {
-  const { docResource, fieldsLayout } = resources
+  const { docResource, fieldsLayout, files } = resources
   const route = useRoute()
 
   const doc = ref<Record<string, any>>({})
@@ -38,6 +38,9 @@ export function useRecordPage(resources: any) {
     doctype: doctype.value,
     docname,
     refetch: () => refetchCached(docResource, recordKey, doctype.value),
+    reloadFiles: () => {
+      if (files.data) files.reload()
+    },
   })
 
   const viewId = typeof route.query.view === 'string' ? route.query.view : ''
@@ -190,6 +193,7 @@ export function useRecordPage(resources: any) {
     isDirty,
     changedFields,
     linkTitles,
+    feeds: { files },
     saving,
     saveError,
 

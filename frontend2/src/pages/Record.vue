@@ -17,6 +17,7 @@
       :doctype="doctype"
       :docname="docname"
       :docinfo="docinfo"
+      :feeds="feeds"
       :layout="fieldsLayout.data || []"
     />
   </div>
@@ -48,6 +49,7 @@ const {
   isDirty,
   saving,
   breadcrumbs,
+  feeds,
   save,
   docinfo,
   assignees,

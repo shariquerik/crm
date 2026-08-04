@@ -13,6 +13,8 @@ export function activeTab(tabs: NavigationItem[], name?: string) {
 
 export const RECORD_TABS: NavigationItem[] = [
   tabItem('activity', 'Activity', 'lucide-activity'),
+  tabItem('emails', 'Emails', 'lucide-mail'),
+  tabItem('files', 'Files', 'lucide-paperclip'),
   tabItem('details', 'Details', 'lucide-table-properties'),
 ]
 

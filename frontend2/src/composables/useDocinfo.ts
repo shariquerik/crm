@@ -22,11 +22,13 @@ export type RecordRef = {
   docname: string
   /** Refetches `getdoc`, keeping the document cache current. */
   refetch: () => void
+  /** Refetches the Files tab's `File` query, which no bucket carries. */
+  reloadFiles: () => void
 }
 
 /** The record's `docinfo`: its buckets off the shared `getdoc` response, kept live. */
 export function useDocinfo(docResource: any, record: RecordRef) {
-  const { doctype, docname, refetch } = record
+  const { doctype, docname, refetch, reloadFiles } = record
 
   const docinfo = ref<Docinfo>(emptyDocinfo())
 
@@ -67,6 +69,9 @@ export function useDocinfo(docResource: any, record: RecordRef) {
     if (!isForRecord(event, doctype, docname)) return
     docinfo.value = applyDocinfoUpdate(docinfo.value, event)
     if (event.key === 'assignment_logs') refetchAssignments()
+    // Attaching a file posts a Comment, so the echo lands here and the file list
+    // it changed has to come back off its own query.
+    if (event.key === 'attachment_logs') reloadFiles()
   }
 
   // `assignments` gets no delta of its own — the echo lands on `assignment_logs` — so the
