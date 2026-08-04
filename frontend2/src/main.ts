@@ -14,7 +14,8 @@ const { default: App } = await import('@/App.vue')
 
 const app = createApp(App)
 
-app.use(FrappeUI)
+// `socketio` puts the socket on `$socket`, which is where `getSocketInstance` looks.
+app.use(FrappeUI, { socketio: true })
 app.use(spritePlugin)
 app.use(router)
 app.mount('#app')

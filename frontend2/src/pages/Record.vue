@@ -4,9 +4,12 @@
   <div v-if="knownDoctype" class="isolate flex w-full min-h-0 min-w-0 flex-1">
     <RecordHeader
       :breadcrumbs="breadcrumbs"
+      :assignees="assignees"
       :isDirty="isDirty"
       :saving="saving"
       @save="save"
+      @assign="assign"
+      @unassign="unassign"
     />
 
     <RecordTabs
@@ -39,7 +42,8 @@ const docname = route.params.id as string
 const resources = recordResources(doctype, docname)
 const { fieldsLayout } = resources
 
-const { doc, isDirty, saving, breadcrumbs, save } = useRecordPage(resources)
+const { doc, isDirty, saving, breadcrumbs, save, assignees, assign, unassign } =
+  useRecordPage(resources)
 
 const knownDoctype = computed(() => routeDoctype(doctype) !== null)
 </script>

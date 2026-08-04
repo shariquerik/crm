@@ -6,7 +6,9 @@ import { APP_NAME } from '@/data/apps'
 import { doctypeLabel, routeDoctype } from '@/data/doctypes'
 import { errorMessage } from '@/data/errors'
 import { doctypeChanged } from '@/data/doctypeChanged'
-import { fetchCached } from '@/data/cache/queryCache'
+import { fetchCached, refetchCached } from '@/data/cache/queryCache'
+import { useDocinfo } from '@/composables/useDocinfo'
+import { userName } from '@/data/docinfo'
 import {
   collidingFields,
   fieldDiff,
@@ -27,7 +29,16 @@ export function useRecordPage(resources: any) {
   const saveError = ref('')
 
   const doctype = computed(() => route.params.doctype as string)
+  const docname = route.params.id as string
   const doctypeLink = computed(() => `/${encodeURIComponent(doctype.value)}`)
+
+  const recordKey = `record:${doctype.value}/${docname}`
+
+  const docinfo = useDocinfo(docResource, {
+    doctype: doctype.value,
+    docname,
+    refetch: () => refetchCached(docResource, recordKey, doctype.value),
+  })
 
   const viewId = typeof route.query.view === 'string' ? route.query.view : ''
   const viewLink = computed(() =>
@@ -39,7 +50,7 @@ export function useRecordPage(resources: any) {
 
   if (routeDoctype(doctype.value) !== null) {
     const name = doctype.value
-    fetchCached(docResource, `record:${name}/${route.params.id}`, name)
+    fetchCached(docResource, recordKey, name)
     fetchCached(fieldsLayout, `layout:${name}`, FIELDS_LAYOUT_TAG)
   }
 
@@ -85,7 +96,7 @@ export function useRecordPage(resources: any) {
         route: doctypeLink.value,
       },
       viewCrumb.value,
-      { label: doc.value?.name || route.params.id },
+      { label: doc.value?.name || docname },
     ].filter(Boolean),
   )
 
@@ -163,8 +174,8 @@ export function useRecordPage(resources: any) {
   /** Who last wrote the record, named by `docinfo.user_info`. */
   function editorName() {
     const user = stored.value.modified_by
-    const info = docResource.data?.docinfo?.user_info?.[user]
-    return info?.fullname || user || 'Someone else'
+    if (!user) return 'Someone else'
+    return userName(docinfo.docinfo.value, user)
   }
 
   /** Takes the save response as the new baseline. */
@@ -184,5 +195,6 @@ export function useRecordPage(resources: any) {
 
     breadcrumbs,
     save,
+    ...docinfo,
   }
 }

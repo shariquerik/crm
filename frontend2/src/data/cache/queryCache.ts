@@ -66,7 +66,12 @@ export const docCache = new QueryCache<unknown>()
 export function fetchCached(resource: any, key: string, tag: string) {
   const cached = docCache.read(key)
   if (cached !== undefined) resource.setData(cached)
-  resource.fetch(undefined, {
+  return refetchCached(resource, key, tag)
+}
+
+/** Fetches without painting the cache first, so the cache follows the answer. */
+export function refetchCached(resource: any, key: string, tag: string) {
+  return resource.fetch(undefined, {
     onSuccess: (data: unknown) => docCache.write(key, data, tag),
   })
 }
