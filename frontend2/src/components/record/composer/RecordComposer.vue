@@ -52,7 +52,7 @@
     >
       <button
         type="button"
-        class="absolute left-1/2 top-0 z-10 flex h-5 w-24 -translate-x-1/2 cursor-ns-resize touch-none items-center justify-center opacity-60 transition-opacity hover:opacity-100"
+        class="absolute left-1/2 top-0 z-10 flex h-3 w-24 -translate-x-1/2 cursor-ns-resize touch-none items-center justify-center opacity-60 transition-opacity hover:opacity-100"
         aria-label="Resize the composer"
         @pointerdown="startResize"
         @pointermove="resize"
@@ -62,8 +62,29 @@
         <span class="h-1 w-10 rounded-full bg-surface-gray-4" />
       </button>
 
-      <div class="flex items-center gap-2 px-3 pt-3">
-        <template v-if="draft.mode === 'comment'">
+      <EmailComposer
+        v-if="draft.mode === 'reply'"
+        ref="composer"
+        class="min-h-0 flex-1"
+        v-model="body"
+        v-model:subject="subject"
+        v-model:recipients="recipients"
+        :upload-function="uploadAttachment"
+        placeholder="Write a reply…"
+        submit-label="Send"
+        @submit="send"
+      >
+        <template #header>
+          <ComposerHeader
+            v-model:subject="subject"
+            v-model:recipients="recipients"
+            @collapse="collapse"
+          />
+        </template>
+      </EmailComposer>
+
+      <template v-else>
+        <div class="flex items-center gap-2 px-3 pt-3">
           <Avatar
             :label="userLabel"
             :image="currentUser.user_image"
@@ -72,43 +93,20 @@
           <span class="text-base font-medium text-ink-gray-9">
             {{ userLabel }}
           </span>
-        </template>
-        <div class="ml-auto">
-          <Tooltip text="Collapse">
-            <Button
-              icon="lucide-chevrons-down-up"
-              variant="ghost"
-              aria-label="Collapse"
-              @click="collapse"
-            />
-          </Tooltip>
+          <CollapseButton class="ml-auto" @collapse="collapse" />
         </div>
-      </div>
 
-      <EmailComposer
-        v-if="draft.mode === 'reply'"
-        ref="composer"
-        class="min-h-0 flex-1"
-        v-model="body"
-        v-model:subject="subject"
-        v-model:recipients="recipients"
-        :header-fields="EMAIL_HEADER_FIELDS"
-        :upload-function="uploadAttachment"
-        placeholder="Write a reply…"
-        submit-label="Send"
-        @submit="send"
-      />
-      <CommentComposer
-        v-else
-        ref="composer"
-        class="min-h-0 flex-1"
-        v-model="body"
-        :mentions="mentionOptions"
-        :upload-function="uploadAttachment"
-        placeholder="Write a comment…"
-        submit-label="Comment"
-        @submit="send"
-      />
+        <CommentComposer
+          ref="composer"
+          class="min-h-0 flex-1"
+          v-model="body"
+          :mentions="mentionOptions"
+          :upload-function="uploadAttachment"
+          placeholder="Write a comment…"
+          submit-label="Comment"
+          @submit="send"
+        />
+      </template>
 
       <div
         v-if="sending"
@@ -128,11 +126,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  ref,
+  useTemplateRef,
+  type Ref,
+} from 'vue'
 import { useEventListener, useLocalStorage } from '@vueuse/core'
 import {
   Avatar,
-  Button,
   Dropdown,
   LoadingIndicator,
   Tooltip,
@@ -145,9 +149,11 @@ import {
   EmailComposer,
   type CommentPayload,
   type EmailPayload,
-  type HeaderField,
 } from '@framework/ui/components/Composer'
 import type { FormLayoutSchema } from '@framework/ui/components/FormLayout'
+
+import CollapseButton from './CollapseButton.vue'
+import ComposerHeader from './ComposerHeader.vue'
 
 import { useRestoredRef } from '@/composables/usePageState'
 import {
@@ -171,7 +177,6 @@ import { loadMentionOptions, mentionOptions } from '@/data/users'
 
 const ROUND_BUTTON =
   'grid size-9 shrink-0 place-content-center rounded-full border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-md transition hover:bg-surface-gray-2'
-const EMAIL_HEADER_FIELDS: HeaderField[] = ['subject', 'to', 'cc', 'bcc']
 
 const props = defineProps<{
   doctype: string
@@ -276,7 +281,20 @@ function warnUnsent(response: any) {
   if (addresses) toast.warning(`The email was not sent to ${addresses}.`)
 }
 
-const height = useLocalStorage('crm-composer-height', DEFAULT_COMPOSER_HEIGHT)
+// A reply and a comment are resized apart, so each mode keeps its own height.
+const heights: Record<ComposerMode, Ref<number>> = {
+  reply: useLocalStorage('crm-composer-height:reply', DEFAULT_COMPOSER_HEIGHT),
+  comment: useLocalStorage(
+    'crm-composer-height:comment',
+    DEFAULT_COMPOSER_HEIGHT,
+  ),
+}
+
+const height = computed({
+  get: () => heights[draft.value.mode].value,
+  set: (value: number) => (heights[draft.value.mode].value = value),
+})
+
 const card = useTemplateRef<HTMLElement>('card')
 
 let start: ResizeStart | null = null
@@ -301,7 +319,8 @@ function endResize() {
 
 // A window that shrinks under the card would otherwise leave it taller than the feed.
 useEventListener(window, 'resize', () => {
-  height.value = clampHeight(height.value, window.innerHeight)
+  for (const stored of Object.values(heights))
+    stored.value = clampHeight(stored.value, window.innerHeight)
 })
 
 const { upload } = useFileUpload()

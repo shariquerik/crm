@@ -2,7 +2,13 @@
      holding the composer and the one scroll button. -->
 <template>
   <div class="relative min-h-0 flex-1">
-    <div ref="scroller" class="h-full overflow-y-auto px-6 pb-16 pt-4">
+    <!-- The band floats over the scroller, so its height becomes the bottom padding —
+         without it a resized composer hides the last activities. -->
+    <div
+      ref="scroller"
+      class="h-full overflow-y-auto px-6 pt-4"
+      :style="{ paddingBottom: `${bandHeight + 32}px` }"
+    >
       <div ref="content" class="mx-auto flex w-full max-w-3xl flex-col gap-5">
         <slot />
       </div>
@@ -18,6 +24,7 @@
     />
 
     <div
+      ref="band"
       class="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex items-end gap-2 px-6"
     >
       <div class="flex-1" />
@@ -56,8 +63,9 @@
 
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
+import { useElementSize } from '@vueuse/core'
 import { Tooltip } from 'frappe-ui'
-import RecordComposer from '@/components/record/RecordComposer.vue'
+import RecordComposer from '@/components/record/composer/RecordComposer.vue'
 import { useScrollEdges } from '@/composables/useScrollEdges'
 import { useScrollRestore } from '@/composables/usePageState'
 import type { TabProps } from '@/data/tabTypes'
@@ -67,6 +75,9 @@ const props = defineProps<TabProps & { ready: boolean }>()
 
 const scroller = useTemplateRef<HTMLElement>('scroller')
 const content = useTemplateRef<HTMLElement>('content')
+const band = useTemplateRef<HTMLElement>('band')
+
+const { height: bandHeight } = useElementSize(band)
 
 const { atTop, atBottom, overflowing, pastHalf } = useScrollEdges(
   scroller,
