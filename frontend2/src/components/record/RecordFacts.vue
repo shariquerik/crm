@@ -28,7 +28,8 @@
         <span class="lucide-tag size-4 shrink-0" aria-hidden="true" />
         Tags
       </span>
-      <RecordTags :doctype="doctype" :chrome="chrome" />
+      <!-- The rows above inset their avatars by a button's padding; the pills match it. -->
+      <RecordTags class="px-1.5" :doctype="doctype" :chrome="chrome" />
     </div>
   </div>
 </template>
