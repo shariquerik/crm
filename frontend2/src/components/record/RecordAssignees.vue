@@ -7,7 +7,7 @@
     :empty-text="error || 'No users found'"
     placeholder="Assign to…"
     side="bottom"
-    align="end"
+    align="start"
     @update:modelValue="reassign"
     @update:query="searchSoon"
     @update:open="(open: boolean) => open && !searched && search()"
@@ -15,13 +15,15 @@
     <template #trigger="{ open }">
       <button
         type="button"
-        class="flex items-center gap-1 rounded-full p-0.5 transition hover:bg-surface-gray-2"
+        class="flex items-center gap-1 rounded px-1.5 py-1 transition hover:bg-surface-gray-2"
         :aria-label="summary"
       >
         <span
           v-if="!assignees.length"
-          class="lucide-user-plus size-4 text-ink-gray-5"
-        />
+          class="truncate text-base text-ink-gray-4"
+        >
+          Add people…
+        </span>
         <span v-else class="flex -space-x-1.5">
           <!-- ring-outline-* are the only generated ring tokens; ring-surface-base
                falls back to tailwind's default blue. -->
@@ -44,7 +46,13 @@
             +{{ overflow }}
           </span>
         </span>
+
+        <!-- One assignee has room for a name; a stack has to speak through its tooltips. -->
+        <span v-if="only" class="truncate text-base text-ink-gray-8">
+          {{ only.fullName }}
+        </span>
         <span
+          v-if="assignees.length"
           :class="[
             'lucide-chevron-down size-3.5 text-ink-gray-5 transition-transform',
             open && 'rotate-180',
@@ -90,6 +98,10 @@ const { options, loading, error, searched, search, searchSoon } =
   useUserSearch(assigneeOptions)
 
 const visible = computed(() => props.assignees.slice(0, MAX_AVATARS))
+
+const only = computed(() =>
+  props.assignees.length === 1 ? props.assignees[0] : null,
+)
 
 const overflow = computed(() =>
   Math.max(0, props.assignees.length - MAX_AVATARS),

@@ -1,6 +1,10 @@
 <!-- Renders nothing until the record has a tag; from then on it carries its own "+". -->
 <template>
-  <div v-if="chrome.tags.length" class="flex flex-wrap items-center gap-1.5">
+  <!-- The rows above inset their avatars by a button's padding; the pills match it. -->
+  <div
+    v-if="chrome.tags.length"
+    class="flex flex-wrap items-center gap-1.5 px-1.5"
+  >
     <span
       v-for="tag in chrome.tags"
       :key="tag"
