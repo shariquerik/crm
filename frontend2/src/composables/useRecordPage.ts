@@ -9,13 +9,19 @@ import { doctypeChanged } from '@/data/doctypeChanged'
 import { fetchCached, refetchCached } from '@/data/cache/queryCache'
 import { useDocinfo } from '@/composables/useDocinfo'
 import { userName } from '@/data/docinfo'
+import { fieldMetaByName } from '@/data/fieldsLayout'
 import {
   collidingFields,
+  conflictRows,
   fieldDiff,
   isTimestampMismatch,
+  type Choices,
+  type Conflict,
 } from '@/data/recordDoc'
 
 const FIELDS_LAYOUT_TAG = 'CRM Fields Layout'
+const MOVED_TWICE =
+  'The record changed again while it was saving. Your edits are kept — save again to try once more.'
 
 export function useRecordPage(resources: any) {
   const { docResource, fieldsLayout, files } = resources
@@ -27,6 +33,8 @@ export function useRecordPage(resources: any) {
   const linkTitles = ref<Record<string, string>>({})
   const saving = ref(false)
   const saveError = ref('')
+  const conflict = ref<Conflict | null>(null)
+  const conflictVisible = ref(false)
 
   const doctype = computed(() => route.params.doctype as string)
   const docname = route.params.id as string
@@ -105,6 +113,11 @@ export function useRecordPage(resources: any) {
 
   async function save() {
     if (saving.value) return
+    // Nothing was resolved, so the same decision blocks this save too.
+    if (conflict.value) {
+      conflictVisible.value = true
+      return
+    }
     if (!isDirty.value) return toast('No changes to save')
 
     saving.value = true
@@ -125,7 +138,7 @@ export function useRecordPage(resources: any) {
       toast.success('Saved')
     } catch (error: any) {
       if (!isTimestampMismatch(error)) throw error
-      await recover()
+      await recover(true)
     }
   }
 
@@ -135,8 +148,8 @@ export function useRecordPage(resources: any) {
     paintSaved(await call('frappe.client.save', { doc: doc.value }))
   }
 
-  /** Recovers from a concurrent edit by three-way merge. */
-  async function recover() {
+  /** Recovers from a concurrent edit by three-way merge, retrying at most once. */
+  async function recover(mayRetry: boolean) {
     const mine = changedFields()
     const baseline = stored.value
     await docResource.reload()
@@ -145,24 +158,18 @@ export function useRecordPage(resources: any) {
 
     const collisions = collidingFields(mine, fieldDiff(stored.value, baseline))
     reapply(mine, collisions)
-    if (collisions.length) throw new Error(collisionMessage(editor))
+    if (collisions.length) return openConflict(editor, mine, collisions)
+    if (!mayRetry) throw new Error(MOVED_TWICE)
 
-    await retry()
-    toast.success(
-      `Saved. ${editor} also edited this record while you were working.`,
-    )
-  }
-
-  /** One retry, so a record that moves twice reports rather than loops. */
-  async function retry() {
     try {
       await send()
     } catch (error: any) {
       if (!isTimestampMismatch(error)) throw error
-      throw new Error(
-        'The record changed again while it was saving. Your edits are kept — save again to try once more.',
-      )
+      return recover(false)
     }
+    toast.success(
+      `Saved. ${editor} also edited this record while you were working.`,
+    )
   }
 
   function reapply(mine: Record<string, any>, collisions: string[]) {
@@ -170,8 +177,45 @@ export function useRecordPage(resources: any) {
       if (!collisions.includes(fieldname)) doc.value[fieldname] = value
   }
 
-  function collisionMessage(editor: string) {
-    return `${editor} changed the same fields while you were working, so their values are showing. Your other edits are kept — check them and save again.`
+  /** The colliding fields hold theirs until the user says otherwise. */
+  function openConflict(
+    editor: string,
+    mine: Record<string, any>,
+    collisions: string[],
+  ) {
+    conflict.value = {
+      editor,
+      fields: conflictRows(
+        collisions,
+        mine,
+        stored.value,
+        fieldMetaByName(fieldsLayout.data || []),
+        stored.value,
+      ),
+    }
+    conflictVisible.value = true
+  }
+
+  /** The dialog answers for every colliding field, whatever the doc holds by now. */
+  async function resolveConflict(choices: Choices) {
+    const fields = conflict.value?.fields ?? []
+    closeConflict()
+    for (const field of fields)
+      doc.value[field.fieldname] =
+        choices[field.fieldname] === 'mine'
+          ? field.mine.value
+          : field.theirs.value
+    await save()
+  }
+
+  function discardConflict() {
+    doc.value = { ...stored.value }
+    closeConflict()
+  }
+
+  function closeConflict() {
+    conflict.value = null
+    conflictVisible.value = false
   }
 
   /** Who last wrote the record, named by `docinfo.user_info`. */
@@ -196,6 +240,10 @@ export function useRecordPage(resources: any) {
     feeds: { files },
     saving,
     saveError,
+    conflict,
+    conflictVisible,
+    resolveConflict,
+    discardConflict,
 
     breadcrumbs,
     save,

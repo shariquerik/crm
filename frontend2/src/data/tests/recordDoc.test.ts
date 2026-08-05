@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   collidingFields,
+  conflictRows,
   fieldDiff,
   isTimestampMismatch,
   toRecordPayload,
@@ -100,6 +101,74 @@ describe('collidingFields', () => {
 
   it('does not collide on a field they both set to the same value', () => {
     expect(collidingFields({ status: 'Open' }, { status: 'Open' })).toEqual([])
+  })
+})
+
+describe('conflictRows', () => {
+  const fields = {
+    annual_revenue: {
+      fieldname: 'annual_revenue',
+      fieldtype: 'Currency',
+      label: 'Annual Revenue',
+    },
+  }
+
+  it('names a field by its label and carries both values', () => {
+    const rows = conflictRows(
+      ['annual_revenue'],
+      { annual_revenue: 65000 },
+      { annual_revenue: 50000 },
+      fields,
+    )
+
+    expect(rows).toEqual([
+      {
+        fieldname: 'annual_revenue',
+        label: 'Annual Revenue',
+        mine: { value: 65000, display: '65,000.00' },
+        theirs: { value: 50000, display: '50,000.00' },
+      },
+    ])
+  })
+
+  it("reads a Currency field in the record's own currency", () => {
+    const currencyFields = {
+      deal_value: {
+        fieldname: 'deal_value',
+        fieldtype: 'Currency',
+        label: 'Deal Value',
+        options: 'currency',
+      },
+    }
+    const [row] = conflictRows(
+      ['deal_value'],
+      { deal_value: 1000 },
+      { deal_value: 2000 },
+      currencyFields,
+      { currency: 'USD' },
+    )
+
+    expect(row.mine.display).toBe('$ 1,000.00')
+  })
+
+  it('falls back to the fieldname where the layout carries no such field', () => {
+    const [row] = conflictRows(['website'], { website: 'crm.com' }, {}, fields)
+
+    expect(row.label).toBe('website')
+    expect(row.mine.display).toBe('crm.com')
+    expect(row.theirs.display).toBe('Empty')
+  })
+
+  it('reads a child table as a row count, which is how it is picked', () => {
+    const [row] = conflictRows(
+      ['products'],
+      { products: [{ item: 'A' }] },
+      { products: [{ item: 'A' }, { item: 'B' }] },
+      fields,
+    )
+
+    expect(row.mine.display).toBe('1 row')
+    expect(row.theirs.display).toBe('2 rows')
   })
 })
 

@@ -11,11 +11,14 @@ export function activeTab(tabs: NavigationItem[], name?: string) {
   return tabs.find((tab) => tab.name === name) ?? tabs[0]
 }
 
+/** The panel's overflow surface: where a field with no honest panel row is opened. */
+export const DETAILS_TAB = 'details'
+
 export const RECORD_TABS: NavigationItem[] = [
   tabItem('activity', 'Activity', 'lucide-activity'),
   tabItem('emails', 'Emails', 'lucide-mail'),
   tabItem('files', 'Files', 'lucide-paperclip'),
-  tabItem('details', 'Details', 'lucide-table-properties'),
+  tabItem(DETAILS_TAB, 'Details', 'lucide-table-properties'),
 ]
 
 function tabItem(type: string, label: string, icon: string): NavigationItem {

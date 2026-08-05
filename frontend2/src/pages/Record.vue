@@ -14,11 +14,26 @@
 
     <RecordTabs
       v-model:doc="doc"
+      class="min-w-0"
       :doctype="doctype"
       :docname="docname"
       :docinfo="docinfo"
       :feeds="feeds"
       :layout="fieldsLayout.data || []"
+    />
+
+    <RecordPanel
+      v-model:doc="doc"
+      :doctype="doctype"
+      :layout="fieldsLayout.data || []"
+    />
+
+    <SaveConflictDialog
+      v-if="conflict"
+      v-model="conflictVisible"
+      :conflict="conflict"
+      @resolve="resolveConflict"
+      @discard="discardConflict"
     />
   </div>
 
@@ -31,7 +46,9 @@ import { useRoute } from 'vue-router'
 
 import NotFoundPage from '@/components/NotFoundPage.vue'
 import RecordHeader from '@/components/record/RecordHeader.vue'
+import RecordPanel from '@/components/record/RecordPanel.vue'
 import RecordTabs from '@/components/record/RecordTabs.vue'
+import SaveConflictDialog from '@/components/record/SaveConflictDialog.vue'
 import { routeDoctype } from '@/data/doctypes'
 import { recordResources } from '@/data/resources'
 import { useRecordPage } from '@/composables/useRecordPage'
@@ -51,6 +68,10 @@ const {
   breadcrumbs,
   feeds,
   save,
+  conflict,
+  conflictVisible,
+  resolveConflict,
+  discardConflict,
   docinfo,
   assignees,
   assign,
