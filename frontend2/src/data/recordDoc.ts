@@ -23,6 +23,20 @@ export function toRecordPayload(response: any): RecordPayload | undefined {
   }
 }
 
+/** The headline the panel shows: what the doctype's meta says to call this record. */
+export function recordIdentity(
+  doc: Record<string, any>,
+  meta: Record<string, any> | null,
+  doctypeLabel: string,
+) {
+  const title = String(doc?.[meta?.title_field] || doc?.name || '')
+  return {
+    title,
+    subtitle: title === doc?.name ? doctypeLabel : String(doc?.name ?? ''),
+    image: String(doc?.[meta?.image_field] || ''),
+  }
+}
+
 /** What `current` holds that `stored` does not. */
 export function fieldDiff(
   current: Record<string, any>,

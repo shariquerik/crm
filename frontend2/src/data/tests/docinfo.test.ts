@@ -5,6 +5,7 @@ import {
   assigneesOf,
   assignmentDiff,
   isForRecord,
+  sharedWith,
   type DocinfoUpdate,
 } from '@/data/docinfo'
 
@@ -155,5 +156,37 @@ describe('assignmentDiff', () => {
 
   it('reads a cleared selection as dropping everyone', () => {
     expect(assignmentDiff([], assignees).dropped).toHaveLength(2)
+  })
+})
+
+describe('sharedWith', () => {
+  const shares = {
+    shared: [
+      { user: 'jane@example.com', read: 1, write: 1 },
+      { user: 'dev@example.com', read: 1, write: 0 },
+      { user: '', everyone: 1, read: 1 },
+    ],
+    user_info: { 'jane@example.com': { fullname: 'Jane Doe', image: '/j' } },
+  }
+
+  it('names each person and says whether they can edit', () => {
+    expect(sharedWith(shares)).toEqual([
+      {
+        user: 'jane@example.com',
+        fullName: 'Jane Doe',
+        image: '/j',
+        canWrite: true,
+      },
+      {
+        user: 'dev@example.com',
+        fullName: 'dev@example.com',
+        image: '',
+        canWrite: false,
+      },
+    ])
+  })
+
+  it('reads a record nobody shared as shared with nobody', () => {
+    expect(sharedWith({})).toEqual([])
   })
 })

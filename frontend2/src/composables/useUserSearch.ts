@@ -1,56 +1,23 @@
-import { computed, ref, type Ref } from 'vue'
+import { type Ref } from 'vue'
 import { call } from 'frappe-ui'
-import { useDebounceFn } from '@vueuse/core'
 
-import { errorMessage } from '@/data/errors'
+import {
+  useRemoteSearch,
+  type SearchOption,
+} from '@/composables/useRemoteSearch'
 
-export type UserOption = {
-  label: string
-  value: string
-  image: string
-}
+export type UserOption = SearchOption & { image: string }
 
 const PAGE_LENGTH = 10
 
 /** Users to pick from, matched on the server as the reader types. */
 export function useUserSearch(pinned: Ref<UserOption[]>) {
-  const results = ref<UserOption[]>([])
-  const loading = ref(false)
-  const error = ref('')
-  const searched = ref(false)
+  return useRemoteSearch(searchUsers, pinned)
+}
 
-  let latestRequest = 0
-
-  async function search(query = '') {
-    const request = ++latestRequest
-    loading.value = true
-    try {
-      const rows = await call('frappe.client.get_list', searchParams(query))
-      // An earlier but slower answer must not overwrite the latest one.
-      if (request !== latestRequest) return
-      results.value = rows.map(toUserOption)
-      error.value = ''
-      searched.value = true
-    } catch (caught: any) {
-      if (request !== latestRequest) return
-      error.value = errorMessage(caught)
-    } finally {
-      if (request === latestRequest) loading.value = false
-    }
-  }
-
-  const searchSoon = useDebounceFn(search, 250)
-
-  // The server's order wins and pinned users only fill gaps, so picking someone
-  // already on the list never reorders it under the pointer.
-  const options = computed(() => {
-    const shown = new Map(results.value.map((user) => [user.value, user]))
-    for (const user of pinned.value)
-      if (!shown.has(user.value)) shown.set(user.value, user)
-    return [...shown.values()]
-  })
-
-  return { options, loading, error, searched, search, searchSoon }
+async function searchUsers(query: string): Promise<UserOption[]> {
+  const rows: any[] = await call('frappe.client.get_list', searchParams(query))
+  return rows.map(toUserOption)
 }
 
 function searchParams(query: string) {

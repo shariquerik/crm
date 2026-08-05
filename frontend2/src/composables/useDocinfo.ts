@@ -12,10 +12,13 @@ import {
   assigneesOf,
   emptyDocinfo,
   isForRecord,
+  sharedWith,
   type Docinfo,
   type DocinfoUpdate,
+  type RecordChrome,
 } from '@/data/docinfo'
 import { errorMessage } from '@/data/errors'
+import { tagsOf } from '@/data/tags'
 
 export type RecordRef = {
   doctype: string
@@ -41,6 +44,9 @@ export function useDocinfo(docResource: any, record: RecordRef) {
   )
 
   const assignees = computed(() => assigneesOf(docinfo.value))
+  const tags = computed(() => tagsOf(docinfo.value))
+  const shared = computed(() => sharedWith(docinfo.value))
+  const following = computed(() => Boolean(docinfo.value.is_document_followed))
 
   const socket = getSocketInstance()
   subscribe()
@@ -68,15 +74,14 @@ export function useDocinfo(docResource: any, record: RecordRef) {
     const event = args[0] as DocinfoUpdate
     if (!isForRecord(event, doctype, docname)) return
     docinfo.value = applyDocinfoUpdate(docinfo.value, event)
-    if (event.key === 'assignment_logs') refetchAssignments()
+    if (event.key === 'assignment_logs') refetchSoon()
     // Attaching a file posts a Comment, so the echo lands here and the file list
     // it changed has to come back off its own query.
     if (event.key === 'attachment_logs') reloadFiles()
   }
 
-  // `assignments` gets no delta of its own — the echo lands on `assignment_logs` — so the
-  // bucket the avatars read comes back off `getdoc`, once for a burst of picks.
-  const refetchAssignments = useDebounceFn(refetch, 200)
+  // The buckets no delta carries come back off `getdoc`, once for a burst of edits.
+  const refetchSoon = useDebounceFn(refetch, 200)
 
   let missedDeltas = false
 
@@ -93,7 +98,7 @@ export function useDocinfo(docResource: any, record: RecordRef) {
   }
 
   function assign(email: string) {
-    return mutateAssignment('frappe.desk.form.assign_to.add', {
+    return sendMutation('frappe.desk.form.assign_to.add', {
       doctype,
       name: docname,
       assign_to: [email],
@@ -101,15 +106,68 @@ export function useDocinfo(docResource: any, record: RecordRef) {
   }
 
   function unassign(email: string) {
-    return mutateAssignment('frappe.desk.form.assign_to.remove', {
+    return sendMutation('frappe.desk.form.assign_to.remove', {
       doctype,
       name: docname,
       assign_to: email,
     })
   }
 
-  // The response is discarded: `docinfo_update` is the single writer into the buckets.
-  async function mutateAssignment(method: string, args: Record<string, any>) {
+  function addTag(tag: string) {
+    return mutateChrome('frappe.desk.doctype.tag.tag.add_tag', {
+      tag,
+      dt: doctype,
+      dn: docname,
+    })
+  }
+
+  function removeTag(tag: string) {
+    return mutateChrome('frappe.desk.doctype.tag.tag.remove_tag', {
+      tag,
+      dt: doctype,
+      dn: docname,
+    })
+  }
+
+  function toggleFollow() {
+    return mutateChrome('frappe.desk.form.document_follow.update_follow', {
+      doctype,
+      doc_name: docname,
+      following: !following.value,
+    })
+  }
+
+  function share(user: string) {
+    return mutateChrome('frappe.share.add', {
+      doctype,
+      name: docname,
+      user,
+      read: 1,
+      write: 1,
+    })
+  }
+
+  // Dropping read drops the higher permissions with it, and the empty share deletes itself.
+  function unshare(user: string) {
+    return mutateChrome('frappe.share.set_permission', {
+      doctype,
+      name: docname,
+      user,
+      permission_to: 'read',
+      value: 0,
+    })
+  }
+
+  // Tags, shares and follows publish no `docinfo_update`, so the round trip each of them
+  // closes is its own refetch.
+  async function mutateChrome(method: string, args: Record<string, any>) {
+    await sendMutation(method, args)
+    refetchSoon()
+  }
+
+  // The response is discarded: nothing here writes into the buckets, only the socket
+  // and the refetch do.
+  async function sendMutation(method: string, args: Record<string, any>) {
     try {
       await call(method, args)
     } catch (error: any) {
@@ -117,5 +175,16 @@ export function useDocinfo(docResource: any, record: RecordRef) {
     }
   }
 
-  return { docinfo, assignees, assign, unassign }
+  const chrome = computed<RecordChrome>(() => ({
+    tags: tags.value,
+    shared: shared.value,
+    following: following.value,
+    addTag,
+    removeTag,
+    toggleFollow,
+    share,
+    unshare,
+  }))
+
+  return { docinfo, assignees, chrome, assign, unassign }
 }

@@ -25,6 +25,8 @@
     <RecordPanel
       v-model:doc="doc"
       :doctype="doctype"
+      :docname="docname"
+      :chrome="chrome"
       :layout="fieldsLayout.data || []"
     />
 
@@ -74,6 +76,7 @@ const {
   discardConflict,
   docinfo,
   assignees,
+  chrome,
   assign,
   unassign,
 } = useRecordPage(resources)

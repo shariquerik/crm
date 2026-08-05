@@ -89,6 +89,37 @@ export function assigneesOf(docinfo: Record<string, any>): Assignee[] {
   }))
 }
 
+export interface SharedUser {
+  user: string
+  fullName: string
+  image: string
+  canWrite: boolean
+}
+
+/** The record's chrome: what `docinfo` says about it, and what may be done to it. */
+export interface RecordChrome {
+  tags: string[]
+  shared: SharedUser[]
+  following: boolean
+  addTag: (tag: string) => void
+  removeTag: (tag: string) => void
+  toggleFollow: () => void
+  share: (user: string) => void
+  unshare: (user: string) => void
+}
+
+/** Who the record is shared with by name, leaving out the shares nobody granted. */
+export function sharedWith(docinfo: Record<string, any>): SharedUser[] {
+  return (docinfo?.shared ?? [])
+    .filter((share: any) => share.user)
+    .map((share: any) => ({
+      user: share.user,
+      fullName: userName(docinfo, share.user),
+      image: docinfo?.user_info?.[share.user]?.image || '',
+      canWrite: Boolean(share.write),
+    }))
+}
+
 /** What `user_info` calls someone, falling back to the email it knows nothing about. */
 export function userName(docinfo: Record<string, any>, email: string) {
   return docinfo?.user_info?.[email]?.fullname || email
@@ -96,9 +127,16 @@ export function userName(docinfo: Record<string, any>, email: string) {
 
 /** Who a new selection adds and drops against the assignees it replaces. */
 export function assignmentDiff(picked: string[], assignees: Assignee[]) {
-  const assigned = assignees.map((assignee) => assignee.email)
+  return listDiff(
+    picked,
+    assignees.map((assignee) => assignee.email),
+  )
+}
+
+/** What a new selection adds and drops against the one it replaces. */
+export function listDiff(picked: string[], current: string[]) {
   return {
-    added: picked.filter((email) => !assigned.includes(email)),
-    dropped: assigned.filter((email) => !picked.includes(email)),
+    added: picked.filter((value) => !current.includes(value)),
+    dropped: current.filter((value) => !picked.includes(value)),
   }
 }

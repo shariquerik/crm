@@ -5,6 +5,7 @@ import {
   conflictRows,
   fieldDiff,
   isTimestampMismatch,
+  recordIdentity,
   toRecordPayload,
 } from '@/data/recordDoc'
 
@@ -182,5 +183,40 @@ describe('isTimestampMismatch', () => {
   it('leaves every other failure alone', () => {
     expect(isTimestampMismatch({ exc_type: 'ValidationError' })).toBe(false)
     expect(isTimestampMismatch(new Error('offline'))).toBe(false)
+  })
+})
+
+describe('recordIdentity', () => {
+  const contact = { name: 'CONTACT-0001', full_name: 'Emma Chen', image: '/i' }
+
+  it('titles the record by the meta title field, over its ID', () => {
+    const identity = recordIdentity(
+      contact,
+      { title_field: 'full_name', image_field: 'image' },
+      'Contacts',
+    )
+    expect(identity).toEqual({
+      title: 'Emma Chen',
+      subtitle: 'CONTACT-0001',
+      image: '/i',
+    })
+  })
+
+  it('names the doctype below a title that is already the ID', () => {
+    const identity = recordIdentity(contact, null, 'Contacts')
+    expect(identity).toEqual({
+      title: 'CONTACT-0001',
+      subtitle: 'Contacts',
+      image: '',
+    })
+  })
+
+  it('falls back to the ID when the title field is empty', () => {
+    const identity = recordIdentity(
+      { name: 'CONTACT-0002' },
+      { title_field: 'full_name' },
+      'Contacts',
+    )
+    expect(identity.title).toBe('CONTACT-0002')
   })
 })

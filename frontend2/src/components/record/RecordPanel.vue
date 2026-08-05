@@ -12,11 +12,28 @@
     :class="dragging ? '' : 'transition-[width] duration-300 ease-in-out'"
     :style="{ width: `${collapsed ? RAIL_WIDTH : width}px` }"
   >
+    <div v-if="collapsed" class="flex flex-col items-center py-3">
+      <RecordActions
+        vertical
+        :doctype="doctype"
+        :docname="docname"
+        :doc="doc"
+        :chrome="chrome"
+      />
+    </div>
+
     <div
-      v-if="!collapsed"
+      v-else
       class="relative flex h-full min-h-0 flex-col"
       :style="{ width: `${width}px` }"
     >
+      <RecordIdentity
+        :doctype="doctype"
+        :docname="docname"
+        :doc="doc"
+        :chrome="chrome"
+      />
+
       <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto">
         <div ref="content">
           <PanelLayout
@@ -47,11 +64,19 @@ import type {
 } from '@framework/ui/components/FormLayout'
 
 import PanelEdge from '@/components/record/PanelEdge.vue'
+import RecordActions from '@/components/record/RecordActions.vue'
+import RecordIdentity from '@/components/record/RecordIdentity.vue'
+import type { RecordChrome } from '@/data/docinfo'
 import { DETAILS_TAB } from '@/data/recordLayout'
 import { RAIL_WIDTH, usePanelState } from '@/composables/usePanelState'
 import { useScrollEdges } from '@/composables/useScrollEdges'
 
-const props = defineProps<{ doctype: string; layout: FormLayoutSchema }>()
+const props = defineProps<{
+  doctype: string
+  docname: string
+  chrome: RecordChrome
+  layout: FormLayoutSchema
+}>()
 const doc = defineModel<Record<string, any>>('doc', { required: true })
 
 const route = useRoute()
