@@ -132,6 +132,7 @@ import {
   onMounted,
   ref,
   useTemplateRef,
+  watch,
   type Ref,
 } from 'vue'
 import { useEventListener, useLocalStorage } from '@vueuse/core'
@@ -156,6 +157,7 @@ import CollapseButton from './CollapseButton.vue'
 import ComposerHeader from './ComposerHeader.vue'
 
 import { useRestoredRef } from '@/composables/usePageState'
+import { claimReply, pendingReply } from '@/data/composerRequest'
 import {
   clampHeight,
   commentArgs,
@@ -215,6 +217,12 @@ const record = computed<ComposerRecord>(() => ({
 }))
 
 onMounted(loadMentionOptions)
+
+// Immediate: the panel's Email action switches tabs, so the composer that serves it is
+// usually the one mounting after the request, not the one that was there.
+watch(pendingReply, (wanted) => wanted && claimReply() && expand('reply'), {
+  immediate: true,
+})
 
 function expand(mode: ComposerMode) {
   draft.value = openDraft(draft.value, mode, record.value)

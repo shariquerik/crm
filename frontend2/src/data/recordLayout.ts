@@ -14,9 +14,12 @@ export function activeTab(tabs: NavigationItem[], name?: string) {
 /** The panel's overflow surface: where a field with no honest panel row is opened. */
 export const DETAILS_TAB = 'details'
 
+/** Where the panel's Email action sends the reader, so the composer it opens is in view. */
+export const EMAILS_TAB = 'emails'
+
 export const RECORD_TABS: NavigationItem[] = [
   tabItem('activity', 'Activity', 'lucide-activity'),
-  tabItem('emails', 'Emails', 'lucide-mail'),
+  tabItem(EMAILS_TAB, 'Emails', 'lucide-mail'),
   tabItem('files', 'Files', 'lucide-paperclip'),
   tabItem(DETAILS_TAB, 'Details', 'lucide-table-properties'),
 ]

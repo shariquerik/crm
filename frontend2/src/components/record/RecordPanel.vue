@@ -17,8 +17,8 @@
         vertical
         :doctype="doctype"
         :docname="docname"
-        :doc="doc"
         :chrome="chrome"
+        @share="sharing = true"
       />
     </div>
 
@@ -28,10 +28,11 @@
       :style="{ width: `${width}px` }"
     >
       <RecordIdentity
+        v-model:doc="doc"
         :doctype="doctype"
         :docname="docname"
-        :doc="doc"
         :chrome="chrome"
+        @share="sharing = true"
       />
 
       <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto">
@@ -52,6 +53,14 @@
       />
     </div>
   </aside>
+
+  <!-- One dialog for both shapes: the rail and the open panel never render together. -->
+  <ShareDialog
+    v-model="sharing"
+    :shared="chrome.shared"
+    @share="chrome.share"
+    @unshare="chrome.unshare"
+  />
 </template>
 
 <script setup lang="ts">
@@ -66,6 +75,7 @@ import type {
 import PanelEdge from '@/components/record/PanelEdge.vue'
 import RecordActions from '@/components/record/RecordActions.vue'
 import RecordIdentity from '@/components/record/RecordIdentity.vue'
+import ShareDialog from '@/components/record/ShareDialog.vue'
 import type { RecordChrome } from '@/data/docinfo'
 import { DETAILS_TAB } from '@/data/recordLayout'
 import { RAIL_WIDTH, usePanelState } from '@/composables/usePanelState'
@@ -87,6 +97,7 @@ const { width, collapsed, openSections } = usePanelState(
   () => props.layout,
 )
 const dragging = ref(false)
+const sharing = ref(false)
 
 const scroller = useTemplateRef<HTMLElement>('scroller')
 const content = useTemplateRef<HTMLElement>('content')

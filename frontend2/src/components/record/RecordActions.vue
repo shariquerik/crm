@@ -1,17 +1,34 @@
-<!-- Every verb that acts on the record: the quick actions, then the overflow menu holding
-     the rest. Laid out in a row, or vertically in the collapsed rail. -->
+<!-- The record's quick actions: the verbs worth a button. Laid out in a row, or
+     vertically in the collapsed rail. -->
 <template>
   <TooltipProvider :hover-delay="0" :skip-delay="0.5">
     <div
       class="flex items-center gap-1"
       :class="vertical ? 'flex-col' : 'flex-wrap'"
     >
-      <Tooltip text="Share" :placement="placement">
+      <!-- The lead action is named; the rest carry their label in a tooltip. -->
+      <Tooltip text="Write an email" :placement="placement">
         <Button
-          icon="lucide-share-2"
+          icon="lucide-mail"
+          :label="named ? 'Email' : undefined"
+          :aria-label="named ? undefined : 'Write an email'"
           variant="subtle"
-          @click="sharing = true"
+          @click="writeEmail"
         />
+      </Tooltip>
+
+      <RecordLike
+        :likers="chrome.likers"
+        :liked="chrome.liked"
+        @toggle="chrome.toggleLike"
+      />
+
+      <Tooltip text="Attach a file" :placement="placement">
+        <Button icon="lucide-paperclip" variant="subtle" @click="attach" />
+      </Tooltip>
+
+      <Tooltip text="Share" :placement="placement">
+        <Button icon="lucide-share-2" variant="subtle" @click="emit('share')" />
       </Tooltip>
 
       <Tooltip text="Print" :placement="placement">
@@ -26,131 +43,77 @@
         @add="chrome.addTag"
         @remove="chrome.removeTag"
       />
-
-      <Dropdown :options="menuOptions" :side="vertical ? 'left' : 'bottom'">
-        <!-- The trigger must own a box: Tooltip drops the $attrs that anchor the menu,
-             and a display:contents wrapper would anchor it at 0,0. -->
-        <div class="flex shrink-0">
-          <Tooltip text="More actions" :placement="placement">
-            <Button icon="lucide-more-horizontal" variant="subtle" />
-          </Tooltip>
-        </div>
-      </Dropdown>
     </div>
+
+    <FileUploadDialog
+      v-if="dialogMounted"
+      v-model:open="dialogOpen"
+      title="Attach files"
+      multiple
+      :transport="transport"
+      @committed="chrome.reloadFiles"
+    />
   </TooltipProvider>
-
-  <ShareDialog
-    v-model="sharing"
-    :doctype="doctype"
-    :docname="docname"
-    :shared="chrome.shared"
-    @share="chrome.share"
-    @unshare="chrome.unshare"
-  />
-
-  <Dialog v-model="confirmingDelete" :options="deleteOptions" />
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import {
-  Button,
-  Dialog,
-  Dropdown,
-  Tooltip,
-  TooltipProvider,
-  call,
-  toast,
-} from 'frappe-ui'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Button, Tooltip, TooltipProvider } from 'frappe-ui'
 
-import ShareDialog from '@/components/record/ShareDialog.vue'
+import { recordTransport } from '@/data/attachments'
+
+import RecordLike from '@/components/record/RecordLike.vue'
 import TagPicker from '@/components/record/TagPicker.vue'
+import { requestReply } from '@/data/composerRequest'
 import type { RecordChrome } from '@/data/docinfo'
-import { doctypeChanged } from '@/data/doctypeChanged'
-import { errorMessage } from '@/data/errors'
-import { duplicatePayload, printUrl } from '@/data/recordActions'
+import { printUrl } from '@/data/recordActions'
+import { EMAILS_TAB } from '@/data/recordLayout'
 
 const props = defineProps<{
   doctype: string
   docname: string
-  doc: Record<string, any>
   chrome: RecordChrome
   vertical?: boolean
+  /** Drops the lead action's label, for a row that shares its line. */
+  compact?: boolean
 }>()
 
-const router = useRouter()
+const emit = defineEmits<{ share: [] }>()
 
-const sharing = ref(false)
-const confirmingDelete = ref(false)
+// Lazily mounted: the uploader and its cropper load only when attaching.
+const FileUploadDialog = defineAsyncComponent(
+  () => import('@framework/ui/components/FileUpload/FileUploadDialog.vue'),
+)
+
+const dialogMounted = ref(false)
+const dialogOpen = ref(false)
+
+const route = useRoute()
+const router = useRouter()
 
 const placement = computed(() => (props.vertical ? 'left' : 'top'))
 
-const listRoute = computed(() => `/${encodeURIComponent(props.doctype)}`)
+const named = computed(() => !props.vertical && !props.compact)
 
-const menuOptions = computed(() => [
-  {
-    label: props.chrome.following ? 'Following' : 'Follow',
-    icon: props.chrome.following ? 'lucide-bell-ring' : 'lucide-bell',
-    onClick: props.chrome.toggleFollow,
-  },
-  {
-    label: 'Copy link',
-    icon: 'lucide-link',
-    onClick: () => copy(location.href),
-  },
-  { label: 'Copy ID', icon: 'lucide-hash', onClick: () => copy(props.docname) },
-  { label: 'Duplicate', icon: 'lucide-copy', onClick: duplicate },
-  {
-    label: 'Delete',
-    icon: 'lucide-trash-2',
-    onClick: () => (confirmingDelete.value = true),
-  },
-])
+function writeEmail() {
+  requestReply()
+  router.replace({ query: { ...route.query, tab: EMAILS_TAB } })
+}
+
+const transport = computed(() => recordTransport(props.doctype, props.docname))
+
+function attach() {
+  dialogMounted.value = true
+  dialogOpen.value = true
+}
+
+// The dialog closes itself once every row lands, and takes its cropper with it.
+watch(dialogOpen, (open) => {
+  if (!open) dialogMounted.value = false
+})
 
 function print() {
   window.open(printUrl(props.doctype, props.docname), '_blank')
-}
-
-function copy(text: string) {
-  navigator.clipboard.writeText(text)
-  toast.success('Copied')
-}
-
-async function duplicate() {
-  try {
-    const created = await call('frappe.client.insert', {
-      doc: duplicatePayload(props.doc),
-    })
-    doctypeChanged(props.doctype)
-    router.push(`${listRoute.value}/${encodeURIComponent(created.name)}`)
-  } catch (error: any) {
-    toast.error(errorMessage(error))
-  }
-}
-
-// The dialog spins the action for as long as onClick is awaited, so it owns no loading
-// state of its own.
-const deleteOptions = computed(() => ({
-  title: `Delete ${props.docname}?`,
-  message: 'This cannot be undone.',
-  actions: [
-    { label: 'Delete', theme: 'red', variant: 'solid', onClick: remove },
-  ],
-}))
-
-async function remove() {
-  try {
-    await call('frappe.client.delete', {
-      doctype: props.doctype,
-      name: props.docname,
-    })
-    doctypeChanged(props.doctype)
-    router.push(listRoute.value)
-  } catch (error: any) {
-    toast.error(errorMessage(error))
-  } finally {
-    confirmingDelete.value = false
-  }
 }
 </script>
