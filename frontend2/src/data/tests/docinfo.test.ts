@@ -5,6 +5,8 @@ import {
   assigneesOf,
   assignmentDiff,
   isForRecord,
+  likedBy,
+  likersOf,
   sharedWith,
   type DocinfoUpdate,
 } from '@/data/docinfo'
@@ -124,6 +126,48 @@ describe('assigneesOf', () => {
 
   it('reads an unassigned record as nobody', () => {
     expect(assigneesOf({})).toEqual([])
+  })
+})
+
+describe('likedBy', () => {
+  it('parses the JSON string the doc carries', () => {
+    expect(likedBy({ _liked_by: '["jane@example.com"]' })).toEqual([
+      'jane@example.com',
+    ])
+  })
+
+  it('reads a record nobody has liked as an empty list', () => {
+    expect(likedBy({})).toEqual([])
+    expect(likedBy(undefined)).toEqual([])
+  })
+
+  it('survives a value that is not a list of likes', () => {
+    expect(likedBy({ _liked_by: 'not json' })).toEqual([])
+    expect(likedBy({ _liked_by: '{"jane":1}' })).toEqual([])
+  })
+})
+
+describe('likersOf', () => {
+  const docinfo = {
+    user_info: {
+      'jane@example.com': { fullname: 'Jane Doe', image: '/j.png' },
+    },
+  }
+  const doc = { _liked_by: '["jane@example.com","me@example.com"]' }
+
+  it('calls the reader You and names the rest from user_info', () => {
+    expect(likersOf(doc, docinfo, 'me@example.com')).toEqual([
+      { email: 'me@example.com', fullName: 'You', image: '' },
+      { email: 'jane@example.com', fullName: 'Jane Doe', image: '/j.png' },
+    ])
+  })
+
+  it('leads with the reader wherever the list had them', () => {
+    expect(likersOf(doc, docinfo, 'jane@example.com')[0].fullName).toBe('You')
+  })
+
+  it('reads a record nobody has liked as nobody', () => {
+    expect(likersOf({}, docinfo, 'me@example.com')).toEqual([])
   })
 })
 

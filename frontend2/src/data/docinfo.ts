@@ -100,12 +100,50 @@ export interface SharedUser {
 export interface RecordChrome {
   tags: string[]
   shared: SharedUser[]
-  following: boolean
+  assignees: Assignee[]
+  likers: Liker[]
+  liked: boolean
   addTag: (tag: string) => void
   removeTag: (tag: string) => void
-  toggleFollow: () => void
+  toggleLike: () => void
   share: (user: string) => void
   unshare: (user: string) => void
+  assign: (email: string) => void
+  unassign: (email: string) => void
+  reloadFiles: () => void
+}
+
+export interface Liker {
+  email: string
+  fullName: string
+  image: string
+}
+
+/** Who liked the record, named by `docinfo.user_info` and led by the reader. */
+export function likersOf(
+  doc: Record<string, any> | undefined,
+  docinfo: Record<string, any>,
+  reader: string,
+): Liker[] {
+  return likedBy(doc)
+    .sort((one, two) => Number(two === reader) - Number(one === reader))
+    .map((email) => ({
+      email,
+      fullName: email === reader ? 'You' : userName(docinfo, email),
+      image: docinfo?.user_info?.[email]?.image || '',
+    }))
+}
+
+/** Everyone who has liked the record; `_liked_by` arrives as a JSON string. */
+export function likedBy(doc: Record<string, any> | undefined): string[] {
+  const liked = doc?._liked_by
+  if (Array.isArray(liked)) return liked
+  try {
+    const parsed = JSON.parse(liked || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
 }
 
 /** Who the record is shared with by name, leaving out the shares nobody granted. */

@@ -12,12 +12,14 @@ import {
   assigneesOf,
   emptyDocinfo,
   isForRecord,
+  likersOf,
   sharedWith,
   type Docinfo,
   type DocinfoUpdate,
   type RecordChrome,
 } from '@/data/docinfo'
 import { errorMessage } from '@/data/errors'
+import { currentUser } from '@/data/session'
 import { tagsOf } from '@/data/tags'
 
 export type RecordRef = {
@@ -46,7 +48,12 @@ export function useDocinfo(docResource: any, record: RecordRef) {
   const assignees = computed(() => assigneesOf(docinfo.value))
   const tags = computed(() => tagsOf(docinfo.value))
   const shared = computed(() => sharedWith(docinfo.value))
-  const following = computed(() => Boolean(docinfo.value.is_document_followed))
+  const likers = computed(() =>
+    likersOf(docResource.data?.doc, docinfo.value, currentUser.value.email),
+  )
+  const liked = computed(() =>
+    likers.value.some(({ email }) => email === currentUser.value.email),
+  )
 
   const socket = getSocketInstance()
   subscribe()
@@ -129,11 +136,11 @@ export function useDocinfo(docResource: any, record: RecordRef) {
     })
   }
 
-  function toggleFollow() {
-    return mutateChrome('frappe.desk.form.document_follow.update_follow', {
+  function toggleLike() {
+    return mutateChrome('frappe.desk.like.toggle_like', {
       doctype,
-      doc_name: docname,
-      following: !following.value,
+      name: docname,
+      add: !liked.value,
     })
   }
 
@@ -158,7 +165,7 @@ export function useDocinfo(docResource: any, record: RecordRef) {
     })
   }
 
-  // Tags, shares and follows publish no `docinfo_update`, so the round trip each of them
+  // Tags, shares and likes publish no `docinfo_update`, so the round trip each of them
   // closes is its own refetch.
   async function mutateChrome(method: string, args: Record<string, any>) {
     await sendMutation(method, args)
@@ -178,12 +185,17 @@ export function useDocinfo(docResource: any, record: RecordRef) {
   const chrome = computed<RecordChrome>(() => ({
     tags: tags.value,
     shared: shared.value,
-    following: following.value,
+    assignees: assignees.value,
+    likers: likers.value,
+    liked: liked.value,
     addTag,
     removeTag,
-    toggleFollow,
+    toggleLike,
     share,
     unshare,
+    assign,
+    unassign,
+    reloadFiles,
   }))
 
   return { docinfo, assignees, chrome, assign, unassign }
