@@ -1,8 +1,9 @@
 <!-- Who the record is shared with: stacked avatars over the dialog that changes it. -->
 <template>
+  <!-- w-fit: a grid child stretches, and the hover would run the column's whole width. -->
   <button
     type="button"
-    class="flex min-w-0 items-center gap-1.5 rounded px-1.5 py-1 transition hover:bg-surface-gray-2"
+    class="flex w-fit min-w-0 items-center gap-1 rounded px-1.5 py-1 transition hover:bg-surface-gray-2"
     :aria-label="summary"
     @click="emit('open')"
   >
