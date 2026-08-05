@@ -9,14 +9,6 @@ const routes = [
     component: () => import('@/pages/Home.vue'),
   },
   {
-    // PROTOTYPE — throwaway route, drop with src/pages/prototypes. The doctype
-    // param is what makes the shell render its sidebar.
-    path: '/prototype/record/:doctype',
-    name: 'RecordPagePrototype',
-    component: () =>
-      import('@/pages/prototypes/generic/GenericRecordPrototype.vue'),
-  },
-  {
     path: '/:doctype',
     name: 'List',
     component: () => import('@/pages/List.vue'),
