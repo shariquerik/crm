@@ -17,7 +17,7 @@
     <div :class="[ROW, 'items-center']">
       <span :class="LABEL">
         <span class="lucide-share-2 size-4 shrink-0" aria-hidden="true" />
-        Share with
+        Shared with
       </span>
       <RecordShare :shared="chrome.shared" @open="emit('share')" />
     </div>
