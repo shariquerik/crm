@@ -3,7 +3,7 @@
   <div class="pointer-events-none mx-auto w-full max-w-3xl">
     <div
       v-if="!draft.open"
-      class="pointer-events-auto flex items-center gap-1 rounded-lg bg-surface-elevation-2 py-1.5 pl-2 pr-1.5 shadow-md transition hover:bg-surface-elevation-3"
+      class="pointer-events-auto flex items-center gap-1 rounded-lg bg-surface-elevation-2 py-1.5 pl-2 pr-1.5 shadow-md transition"
     >
       <button
         type="button"
