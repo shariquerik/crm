@@ -51,7 +51,7 @@ function onPointerMove(event: PointerEvent) {
   if (props.open && Math.abs(distance) > 2) dragged = true
 
   const { width, toggle } = dragOutcome(props.open, startWidth, distance)
-  if (width) return emit('update:width', width)
+  if (width) emit('update:width', width)
   if (!toggle) return
   dragged = true
   emit('toggle')

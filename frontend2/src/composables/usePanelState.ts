@@ -50,7 +50,9 @@ export function dragOutcome(
 ): { width?: number; toggle?: boolean } {
   if (!open) return distance >= REOPEN_DISTANCE ? { toggle: true } : {}
   const width = startWidth + distance
-  if (width < COLLAPSE_AT) return { toggle: true }
+  // A drag that ends in a collapse commits no resize, so the rail reopens at the width
+  // it had before the drag squashed it against the minimum.
+  if (width < COLLAPSE_AT) return { width: clampWidth(startWidth), toggle: true }
   return { width: snapToDefault(clampWidth(width)) }
 }
 

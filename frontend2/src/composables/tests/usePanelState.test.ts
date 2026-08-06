@@ -50,7 +50,12 @@ describe('dragOutcome', () => {
   })
 
   it('collapses when the drag passes the threshold', () => {
-    expect(dragOutcome(true, 380, -130)).toEqual({ toggle: true })
+    expect(dragOutcome(true, 380, -130)).toEqual({ width: 380, toggle: true })
+  })
+
+  it('keeps the pre-drag width so the rail reopens at it', () => {
+    expect(dragOutcome(true, 420, -200)).toEqual({ width: 420, toggle: true })
+    expect(dragOutcome(true, 900, -700)).toEqual({ width: 640, toggle: true })
   })
 
   it('reopens a rail only once the drag is long enough', () => {
