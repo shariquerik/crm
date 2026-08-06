@@ -10,7 +10,7 @@
 
     <button
       type="button"
-      class="absolute -left-3 top-1/2 grid size-6 -translate-y-1/2 place-content-center rounded-full border border-outline-gray-2 bg-surface-base text-ink-gray-5 opacity-0 shadow-sm transition hover:bg-surface-gray-2 focus-visible:opacity-100 group-hover/edge:opacity-100"
+      class="absolute -left-3 bottom-1/3 grid size-6 translate-y-1/2 place-content-center rounded-full border border-outline-gray-2 bg-surface-base text-ink-gray-5 opacity-0 shadow-sm transition hover:bg-surface-gray-2 focus-visible:opacity-100 group-hover/edge:opacity-100"
       :aria-label="open ? 'Hide details panel' : 'Show details panel'"
       :aria-expanded="open"
       @click="emit('toggle')"
