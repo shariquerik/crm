@@ -27,39 +27,47 @@
 
     <div
       ref="band"
-      class="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex items-end gap-2 px-6"
+      class="pointer-events-none absolute inset-x-0 bottom-4 z-10 px-6"
     >
-      <div class="flex-1" />
+      <div class="relative mx-auto w-full max-w-3xl">
+        <RecordComposer
+          :doctype="doctype"
+          :docname="docname"
+          :doc="doc"
+          :layout="layout"
+        />
 
-      <RecordComposer
-        class="min-w-0"
-        :doctype="doctype"
-        :docname="docname"
-        :doc="doc"
-        :layout="layout"
-      />
-
-      <div class="flex flex-1 justify-end mb-1">
-        <Tooltip
+        <!-- The button floats off the composer instead of sharing a flex row with it: as a
+             sibling it kept a floor under the row, shrinking it off the timeline's column. -->
+        <div
           v-if="overflowing"
-          :text="pastHalf ? 'Scroll to top' : 'Scroll to bottom'"
-          placement="top"
+          class="absolute"
+          :class="
+            besideComposer
+              ? 'bottom-1 left-full ml-2'
+              : 'bottom-full right-0 mb-2'
+          "
         >
-          <Button
-            class="pointer-events-auto bg-surface-elevation-2 shadow-md"
-            variant="ghost"
-            :icon="pastHalf ? 'lucide-arrow-up' : 'lucide-arrow-down'"
-            :aria-label="pastHalf ? 'Scroll to top' : 'Scroll to bottom'"
-            @click="scrollTo(pastHalf ? 0 : scroller?.scrollHeight)"
-          />
-        </Tooltip>
+          <Tooltip
+            :text="pastHalf ? 'Scroll to top' : 'Scroll to bottom'"
+            placement="top"
+          >
+            <Button
+              class="pointer-events-auto shadow-md !bg-surface-elevation-2"
+              variant="ghost"
+              :icon="pastHalf ? 'lucide-arrow-up' : 'lucide-arrow-down'"
+              :aria-label="pastHalf ? 'Scroll to top' : 'Scroll to bottom'"
+              @click="scrollTo(pastHalf ? 0 : scroller?.scrollHeight)"
+            />
+          </Tooltip>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useTemplateRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useElementSize } from '@vueuse/core'
 import { Button, Tooltip } from 'frappe-ui'
 import RecordComposer from '@/components/record/composer/RecordComposer.vue'
@@ -74,7 +82,15 @@ const scroller = useTemplateRef<HTMLElement>('scroller')
 const content = useTemplateRef<HTMLElement>('content')
 const band = useTemplateRef<HTMLElement>('band')
 
-const { height: bandHeight } = useElementSize(band)
+const { width: bandWidth, height: bandHeight } = useElementSize(band)
+
+/** `max-w-3xl` on the composer column, and the room the scroll button needs next to it. */
+const composerWidth = 768
+const buttonWidth = 36
+
+const besideComposer = computed(
+  () => bandWidth.value - composerWidth >= buttonWidth * 2,
+)
 
 const { atTop, atBottom, overflowing, pastHalf } = useScrollEdges(
   scroller,
