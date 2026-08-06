@@ -27,7 +27,6 @@
           :doctype="doctype"
           :docname="docname"
           :chrome="chrome"
-          compact
           @share="emit('share')"
         />
       </div>

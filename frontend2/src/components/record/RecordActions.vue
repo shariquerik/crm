@@ -17,12 +17,6 @@
         />
       </Tooltip>
 
-      <RecordLike
-        :likers="chrome.likers"
-        :liked="chrome.liked"
-        @toggle="chrome.toggleLike"
-      />
-
       <Tooltip text="Attach a file" :placement="placement">
         <Button icon="lucide-paperclip" variant="subtle" @click="attach" />
       </Tooltip>
@@ -42,6 +36,12 @@
         :vertical="vertical"
         @add="chrome.addTag"
         @remove="chrome.removeTag"
+      />
+
+      <RecordFavourite
+        :favourites="chrome.likers"
+        :favourited="chrome.liked"
+        @toggle="chrome.toggleLike"
       />
     </div>
 
@@ -63,7 +63,7 @@ import { Button, Tooltip, TooltipProvider } from 'frappe-ui'
 
 import { recordTransport } from '@/data/attachments'
 
-import RecordLike from '@/components/record/RecordLike.vue'
+import RecordFavourite from '@/components/record/RecordFavourite.vue'
 import TagPicker from '@/components/record/TagPicker.vue'
 import { requestReply } from '@/data/composerRequest'
 import type { RecordChrome } from '@/data/docinfo'
@@ -75,8 +75,6 @@ const props = defineProps<{
   docname: string
   chrome: RecordChrome
   vertical?: boolean
-  /** Drops the lead action's label, for a row that shares its line. */
-  compact?: boolean
 }>()
 
 const emit = defineEmits<{ share: [] }>()
@@ -94,7 +92,7 @@ const router = useRouter()
 
 const placement = computed(() => (props.vertical ? 'left' : 'top'))
 
-const named = computed(() => !props.vertical && !props.compact)
+const named = computed(() => !props.vertical)
 
 function writeEmail() {
   const tab = route.query.tab as string | undefined

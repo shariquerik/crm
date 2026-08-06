@@ -1,35 +1,39 @@
-<!-- The like button, over the card naming everyone who has liked the record. -->
+<!-- The favourite button, over the card naming everyone who has favourited the record. -->
 <template>
   <DefineButton>
     <Button
       variant="subtle"
-      :aria-label="liked ? 'Unlike' : 'Like'"
-      :aria-pressed="liked"
+      :aria-label="favourited ? 'Remove from favourites' : 'Add to favourites'"
+      :aria-pressed="favourited"
       @click="emit('toggle')"
     >
       <template #icon>
-        <!-- Drawn here, not off a lucide mask, so the liked stroke can thicken. -->
+        <!-- Drawn here, not off a lucide mask, so the favourited stroke can thicken. -->
         <svg
           class="size-4"
-          :class="liked ? 'fill-ink-red-5 stroke-ink-red-5' : 'text-ink-gray-7'"
+          :class="
+            favourited
+              ? 'fill-ink-amber-5 stroke-ink-amber-5'
+              : 'text-ink-gray-7'
+          "
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          :stroke-width="liked ? 2.5 : 1.5"
+          :stroke-width="favourited ? 2.5 : 1.5"
           stroke-linecap="round"
           stroke-linejoin="round"
           aria-hidden="true"
         >
           <path
-            d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+            d="M12 2.5l2.9 5.88 6.6.96-4.75 4.63 1.12 6.53L12 17.4l-5.87 3.1 1.12-6.53L2.5 9.34l6.6-.96z"
           />
         </svg>
       </template>
     </Button>
   </DefineButton>
 
-  <!-- No likers, no card: an empty one would still open as a blank panel. -->
-  <LikeButton v-if="!likers.length" />
+  <!-- No favourites, no card: an empty one would still open as a blank panel. -->
+  <FavouriteButton v-if="!favourites.length" />
   <HoverCard
     v-else
     :hover-delay="0.2"
@@ -38,19 +42,23 @@
     align="end"
   >
     <template #trigger>
-      <LikeButton />
+      <FavouriteButton />
     </template>
 
     <template #default>
       <div class="flex min-w-44 max-w-64 flex-col gap-2 p-3">
         <div
-          v-for="liker in likers"
-          :key="liker.email"
+          v-for="favourite in favourites"
+          :key="favourite.email"
           class="flex items-center gap-2"
         >
-          <Avatar :label="liker.fullName" :image="liker.image" size="md" />
+          <Avatar
+            :label="favourite.fullName"
+            :image="favourite.image"
+            size="md"
+          />
           <span class="truncate text-p-base text-ink-gray-8">
-            {{ liker.fullName }}
+            {{ favourite.fullName }}
           </span>
         </div>
       </div>
@@ -64,9 +72,9 @@ import { Avatar, Button, HoverCard } from 'frappe-ui'
 
 import type { Liker } from '@/data/docinfo'
 
-defineProps<{ likers: Liker[]; liked: boolean }>()
+defineProps<{ favourites: Liker[]; favourited: boolean }>()
 
-const [DefineButton, LikeButton] = createReusableTemplate()
+const [DefineButton, FavouriteButton] = createReusableTemplate()
 
 const emit = defineEmits<{ toggle: [] }>()
 </script>
