@@ -137,33 +137,12 @@
           </ScrollArea>
         </Sidebar>
 
-        <div
-          class="absolute inset-y-0 z-10 w-2 -translate-x-1/2 transition-[left] duration-300 ease-in-out"
-          :class="collapsed ? 'cursor-e-resize' : 'cursor-w-resize'"
-          :style="{ left: `calc(50px + ${collapsed ? '0px' : SIDEBAR_WIDTH})` }"
-          aria-hidden="true"
-          @click="collapsed = !collapsed"
+        <SidebarEdge
+          :open="!collapsed"
+          :offset="edgeOffset"
+          :railHovered="railHovered"
+          @toggle="collapsed = !collapsed"
         />
-
-        <button
-          type="button"
-          class="absolute bottom-1/3 z-20 flex size-6 -translate-x-1/2 translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-outline-gray-2 bg-surface-base text-ink-gray-5 shadow-sm transition-[left,opacity,background-color] duration-300 ease-in-out hover:bg-surface-gray-2 focus-visible:opacity-100 focus-visible:focus-ring"
-          :class="
-            collapsed && railHovered
-              ? 'opacity-100'
-              : 'opacity-0 group-hover/sidebar:opacity-100'
-          "
-          :style="{ left: `calc(50px + ${collapsed ? '0px' : SIDEBAR_WIDTH})` }"
-          :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-          :aria-expanded="!collapsed"
-          @click="collapsed = !collapsed"
-        >
-          <span
-            class="lucide-chevron-left size-4 transition-transform duration-300 ease-in-out"
-            :class="{ 'rotate-180': collapsed }"
-            aria-hidden="true"
-          />
-        </button>
       </div>
     </template>
 
@@ -204,6 +183,7 @@ import { useLocalStorage } from '@vueuse/core'
 import AboutDialog from '@/components/AboutDialog.vue'
 import RailEditorDialog from '@/components/RailEditorDialog.vue'
 import SettingsDialog from '@/components/SettingsDialog.vue'
+import SidebarEdge from '@/components/SidebarEdge.vue'
 import { deriveShellChrome } from '@/components/shellChrome'
 import { useAccountMenu } from '@/composables/useAccountMenu'
 import { useAppMenu } from '@/composables/useAppMenu'
@@ -231,6 +211,10 @@ const SIDEBAR_WIDTH = '14rem'
 const collapsed = useLocalStorage('crm-sidebar-collapsed', false)
 
 const railHovered = ref(false)
+
+const edgeOffset = computed(
+  () => `calc(50px + ${collapsed.value ? '0px' : SIDEBAR_WIDTH})`,
+)
 
 const editingRail = ref(false)
 
