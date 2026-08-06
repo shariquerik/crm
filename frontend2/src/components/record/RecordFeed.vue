@@ -39,24 +39,19 @@
         :layout="layout"
       />
 
-      <div class="flex flex-1 justify-end">
+      <div class="flex flex-1 justify-end mb-1">
         <Tooltip
           v-if="overflowing"
           :text="pastHalf ? 'Scroll to top' : 'Scroll to bottom'"
           placement="top"
         >
-          <button
-            type="button"
-            class="pointer-events-auto grid size-9 place-content-center rounded-full border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-md transition hover:bg-surface-gray-2"
+          <Button
+            class="pointer-events-auto bg-surface-elevation-2 shadow-md"
+            variant="ghost"
+            :icon="pastHalf ? 'lucide-arrow-up' : 'lucide-arrow-down'"
             :aria-label="pastHalf ? 'Scroll to top' : 'Scroll to bottom'"
             @click="scrollTo(pastHalf ? 0 : scroller?.scrollHeight)"
-          >
-            <span
-              class="size-4"
-              :class="pastHalf ? 'lucide-arrow-up' : 'lucide-arrow-down'"
-              aria-hidden="true"
-            />
-          </button>
+          />
         </Tooltip>
       </div>
     </div>
@@ -66,7 +61,7 @@
 <script setup lang="ts">
 import { useTemplateRef } from 'vue'
 import { useElementSize } from '@vueuse/core'
-import { Tooltip } from 'frappe-ui'
+import { Button, Tooltip } from 'frappe-ui'
 import RecordComposer from '@/components/record/composer/RecordComposer.vue'
 import { useScrollEdges } from '@/composables/useScrollEdges'
 import { useScrollRestore } from '@/composables/usePageState'

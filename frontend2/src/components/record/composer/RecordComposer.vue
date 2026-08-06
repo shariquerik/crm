@@ -1,10 +1,13 @@
 <!-- The feed's band: three controls until one of them opens the editor for its mode. -->
 <template>
   <div class="pointer-events-none mx-auto w-full max-w-3xl">
-    <div v-if="!draft.open" class="pointer-events-auto flex items-center gap-2">
+    <div
+      v-if="!draft.open"
+      class="pointer-events-auto flex items-center gap-1 rounded-lg bg-surface-elevation-2 py-1.5 pl-2 pr-1.5 shadow-md transition hover:bg-surface-elevation-3"
+    >
       <button
         type="button"
-        class="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full border border-outline-gray-2 bg-surface-base px-3 text-left text-base text-ink-gray-4 shadow-md hover:border-outline-gray-3"
+        class="flex min-w-0 flex-1 items-center gap-2 text-left text-base text-ink-gray-5"
         @click="expand('reply')"
       >
         <Avatar :label="userLabel" :image="currentUser.user_image" size="sm" />
@@ -12,14 +15,13 @@
       </button>
 
       <Tooltip text="Add a comment">
-        <button
-          type="button"
-          :class="ROUND_BUTTON"
+        <Button
+          icon="lucide-message-circle"
+          variant="ghost"
+          size="xs"
           aria-label="Add a comment"
           @click="expand('comment')"
-        >
-          <span class="lucide-message-circle size-4" aria-hidden="true" />
-        </button>
+        />
       </Tooltip>
 
       <Dropdown
@@ -32,13 +34,12 @@
              display:contents wrapper would anchor the menu at 0,0. -->
         <div class="flex shrink-0">
           <Tooltip text="Add to this record">
-            <button
-              type="button"
-              :class="ROUND_BUTTON"
+            <Button
+              icon="lucide-plus"
+              variant="ghost"
+              size="xs"
               aria-label="Add to this record"
-            >
-              <span class="lucide-plus size-4" aria-hidden="true" />
-            </button>
+            />
           </Tooltip>
         </div>
       </Dropdown>
@@ -138,6 +139,7 @@ import {
 import { useEventListener, useLocalStorage } from '@vueuse/core'
 import {
   Avatar,
+  Button,
   Dropdown,
   LoadingIndicator,
   Tooltip,
@@ -176,9 +178,6 @@ import { useRecordLayout } from '@/data/recordLayout'
 import { currentUser, userLabel } from '@/data/session'
 import { createActions, type CreateContext } from '@/data/tabTypes'
 import { loadMentionOptions, mentionOptions } from '@/data/users'
-
-const ROUND_BUTTON =
-  'grid size-9 shrink-0 place-content-center rounded-full border border-outline-gray-2 bg-surface-base text-ink-gray-6 shadow-md transition hover:bg-surface-gray-2'
 
 const props = defineProps<{
   doctype: string
