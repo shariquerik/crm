@@ -9,9 +9,10 @@ import type {
 
 export const MIN_WIDTH = 320
 export const MAX_WIDTH = 640
-export const DEFAULT_WIDTH = 380
+export const DEFAULT_WIDTH = 420
 export const COLLAPSE_AT = 260
 export const REOPEN_DISTANCE = 40
+export const SNAP_DISTANCE = 7
 export const RAIL_WIDTH = 48
 
 export function usePanelState(
@@ -50,7 +51,13 @@ export function dragOutcome(
   if (!open) return distance >= REOPEN_DISTANCE ? { toggle: true } : {}
   const width = startWidth + distance
   if (width < COLLAPSE_AT) return { toggle: true }
-  return { width: clampWidth(width) }
+  return { width: snapToDefault(clampWidth(width)) }
+}
+
+/** A drag that passes close to the default width settles on it. */
+export function snapToDefault(width: number) {
+  const offset = Math.abs(width - DEFAULT_WIDTH)
+  return offset <= SNAP_DISTANCE ? DEFAULT_WIDTH : width
 }
 
 /** Clamped on read as well as on drag, so a hand-edited value cannot escape the range. */
