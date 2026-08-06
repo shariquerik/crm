@@ -20,14 +20,19 @@ export function useRestoredRef<Value>(
   return state
 }
 
+/** Where a scroller opens before the entry has an offset of its own. */
+type Anchor = number | 'bottom'
+
 /** Puts a scroller back where the entry left it, once the rows that give it height are in. */
 export function useScrollRestore(
   element: Ref<HTMLElement | null | undefined>,
   ready: () => boolean,
   name = 'scrollTop',
+  fallback: Anchor = 0,
 ) {
-  const offset = useRestoredRef(name, 0)
+  const offset = useRestoredRef<number | null>(name, null)
   const { y } = useScroll(element, { throttle: 100 })
+  const landed = ref(false)
 
   let restored = false
   // A restore is not a reader moving: the re-render that resets the scroller would
@@ -42,24 +47,33 @@ export function useScrollRestore(
     ([target, isReady]) => {
       if (restored || !target || !isReady) return
       restored = true
-      const wanted = offset.value
-      if (!wanted) return
+      const wanted = offset.value ?? fallback
+      if (!wanted) return (landed.value = true)
       holding = true
       nextTick(() =>
         requestAnimationFrame(() =>
-          land(target, wanted, () => (holding = false)),
+          land(target, wanted, {
+            placed: () => (landed.value = true),
+            release: () => (holding = false),
+          }),
         ),
       )
     },
     { immediate: true },
   )
+
+  return { landed }
 }
 
 /**
  * Holds the offset while the rows arrive: the list re-renders as live data replaces the
  * repaint, which resets the scroller. Lets go as soon as the reader scrolls themselves.
  */
-function land(target: HTMLElement, wanted: number, release: () => void) {
+function land(
+  target: HTMLElement,
+  wanted: Anchor,
+  { placed, release }: { placed: () => void; release: () => void },
+) {
   const deadline = Date.now() + GROW_TIMEOUT_MS
   let expected = -1
   let stopped = false
@@ -73,14 +87,21 @@ function land(target: HTMLElement, wanted: number, release: () => void) {
   const stop = () => {
     stopped = true
     target.removeEventListener('scroll', onScroll)
+    placed()
     release()
   }
 
   const hold = () => {
     if (stopped) return
-    if (target.scrollTop !== expected && reaches(target, wanted)) {
-      target.scrollTop = wanted
-      expected = target.scrollTop
+    const top = destination(target, wanted)
+    if (top !== null) {
+      if (target.scrollTop !== top) {
+        target.scrollTop = top
+        expected = target.scrollTop
+      }
+      // Sitting where it belongs counts as landed: a feed shorter than the scroller
+      // is already there, and would otherwise stay hidden until the deadline.
+      placed()
     }
     if (Date.now() > deadline) return stop()
     requestAnimationFrame(hold)
@@ -90,6 +111,9 @@ function land(target: HTMLElement, wanted: number, release: () => void) {
   hold()
 }
 
-function reaches(target: HTMLElement, wanted: number) {
-  return target.scrollHeight - target.clientHeight >= wanted
+/** Null while the rows are still too few to reach a fixed offset. */
+function destination(target: HTMLElement, wanted: Anchor) {
+  const bottom = target.scrollHeight - target.clientHeight
+  if (wanted === 'bottom') return bottom
+  return bottom >= wanted ? wanted : null
 }

@@ -1,6 +1,11 @@
 <!-- Everything said about the record, in one time order. -->
 <template>
-  <RecordFeed v-bind="props" :doc="doc" :ready="activities.length > 0">
+  <RecordFeed
+    v-bind="props"
+    :doc="doc"
+    :ready="activities.length > 0"
+    openAtBottom
+  >
     <!-- RecordFeed restores this tab's own offset, so the timeline must not jump to newest. -->
     <ActivityTimeline
       :activities="activities"

@@ -11,7 +11,13 @@
       class="isolate h-full overflow-y-auto px-6 pt-4"
       :style="{ paddingBottom: `${bandHeight + 32}px` }"
     >
-      <div ref="content" class="mx-auto flex w-full max-w-3xl flex-col gap-5">
+      <!-- Hidden until the offset is applied: painted first, the rows would be seen at the
+           top and then shoved down. -->
+      <div
+        ref="content"
+        class="mx-auto flex w-full max-w-3xl flex-col gap-5"
+        :class="{ invisible: ready && !landed }"
+      >
         <slot />
       </div>
     </div>
@@ -76,7 +82,10 @@ import { useScrollRestore } from '@/composables/usePageState'
 import type { TabProps } from '@/data/tabTypes'
 
 /** The tab's own props, so the feed keeps its offset and the band knows the record. */
-const props = defineProps<TabProps & { ready: boolean }>()
+const props = withDefaults(
+  defineProps<TabProps & { ready: boolean; openAtBottom?: boolean }>(),
+  { openAtBottom: false },
+)
 
 const scroller = useTemplateRef<HTMLElement>('scroller')
 const content = useTemplateRef<HTMLElement>('content')
@@ -97,7 +106,12 @@ const { atTop, atBottom, overflowing, pastHalf } = useScrollEdges(
   content,
 )
 
-useScrollRestore(scroller, () => props.ready, `scroll:${props.item.name}`)
+const { landed } = useScrollRestore(
+  scroller,
+  () => props.ready,
+  `scroll:${props.item.name}`,
+  props.openAtBottom ? 'bottom' : 0,
+)
 
 function scrollTo(top = 0) {
   scroller.value?.scrollTo({ top, behavior: 'smooth' })

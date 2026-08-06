@@ -1,6 +1,6 @@
 <!-- The record's email conversation, oldest first, paging back as it is read. -->
 <template>
-  <RecordFeed v-bind="props" :doc="doc" :ready="emails.length > 0">
+  <RecordFeed v-bind="props" :doc="doc" :ready="emails.length > 0" openAtBottom>
     <!-- RecordFeed restores this tab's own offset, so the timeline must not jump to newest. -->
     <ActivityTimeline
       v-if="emails.length || loading"
