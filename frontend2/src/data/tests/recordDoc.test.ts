@@ -221,7 +221,12 @@ describe('recordIdentity', () => {
 })
 
 describe('recordImageField', () => {
-  const lead = { fieldname: 'lead', fieldtype: 'Link', options: 'CRM Lead' }
+  const lead = {
+    fieldname: 'lead',
+    fieldtype: 'Link',
+    label: 'Lead',
+    options: 'CRM Lead',
+  }
   const fetched = {
     image_field: 'custom_lead_image',
     fields: [
@@ -273,7 +278,25 @@ describe('recordImageField', () => {
     const field = recordImageField(fetched, {})
     expect(field?.editable).toBe(false)
     expect(field?.source).toBeNull()
-    expect(field?.reason).toBe('This image is fetched from a linked record')
+    expect(field?.reason).toBe(
+      'This image is fetched from the record linked in Lead',
+    )
+  })
+
+  it('names the empty link by its fieldname when it carries no label', () => {
+    const field = recordImageField(
+      {
+        image_field: 'custom_lead_image',
+        fields: [
+          { fieldname: 'lead', fieldtype: 'Link', options: 'CRM Lead' },
+          { fieldname: 'custom_lead_image', fetch_from: 'lead.image' },
+        ],
+      },
+      {},
+    )
+    expect(field?.reason).toBe(
+      'This image is fetched from the record linked in lead',
+    )
   })
 
   it('edits a fetched image the server only fills when empty', () => {
