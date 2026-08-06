@@ -5,9 +5,9 @@
     <div class="flex items-start gap-3 px-4 pb-4 pt-5">
       <RecordImage
         v-if="meta?.image_field"
+        v-model:doc="doc"
+        :doctype="doctype"
         :label="identity.title"
-        :image="identity.image"
-        @update="setImage"
       />
       <!-- Beside the tile the column spans its height, so both edges line up. -->
       <div
@@ -63,10 +63,4 @@ const { meta } = useDoctypeMeta(() => props.doctype)
 const identity = computed(() =>
   recordIdentity(doc.value, meta.value, doctypeLabel(props.doctype)),
 )
-
-/** An upload lands in the doc like any other edit, and saves with it. */
-function setImage(url: string) {
-  const fieldname = meta.value?.image_field
-  if (fieldname) doc.value = { ...doc.value, [fieldname]: url }
-}
 </script>

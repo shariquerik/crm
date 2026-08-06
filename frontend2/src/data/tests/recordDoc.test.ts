@@ -6,6 +6,7 @@ import {
   fieldDiff,
   isTimestampMismatch,
   recordIdentity,
+  recordImageField,
   toRecordPayload,
 } from '@/data/recordDoc'
 
@@ -198,7 +199,6 @@ describe('recordIdentity', () => {
     expect(identity).toEqual({
       title: 'Emma Chen',
       subtitle: 'CONTACT-0001',
-      image: '/i',
     })
   })
 
@@ -207,7 +207,6 @@ describe('recordIdentity', () => {
     expect(identity).toEqual({
       title: 'CONTACT-0001',
       subtitle: 'Contacts',
-      image: '',
     })
   })
 
@@ -218,5 +217,94 @@ describe('recordIdentity', () => {
       'Contacts',
     )
     expect(identity.title).toBe('CONTACT-0002')
+  })
+})
+
+describe('recordImageField', () => {
+  const lead = { fieldname: 'lead', fieldtype: 'Link', options: 'CRM Lead' }
+  const fetched = {
+    image_field: 'custom_lead_image',
+    fields: [
+      lead,
+      { fieldname: 'custom_lead_image', fetch_from: 'lead.image' },
+    ],
+  }
+  const deal = { lead: 'CRM-LEAD-0001' }
+  const titleOf = (doctype: string, name: string) =>
+    doctype === 'CRM Lead' && name === 'CRM-LEAD-0001' ? 'Alice Johnson' : name
+
+  it('offers nothing when the doctype names no image field', () => {
+    expect(recordImageField({ fields: [] })).toBeNull()
+  })
+
+  it('edits a plain image field', () => {
+    const field = recordImageField({
+      image_field: 'image',
+      fields: [{ fieldname: 'image', fieldtype: 'Attach Image' }],
+    })
+    expect(field).toEqual({
+      fieldname: 'image',
+      editable: true,
+      reason: '',
+      source: null,
+    })
+  })
+
+  it('holds back a fetched image, naming the record it comes from', () => {
+    const field = recordImageField(fetched, deal, titleOf)
+    expect(field?.editable).toBe(false)
+    expect(field?.reason).toBe(
+      'This image comes from Alice Johnson, open it to change',
+    )
+    expect(field?.source).toEqual({
+      doctype: 'CRM Lead',
+      name: 'CRM-LEAD-0001',
+    })
+  })
+
+  it('names the source by its ID when no link title came back', () => {
+    const field = recordImageField(fetched, deal)
+    expect(field?.reason).toBe(
+      'This image comes from CRM-LEAD-0001, open it to change',
+    )
+  })
+
+  it('holds back a fetched image whose link is empty, with nowhere to open', () => {
+    const field = recordImageField(fetched, {})
+    expect(field?.editable).toBe(false)
+    expect(field?.source).toBeNull()
+    expect(field?.reason).toBe('This image is fetched from a linked record')
+  })
+
+  it('edits a fetched image the server only fills when empty', () => {
+    const field = recordImageField(
+      {
+        image_field: 'custom_lead_image',
+        fields: [
+          lead,
+          {
+            fieldname: 'custom_lead_image',
+            fetch_from: 'lead.image',
+            fetch_if_empty: 1,
+          },
+        ],
+      },
+      deal,
+      titleOf,
+    )
+    expect(field?.editable).toBe(true)
+  })
+
+  it('holds back a read-only image field', () => {
+    const field = recordImageField({
+      image_field: 'image',
+      fields: [{ fieldname: 'image', read_only: 1 }],
+    })
+    expect(field).toEqual({
+      fieldname: 'image',
+      editable: false,
+      reason: 'This image is read-only',
+      source: null,
+    })
   })
 })

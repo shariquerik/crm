@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { call, toast } from 'frappe-ui'
+import { useDoctypeMeta } from '@framework/ui'
 import { useNavigation } from '@framework/ui/components/Navigation'
 import { APP_NAME } from '@/data/apps'
 import { doctypeLabel, routeDoctype } from '@/data/doctypes'
@@ -10,11 +11,13 @@ import { fetchCached, refetchCached } from '@/data/cache/queryCache'
 import { useDocinfo } from '@/composables/useDocinfo'
 import { userName } from '@/data/docinfo'
 import { fieldMetaByName } from '@/data/fieldsLayout'
+import { rememberLinkTitles } from '@/data/linkTitles'
 import {
   collidingFields,
   conflictRows,
   fieldDiff,
   isTimestampMismatch,
+  recordTitle,
   type Choices,
   type Conflict,
 } from '@/data/recordDoc'
@@ -30,7 +33,6 @@ export function useRecordPage(resources: any) {
   const doc = ref<Record<string, any>>({})
   /** The document as the server last showed it. */
   const stored = ref<Record<string, any>>({})
-  const linkTitles = ref<Record<string, string>>({})
   const saving = ref(false)
   const saveError = ref('')
   const conflict = ref<Conflict | null>(null)
@@ -39,6 +41,7 @@ export function useRecordPage(resources: any) {
   const doctype = computed(() => route.params.doctype as string)
   const docname = route.params.id as string
   const doctypeLink = computed(() => `/${encodeURIComponent(doctype.value)}`)
+  const { meta } = useDoctypeMeta(doctype)
 
   const recordKey = `record:${doctype.value}/${docname}`
 
@@ -77,7 +80,7 @@ export function useRecordPage(resources: any) {
     lastPainted = payload
     stored.value = { ...(payload?.doc ?? {}) }
     doc.value = { ...stored.value }
-    linkTitles.value = payload?.linkTitles ?? {}
+    rememberLinkTitles(payload?.linkTitles ?? {})
     saveError.value = ''
   }
 
@@ -107,7 +110,7 @@ export function useRecordPage(resources: any) {
         route: doctypeLink.value,
       },
       viewCrumb.value,
-      { label: doc.value?.name || docname },
+      { label: recordTitle(doc.value, meta.value) || docname },
     ].filter(Boolean),
   )
 
@@ -236,7 +239,6 @@ export function useRecordPage(resources: any) {
     doc,
     isDirty,
     changedFields,
-    linkTitles,
     feeds: { files },
     saving,
     saveError,

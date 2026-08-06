@@ -23,18 +23,80 @@ export function toRecordPayload(response: any): RecordPayload | undefined {
   }
 }
 
+/** What the doctype's meta says to call this record. */
+export function recordTitle(
+  doc: Record<string, any>,
+  meta: Record<string, any> | null,
+) {
+  return String(doc?.[meta?.title_field] || doc?.name || '')
+}
+
 /** The headline the panel shows: what the doctype's meta says to call this record. */
 export function recordIdentity(
   doc: Record<string, any>,
   meta: Record<string, any> | null,
   doctypeLabel: string,
 ) {
-  const title = String(doc?.[meta?.title_field] || doc?.name || '')
+  const title = recordTitle(doc, meta)
   return {
     title,
     subtitle: title === doc?.name ? doctypeLabel : String(doc?.name ?? ''),
-    image: String(doc?.[meta?.image_field] || ''),
   }
+}
+
+/** The picture the panel offers, why it may not be edited, and the record it comes from. */
+export interface RecordImageField {
+  fieldname: string
+  editable: boolean
+  reason: string
+  source: { doctype: string; name: string } | null
+}
+
+export function recordImageField(
+  meta: Record<string, any> | null,
+  doc: Record<string, any> = {},
+  titleOf: (doctype: string, name: string) => string = (_, name) => name,
+): RecordImageField | null {
+  const fieldname = meta?.image_field
+  if (!fieldname) return null
+  const field = docfield(meta, fieldname)
+  const source = fetchSource(field, meta, doc)
+  const reason = uneditableReason(field, source, titleOf)
+  return { fieldname, editable: !reason, reason, source }
+}
+
+// A `fetch_from` without `fetch_if_empty` is rewritten from its source on every save,
+// so an upload here would be thrown away.
+function uneditableReason(
+  field: Record<string, any> | undefined,
+  source: RecordImageField['source'],
+  titleOf: (doctype: string, name: string) => string,
+) {
+  if (!field) return ''
+  if (field.read_only) return 'This image is read-only'
+  if (!field.fetch_from || field.fetch_if_empty) return ''
+  if (!source) return 'This image is fetched from a linked record'
+  const title = titleOf(source.doctype, source.name)
+  return `This image comes from ${title}, open it to change`
+}
+
+/** The record the fetch reads from: whom the link field on this doc points at. */
+function fetchSource(
+  field: Record<string, any> | undefined,
+  meta: Record<string, any> | null,
+  doc: Record<string, any>,
+) {
+  if (!field?.fetch_from) return null
+  const [linkFieldname] = String(field.fetch_from).split('.')
+  const link = docfield(meta, linkFieldname)
+  const name = String(doc?.[linkFieldname] || '')
+  if (!link?.options || !name) return null
+  return { doctype: String(link.options), name }
+}
+
+function docfield(meta: Record<string, any> | null, fieldname: string) {
+  const fields: any[] = Array.isArray(meta?.fields) ? meta!.fields : []
+  return fields.find((field) => field?.fieldname === fieldname)
 }
 
 /** What `current` holds that `stored` does not. */
