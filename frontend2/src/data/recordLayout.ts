@@ -14,11 +14,20 @@ export function activeTab(tabs: NavigationItem[], name?: string) {
 /** The panel's overflow surface: where a field with no honest panel row is opened. */
 export const DETAILS_TAB = 'details'
 
+export const ACTIVITY_TAB = 'activity'
+
 /** Where the panel's Email action sends the reader, so the composer it opens is in view. */
 export const EMAILS_TAB = 'emails'
 
+/** Tabs that carry the email composer themselves, so the Email action stays where it is. */
+const COMPOSER_TABS = [ACTIVITY_TAB, EMAILS_TAB]
+
+export function hasComposer(name?: string) {
+  return COMPOSER_TABS.includes(activeTab(RECORD_TABS, name).name)
+}
+
 export const RECORD_TABS: NavigationItem[] = [
-  tabItem('activity', 'Activity', 'lucide-activity'),
+  tabItem(ACTIVITY_TAB, 'Activity', 'lucide-activity'),
   tabItem(EMAILS_TAB, 'Emails', 'lucide-mail'),
   tabItem('files', 'Files', 'lucide-paperclip'),
   tabItem(DETAILS_TAB, 'Details', 'lucide-table-properties'),

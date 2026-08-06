@@ -68,7 +68,7 @@ import TagPicker from '@/components/record/TagPicker.vue'
 import { requestReply } from '@/data/composerRequest'
 import type { RecordChrome } from '@/data/docinfo'
 import { printUrl } from '@/data/recordActions'
-import { EMAILS_TAB } from '@/data/recordLayout'
+import { EMAILS_TAB, hasComposer } from '@/data/recordLayout'
 
 const props = defineProps<{
   doctype: string
@@ -97,8 +97,10 @@ const placement = computed(() => (props.vertical ? 'left' : 'top'))
 const named = computed(() => !props.vertical && !props.compact)
 
 function writeEmail() {
+  const tab = route.query.tab as string | undefined
   requestReply()
-  router.replace({ query: { ...route.query, tab: EMAILS_TAB } })
+  if (!hasComposer(tab))
+    router.replace({ query: { ...route.query, tab: EMAILS_TAB } })
 }
 
 const transport = computed(() => recordTransport(props.doctype, props.docname))
