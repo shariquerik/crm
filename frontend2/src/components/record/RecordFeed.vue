@@ -3,10 +3,12 @@
 <template>
   <div class="relative min-h-0 flex-1">
     <!-- The band floats over the scroller, so its height becomes the bottom padding —
-         without it a resized composer hides the last activities. -->
+         without it a resized composer hides the last activities.
+         `isolate` keeps the timeline's own z-indices (the gutter icons sit above their
+         connector line) from rising over the fades below. -->
     <div
       ref="scroller"
-      class="h-full overflow-y-auto px-6 pt-4"
+      class="isolate h-full overflow-y-auto px-6 pt-4"
       :style="{ paddingBottom: `${bandHeight + 32}px` }"
     >
       <div ref="content" class="mx-auto flex w-full max-w-3xl flex-col gap-5">
