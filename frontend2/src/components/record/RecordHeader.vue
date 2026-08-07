@@ -1,8 +1,16 @@
-<!-- The record's chrome: breadcrumbs, the overflow menu and Save. -->
+<!-- The record's chrome: breadcrumbs, the favourite star, the overflow menu and Save. -->
 <template>
   <PageHeaderPortal>
     <div class="flex w-full items-center justify-between gap-3">
-      <PageBreadcrumbs :items="breadcrumbs" />
+      <div class="flex min-w-0 items-center">
+        <PageBreadcrumbs :items="breadcrumbs" />
+
+        <RecordFavourite
+          :favourites="chrome.likers"
+          :favourited="chrome.liked"
+          @toggle="chrome.toggleLike"
+        />
+      </div>
 
       <div class="flex items-center gap-2">
         <RecordMenu
@@ -35,6 +43,7 @@ import { Button, Tooltip } from 'frappe-ui'
 
 import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
 import PageHeaderPortal from '@/components/PageHeaderPortal.vue'
+import RecordFavourite from '@/components/record/RecordFavourite.vue'
 import RecordMenu from '@/components/record/RecordMenu.vue'
 import type { RecordChrome } from '@/data/docinfo'
 

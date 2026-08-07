@@ -2,7 +2,7 @@
 <template>
   <DefineButton>
     <Button
-      variant="subtle"
+      variant="ghost"
       :aria-label="favourited ? 'Remove from favourites' : 'Add to favourites'"
       :aria-pressed="favourited"
       @click="emit('toggle')"
@@ -32,8 +32,11 @@
     </Button>
   </DefineButton>
 
-  <!-- No favourites, no card: an empty one would still open as a blank panel. -->
-  <FavouriteButton v-if="!favourites.length" />
+  <!-- No favourites, no card: an empty one would still open as a blank panel. The
+       tooltip stands in for it, so the star is never bare on hover. -->
+  <Tooltip v-if="!favourites.length" text="Add to favourites">
+    <FavouriteButton />
+  </Tooltip>
   <HoverCard
     v-else
     :hover-delay="0.2"
@@ -68,7 +71,7 @@
 
 <script setup lang="ts">
 import { createReusableTemplate } from '@vueuse/core'
-import { Avatar, Button, HoverCard } from 'frappe-ui'
+import { Avatar, Button, HoverCard, Tooltip } from 'frappe-ui'
 
 import type { Liker } from '@/data/docinfo'
 
