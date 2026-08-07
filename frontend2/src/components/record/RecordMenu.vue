@@ -5,7 +5,7 @@
          and a display:contents wrapper would anchor it at 0,0. -->
     <div class="flex shrink-0">
       <Tooltip text="More actions">
-        <Button icon="lucide-more-horizontal" variant="subtle" />
+        <Button icon="lucide-more-vertical" variant="subtle" />
       </Tooltip>
     </div>
   </Dropdown>
@@ -36,18 +36,48 @@ const confirmingDelete = ref(false)
 
 const listRoute = computed(() => `/${encodeURIComponent(props.doctype)}`)
 
+// Three unlabelled groups: the record's state, then its verbs, then the one that ends it.
 const menuOptions = computed(() => [
   {
-    label: 'Copy link',
-    icon: 'lucide-link',
-    onClick: () => copy(location.href),
+    group: 'Favourite',
+    hideLabel: true,
+    options: [
+      {
+        label: props.chrome.liked
+          ? 'Remove from favourites'
+          : 'Add to favourites',
+        icon: props.chrome.liked ? 'lucide-star-off' : 'lucide-star',
+        onClick: props.chrome.toggleLike,
+      },
+    ],
   },
-  { label: 'Copy ID', icon: 'lucide-hash', onClick: () => copy(props.docname) },
-  { label: 'Duplicate', icon: 'lucide-copy', onClick: duplicate },
   {
-    label: 'Delete',
-    icon: 'lucide-trash-2',
-    onClick: () => (confirmingDelete.value = true),
+    group: 'Actions',
+    hideLabel: true,
+    options: [
+      {
+        label: 'Copy record URL',
+        icon: 'lucide-link',
+        onClick: () => copy(location.href),
+      },
+      {
+        label: 'Copy record ID',
+        icon: 'lucide-hash',
+        onClick: () => copy(props.docname),
+      },
+      { label: 'Duplicate', icon: 'lucide-copy', onClick: duplicate },
+    ],
+  },
+  {
+    group: 'Delete',
+    hideLabel: true,
+    options: [
+      {
+        label: 'Delete',
+        icon: 'lucide-trash-2',
+        onClick: () => (confirmingDelete.value = true),
+      },
+    ],
   },
 ])
 
