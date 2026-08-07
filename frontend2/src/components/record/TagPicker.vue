@@ -1,16 +1,18 @@
 <!-- The only way tags are added or removed; the trigger differs, the picker does not.
-     Icon trigger while the record has none, a "+" once it has some. -->
+     Icon trigger while the record has none, a "+" once it has some, and a bare anchor
+     when something else does the opening. -->
 <template>
   <MultiSelect
+    :open="open"
     :modelValue="tags"
     :options="options"
     :loading="loading"
     :empty-text="error || 'No tags found'"
     placeholder="Search or create tags"
-    :side="vertical ? 'left' : 'top'"
+    :side="side"
     @update:modelValue="retag"
     @update:query="onQuery"
-    @update:open="(open: boolean) => open && !searched && search()"
+    @update:open="(opened: boolean) => (open = opened)"
   >
     <template #trigger>
       <button
@@ -21,6 +23,14 @@
       >
         <span class="lucide-plus size-3.5" aria-hidden="true" />
       </button>
+
+      <!-- It only positions the popover; letting it take clicks would swallow the
+           trigger it covers. -->
+      <div
+        v-else-if="anchored"
+        class="pointer-events-none absolute inset-0"
+        aria-hidden="true"
+      />
 
       <!-- The trigger must own a box of its own: Tooltip drops the $attrs the popover
            anchors on, and a display:contents wrapper would anchor it at 0,0. -->
@@ -54,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Button, MultiSelect, Tooltip } from 'frappe-ui'
 
 import { useTagSearch } from '@/composables/useTagSearch'
@@ -65,10 +75,21 @@ const props = defineProps<{
   doctype: string
   tags: string[]
   chip?: boolean
+  anchored?: boolean
   vertical?: boolean
 }>()
 
 const emit = defineEmits<{ add: [string]; remove: [string] }>()
+
+// Left undefined the picker owns its own open state, which is what every trigger but
+// the anchor wants.
+const open = defineModel<boolean | undefined>('open', { default: undefined })
+
+// The anchor hangs off a menu that already opened downwards.
+const side = computed(() => {
+  if (props.anchored) return 'bottom'
+  return props.vertical ? 'left' : 'top'
+})
 
 const query = ref('')
 
@@ -85,6 +106,9 @@ const { options, loading, error, searched, search, searchSoon } = useTagSearch(
   () => props.doctype,
   ownTags,
 )
+
+// Watched, not handled: opened from the outside, the picker never fires update:open.
+watch(open, (opened) => opened && !searched.value && search())
 
 function onQuery(text: string) {
   query.value = text

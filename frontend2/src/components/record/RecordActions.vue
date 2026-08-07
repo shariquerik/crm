@@ -2,47 +2,64 @@
      vertically in the collapsed rail. -->
 <template>
   <TooltipProvider :hover-delay="0" :skip-delay="0.5">
+    <!-- Nothing may shrink: the row has to overflow for the fit to be measurable. -->
     <div
-      class="flex items-center gap-1"
-      :class="vertical ? 'flex-col' : 'flex-wrap'"
+      ref="row"
+      class="flex items-center gap-1 [&>*]:shrink-0"
+      :class="vertical ? 'flex-col' : ''"
     >
-      <!-- The lead action is named; the rest carry their label in a tooltip. -->
-      <Tooltip text="Write an email" :placement="placement">
-        <Button
-          icon="lucide-mail"
-          :label="named ? 'Email' : undefined"
-          :aria-label="named ? undefined : 'Write an email'"
-          variant="subtle"
-          @click="writeEmail"
+      <!-- Named from the left while the width lasts; the rest keep to their tooltip. -->
+      <template v-for="(action, index) in actions.slice(0, visible)">
+        <TagPicker
+          v-if="action.tagging"
+          :key="`${action.icon}-picker`"
+          :doctype="doctype"
+          :tags="chrome.tags"
+          :vertical="vertical"
+          @add="chrome.addTag"
+          @remove="chrome.removeTag"
         />
-      </Tooltip>
 
-      <Tooltip text="Attach a file" :placement="placement">
-        <Button icon="lucide-paperclip" variant="subtle" @click="attach" />
-      </Tooltip>
+        <!-- `icon` is what makes a Button icon-only; a named one takes `icon-left`. -->
+        <!-- A named button says it already; the tooltip is for the bare icons. -->
+        <Tooltip
+          v-else
+          :key="action.icon"
+          :text="action.description"
+          :placement="placement"
+          :disabled="index < labelled"
+        >
+          <Button
+            :icon="index < labelled ? undefined : action.icon"
+            :icon-left="index < labelled ? action.icon : undefined"
+            :label="index < labelled ? action.label : undefined"
+            :aria-label="index < labelled ? undefined : action.description"
+            variant="subtle"
+            @click="action.run"
+          />
+        </Tooltip>
+      </template>
 
-      <Tooltip text="Share" :placement="placement">
-        <Button icon="lucide-share-2" variant="subtle" @click="emit('share')" />
-      </Tooltip>
+      <!-- The anchor overlays the trigger, so the picker opens under the menu it came from. -->
+      <div v-if="overflow.length" class="relative flex shrink-0">
+        <Dropdown :options="overflow" side="bottom" align="end">
+          <div class="flex shrink-0">
+            <Tooltip text="More quick actions" :placement="placement">
+              <Button icon="lucide-more-horizontal" variant="subtle" />
+            </Tooltip>
+          </div>
+        </Dropdown>
 
-      <Tooltip text="Print" :placement="placement">
-        <Button icon="lucide-printer" variant="subtle" @click="print" />
-      </Tooltip>
-
-      <TagPicker
-        v-if="!chrome.tags.length"
-        :doctype="doctype"
-        :tags="chrome.tags"
-        :vertical="vertical"
-        @add="chrome.addTag"
-        @remove="chrome.removeTag"
-      />
-
-      <RecordFavourite
-        :favourites="chrome.likers"
-        :favourited="chrome.liked"
-        @toggle="chrome.toggleLike"
-      />
+        <TagPicker
+          v-if="taggingOverflowed"
+          v-model:open="picking"
+          anchored
+          :doctype="doctype"
+          :tags="chrome.tags"
+          @add="chrome.addTag"
+          @remove="chrome.removeTag"
+        />
+      </div>
     </div>
 
     <FileUploadDialog
@@ -57,18 +74,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Button, Tooltip, TooltipProvider } from 'frappe-ui'
+import { Button, Dropdown, Tooltip, TooltipProvider } from 'frappe-ui'
 
 import { recordTransport } from '@/data/attachments'
 
-import RecordFavourite from '@/components/record/RecordFavourite.vue'
 import TagPicker from '@/components/record/TagPicker.vue'
-import { requestReply } from '@/data/composerRequest'
+import type { ComposerMode } from '@/data/composer'
+import { requestComposer } from '@/data/composerRequest'
 import type { RecordChrome } from '@/data/docinfo'
 import { printUrl } from '@/data/recordActions'
-import { EMAILS_TAB, hasComposer } from '@/data/recordLayout'
+import { useFittedActions } from '@/composables/useFittedActions'
+import { ACTIVITY_TAB, EMAILS_TAB, hasComposer } from '@/data/recordLayout'
 
 const props = defineProps<{
   doctype: string
@@ -76,8 +94,6 @@ const props = defineProps<{
   chrome: RecordChrome
   vertical?: boolean
 }>()
-
-const emit = defineEmits<{ share: [] }>()
 
 // Lazily mounted: the uploader and its cropper load only when attaching.
 const FileUploadDialog = defineAsyncComponent(
@@ -92,13 +108,84 @@ const router = useRouter()
 
 const placement = computed(() => (props.vertical ? 'left' : 'top'))
 
-const named = computed(() => !props.vertical)
+const picking = ref(false)
+
+type QuickAction = {
+  icon: string
+  label: string
+  description: string
+  run: () => void
+  tagging?: boolean
+}
+
+// Tagging comes last, so it is the first thing the row gives up. A tagged record has
+// the chips' own "+" instead.
+const actions = computed<QuickAction[]>(() => [
+  {
+    icon: 'lucide-mail',
+    label: 'Compose email',
+    description: 'Compose an email',
+    run: writeEmail,
+  },
+  {
+    icon: 'lucide-message-circle',
+    label: 'Add comment',
+    description: 'Add a comment',
+    run: addComment,
+  },
+  {
+    icon: 'lucide-paperclip',
+    label: 'Attach',
+    description: 'Attach a file',
+    run: attach,
+  },
+  { icon: 'lucide-printer', label: 'Print', description: 'Print', run: print },
+  ...(props.chrome.tags.length
+    ? []
+    : [
+        {
+          icon: 'lucide-tag',
+          label: 'Tags',
+          description: 'Tags',
+          tagging: true,
+          run: () => (picking.value = true),
+        },
+      ]),
+])
+
+// The rail has no width to spend, so it names nothing and hides nothing.
+const row = useTemplateRef<HTMLElement>('row')
+const { labelled, visible } = useFittedActions(
+  row,
+  () => actions.value.length,
+  () => !props.vertical,
+)
+
+const overflow = computed(() =>
+  actions.value.slice(visible.value).map(({ label, icon, run }) => ({
+    label,
+    icon,
+    onClick: run,
+  })),
+)
+
+const taggingOverflowed = computed(() =>
+  actions.value.slice(visible.value).some((action) => action.tagging),
+)
 
 function writeEmail() {
-  const tab = route.query.tab as string | undefined
-  requestReply()
-  if (!hasComposer(tab))
-    router.replace({ query: { ...route.query, tab: EMAILS_TAB } })
+  openComposer('reply', EMAILS_TAB)
+}
+
+function addComment() {
+  openComposer('comment', ACTIVITY_TAB)
+}
+
+// The tab only changes when the one in view carries no composer to serve the request.
+function openComposer(mode: ComposerMode, tab: string) {
+  requestComposer(mode)
+  if (!hasComposer(route.query.tab as string | undefined))
+    router.replace({ query: { ...route.query, tab } })
 }
 
 const transport = computed(() => recordTransport(props.doctype, props.docname))

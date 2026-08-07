@@ -159,7 +159,7 @@ import CollapseButton from './CollapseButton.vue'
 import ComposerHeader from './ComposerHeader.vue'
 
 import { useRestoredRef } from '@/composables/usePageState'
-import { claimReply, pendingReply } from '@/data/composerRequest'
+import { claimComposer, pendingComposer } from '@/data/composerRequest'
 import {
   clampHeight,
   commentArgs,
@@ -217,9 +217,9 @@ const record = computed<ComposerRecord>(() => ({
 
 onMounted(loadMentionOptions)
 
-// Immediate: the panel's Email action switches tabs, so the composer that serves it is
-// usually the one mounting after the request, not the one that was there.
-watch(pendingReply, (wanted) => wanted && claimReply() && expand('reply'), {
+// Immediate: the panel's actions switch tabs, so the composer that serves one is usually
+// the one mounting after the request, not the one that was there.
+watch(pendingComposer, (mode) => mode && claimComposer() && expand(mode), {
   immediate: true,
 })
 

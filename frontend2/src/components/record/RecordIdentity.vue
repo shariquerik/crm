@@ -12,7 +12,7 @@
         />
         <!-- Beside the tile the column spans its height, so both edges line up. -->
         <div
-          class="flex min-w-0 flex-col"
+          class="flex min-w-0 flex-1 flex-col"
           :class="meta?.image_field ? 'h-20 justify-between' : 'gap-2.5'"
         >
           <div class="min-w-0">
@@ -28,7 +28,6 @@
             :doctype="doctype"
             :docname="docname"
             :chrome="chrome"
-            @share="emit('share')"
           />
         </div>
       </div>

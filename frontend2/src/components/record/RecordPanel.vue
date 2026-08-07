@@ -18,7 +18,6 @@
         :doctype="doctype"
         :docname="docname"
         :chrome="chrome"
-        @share="sharing = true"
       />
     </div>
 
@@ -54,7 +53,6 @@
     </div>
   </aside>
 
-  <!-- One dialog for both shapes: the rail and the open panel never render together. -->
   <ShareDialog
     v-model="sharing"
     :shared="chrome.shared"

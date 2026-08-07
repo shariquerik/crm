@@ -1,17 +1,19 @@
-/** The panel's Email action, claimed by whichever composer is mounted when it lands. */
+/** The panel's composer actions, claimed by whichever composer is mounted when they land. */
 import { ref } from 'vue'
 
-const pendingReply = ref(false)
+import type { ComposerMode } from '@/data/composer'
 
-export function requestReply() {
-  pendingReply.value = true
+const pendingComposer = ref<ComposerMode | null>(null)
+
+export function requestComposer(mode: ComposerMode) {
+  pendingComposer.value = mode
 }
 
-/** True once, for the first composer to ask after the action fired. */
-export function claimReply() {
-  if (!pendingReply.value) return false
-  pendingReply.value = false
-  return true
+/** The requested mode once, for the first composer to ask after the action fired. */
+export function claimComposer() {
+  const mode = pendingComposer.value
+  pendingComposer.value = null
+  return mode
 }
 
-export { pendingReply }
+export { pendingComposer }
