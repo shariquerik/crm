@@ -1,5 +1,5 @@
 import { computed, type MaybeRefOrGetter } from 'vue'
-import type { NavigationItem } from '@framework/ui/components/Navigation'
+import type { NavigationItem } from '@framework/ui/experimental/Navigation'
 
 /** The record page's tab strip. */
 export function useRecordLayout(_doctype: MaybeRefOrGetter<string>) {

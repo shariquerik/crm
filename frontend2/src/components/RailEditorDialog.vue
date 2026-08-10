@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { NavigationEditorDialog } from '@framework/ui/components/Navigation'
+import { NavigationEditorDialog } from '@framework/ui/experimental'
 
 import { railNavigation } from '@/data/railLayout'
 

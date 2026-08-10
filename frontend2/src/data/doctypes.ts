@@ -1,6 +1,6 @@
 import { call } from 'frappe-ui'
 
-import { isCustomIconName } from '@framework/ui/components/IconPicker'
+import { isCustomIconName } from '@framework/ui/experimental/IconPicker'
 import { isIconName } from '@/data/icons'
 import { railItems } from '@/data/railLayout'
 

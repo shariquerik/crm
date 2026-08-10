@@ -1,5 +1,5 @@
 import type { Component } from 'vue'
-import type { NavigationItem } from '@framework/ui/components/Navigation'
+import type { NavigationItem } from '@framework/ui/experimental/Navigation'
 import type { FormLayoutSchema } from '@framework/ui/components/FormLayout'
 
 import ActivityTab from '@/components/record/tabs/ActivityTab.vue'

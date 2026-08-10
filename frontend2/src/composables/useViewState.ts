@@ -1,6 +1,9 @@
 import { computed, onScopeDispose, ref, watch, type Ref } from 'vue'
-import { useSavedViews } from '@framework/ui/components/SavedViews'
-import { findView, useNavigation } from '@framework/ui/components/Navigation'
+import {
+  findView,
+  useNavigation,
+  useSavedViews,
+} from '@framework/ui/experimental'
 import { serializeColumns } from '@framework/ui/components/ColumnSettings'
 import { serializeOrderBy } from '@framework/ui/components/SortBy'
 import { APP_NAME } from '@/data/apps'

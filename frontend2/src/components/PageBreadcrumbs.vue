@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import { Breadcrumbs } from 'frappe-ui'
-import { ViewIcon } from '@framework/ui/components/SavedViews'
+import { ViewIcon } from '@framework/ui/experimental'
 
 defineProps<{ items: any[] }>()
 </script>

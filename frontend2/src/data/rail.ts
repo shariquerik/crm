@@ -1,8 +1,8 @@
-import { itemTarget } from '@framework/ui/components/Navigation/items'
+import { itemTarget } from '@framework/ui/experimental/Navigation/items'
 import type {
   NavigationItem,
   NavigationSection,
-} from '@framework/ui/components/Navigation'
+} from '@framework/ui/experimental/Navigation'
 
 export type RailItem = NavigationItem & { section: string }
 

@@ -171,11 +171,11 @@ import {
   Sidebar,
   Tooltip,
 } from 'frappe-ui'
-import { IconGlyph } from '@framework/ui/components/IconPicker'
 import {
+  IconGlyph,
   itemTarget,
   NavigationSidebar,
-} from '@framework/ui/components/Navigation'
+} from '@framework/ui/experimental'
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLocalStorage } from '@vueuse/core'

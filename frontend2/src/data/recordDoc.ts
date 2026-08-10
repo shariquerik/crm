@@ -1,6 +1,6 @@
 /** The record's document: how `getdoc` answers, and what changed in the answer since. */
 // The module, not the barrel: the barrel's `PanelLayout.vue` drags the whole form runtime in.
-import { displayValue } from '@framework/ui/components/PanelLayout/displayValue'
+import { displayValue } from '@framework/ui/experimental/PanelLayout/displayValue'
 import { getFormatDefaults } from '@framework/ui/components/FormLayout/formatDefaults'
 import { pickSiblingValue } from '@framework/ui/components/FormLayout/pickSiblingValue'
 import type { FieldMeta } from '@framework/ui/components/FormLayout'

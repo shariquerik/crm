@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { nextTick, ref, useTemplateRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { PanelLayout } from '@framework/ui/components/PanelLayout'
+import { PanelLayout } from '@framework/ui/experimental'
 import type {
   FieldNode,
   FormLayoutSchema,

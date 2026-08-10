@@ -1,7 +1,7 @@
 import { createResource } from 'frappe-ui'
 import { computed } from 'vue'
 
-import { useNavigation } from '@framework/ui/components/Navigation'
+import { useNavigation } from '@framework/ui/experimental/Navigation'
 import { APP_NAME } from '@/data/apps'
 import { flattenRail, type RailItem } from '@/data/rail'
 

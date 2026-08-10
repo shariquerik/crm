@@ -1,4 +1,4 @@
-import { navigationScope } from '@framework/ui/components/Navigation'
+import { navigationScope } from '@framework/ui/experimental/Navigation'
 
 import { APP_NAME } from '@/data/apps'
 import { docCache, listCache } from '@/data/cache/queryCache'

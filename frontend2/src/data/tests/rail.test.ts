@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type {
   NavigationItem,
   NavigationSection,
-} from '@framework/ui/components/Navigation'
+} from '@framework/ui/experimental/Navigation'
 import {
   flattenRail,
   isActiveRailItem,
