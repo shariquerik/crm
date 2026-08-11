@@ -41,6 +41,8 @@
             v-model:doc="doc"
             v-model:openSections="openSections"
             :layout="layout"
+            :surface="controller?.panelSections"
+            :page="controller?.page"
             @expand="expand"
           />
         </div>
@@ -62,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, useTemplateRef } from 'vue'
+import { inject, nextTick, ref, useTemplateRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { PanelLayout } from '@framework/ui/experimental'
 import type {
@@ -75,6 +77,7 @@ import RecordActions from '@/components/record/RecordActions.vue'
 import RecordIdentity from '@/components/record/RecordIdentity.vue'
 import ShareDialog from '@/components/record/ShareDialog.vue'
 import type { RecordChrome } from '@/data/docinfo'
+import { RecordPageKey } from '@/data/pageContext'
 import { DETAILS_TAB } from '@/data/recordLayout'
 import { RAIL_WIDTH, usePanelState } from '@/composables/usePanelState'
 import { useScrollEdges } from '@/composables/useScrollEdges'
@@ -89,6 +92,8 @@ const doc = defineModel<Record<string, any>>('doc', { required: true })
 
 const route = useRoute()
 const router = useRouter()
+
+const controller = inject(RecordPageKey, null)
 
 const { width, collapsed, openSections } = usePanelState(
   props.doctype,

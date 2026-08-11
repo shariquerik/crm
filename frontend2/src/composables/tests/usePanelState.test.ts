@@ -79,8 +79,10 @@ describe('openState', () => {
     })
   })
 
-  it('ignores a stored name the layout no longer carries', () => {
-    expect(openState(sections, { gone: true }).gone).toBeUndefined()
+  it('passes a stored name the layout does not carry through', () => {
+    // A scripted section's key: the layout knows nothing of it, but its toggle
+    // still has to survive a reload.
+    expect(openState(sections, { scripted: true }).scripted).toBe(true)
   })
 
   it('reads a section with no opened flag as open', () => {

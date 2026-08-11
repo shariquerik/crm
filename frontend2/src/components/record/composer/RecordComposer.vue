@@ -129,6 +129,7 @@
 <script setup lang="ts">
 import {
   computed,
+  inject,
   nextTick,
   onMounted,
   ref,
@@ -174,6 +175,7 @@ import {
   type ResizeStart,
 } from '@/data/composer'
 import { errorMessage } from '@/data/errors'
+import { RecordPageKey } from '@/data/pageContext'
 import { useRecordLayout } from '@/data/recordLayout'
 import { currentUser, userLabel } from '@/data/session'
 import { createActions, type CreateContext } from '@/data/tabTypes'
@@ -339,13 +341,15 @@ function uploadAttachment(file: File) {
 }
 
 const { tabs } = useRecordLayout(() => props.doctype)
+const controller = inject(RecordPageKey, null)
+const resolvedTabs = computed(() => controller?.tabs.visible() ?? tabs.value)
 
 const attachInput = useTemplateRef<HTMLInputElement>('attachInput')
 
 const context: CreateContext = { attach: () => attachInput.value?.click() }
 
 const createOptions = computed(() =>
-  createActions(tabs.value).map((action) => ({
+  createActions(resolvedTabs.value, controller?.page).map((action) => ({
     label: action.label,
     icon: action.icon,
     onClick: () => action.run(context),

@@ -6,6 +6,8 @@ import type {
   FormLayoutSchema,
   Section,
 } from '@framework/ui/components/FormLayout'
+// A leaf import: the experimental barrel drags the whole form runtime in.
+import { sectionName } from '@framework/ui/experimental/PanelLayout/sectionName'
 
 export const MIN_WIDTH = 320
 export const MAX_WIDTH = 640
@@ -52,7 +54,8 @@ export function dragOutcome(
   const width = startWidth + distance
   // A drag that ends in a collapse commits no resize, so the rail reopens at the width
   // it had before the drag squashed it against the minimum.
-  if (width < COLLAPSE_AT) return { width: clampWidth(startWidth), toggle: true }
+  if (width < COLLAPSE_AT)
+    return { width: clampWidth(startWidth), toggle: true }
   return { width: snapToDefault(clampWidth(width)) }
 }
 
@@ -78,6 +81,10 @@ export function openState(
     const key = sectionKey(section)
     if (key) open[key] = divergences[key] ?? opensByDefault(section)
   }
+  // Scripted sections persist through the same map, though the layout knows
+  // nothing of them.
+  for (const [key, value] of Object.entries(divergences))
+    if (!(key in open)) open[key] = value
   return open
 }
 
@@ -87,11 +94,14 @@ export function divergencesOf(
   open: Record<string, boolean>,
 ) {
   const diverged: Record<string, boolean> = {}
+  const known = new Set(sections.map(sectionKey))
   for (const section of sections) {
     const key = sectionKey(section)
     if (key && Boolean(open[key]) !== opensByDefault(section))
       diverged[key] = Boolean(open[key])
   }
+  for (const [key, value] of Object.entries(open))
+    if (!known.has(key)) diverged[key] = value
   return diverged
 }
 
@@ -99,10 +109,11 @@ function sectionsOf(layout: FormLayoutSchema) {
   return (layout || []).flatMap((tab) => tab.sections || [])
 }
 
-// The name a saved layout stores. A doctype without one mints a fresh name per request,
-// so nothing persists there and the layout's defaults win each load.
+// The framework's guaranteed section name, so these keys match the ones
+// `PanelLayout` renders and scripts target. A doctype whose layout mints a
+// fresh name per request persists nothing; the layout's defaults win each load.
 function sectionKey(section: Section) {
-  return section.name ?? section.label ?? ''
+  return sectionName(section)
 }
 
 function opensByDefault(section: Section) {

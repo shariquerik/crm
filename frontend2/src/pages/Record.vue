@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, provide } from 'vue'
 import { useRoute } from 'vue-router'
 
 import NotFoundPage from '@/components/NotFoundPage.vue'
@@ -53,6 +53,7 @@ import RecordPanel from '@/components/record/RecordPanel.vue'
 import RecordTabs from '@/components/record/RecordTabs.vue'
 import SaveConflictDialog from '@/components/record/SaveConflictDialog.vue'
 import { routeDoctype } from '@/data/doctypes'
+import { RecordPageKey } from '@/data/pageContext'
 import { recordResources } from '@/data/resources'
 import { useRecordPage } from '@/composables/useRecordPage'
 
@@ -66,6 +67,7 @@ const { fieldsLayout } = resources
 
 const {
   doc,
+  pageController,
   isDirty,
   saving,
   breadcrumbs,
@@ -78,6 +80,8 @@ const {
   docinfo,
   chrome,
 } = useRecordPage(resources)
+
+provide(RecordPageKey, pageController)
 
 const knownDoctype = computed(() => routeDoctype(doctype) !== null)
 </script>

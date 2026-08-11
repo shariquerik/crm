@@ -7,7 +7,10 @@ export function useRecordLayout(_doctype: MaybeRefOrGetter<string>) {
 }
 
 /** The tab a `?tab=` value names, or the first one. */
-export function activeTab(tabs: NavigationItem[], name?: string) {
+export function activeTab<T extends { name: string }>(
+  tabs: T[],
+  name?: string,
+) {
   return tabs.find((tab) => tab.name === name) ?? tabs[0]
 }
 

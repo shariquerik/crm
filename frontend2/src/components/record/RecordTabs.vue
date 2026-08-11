@@ -2,8 +2,18 @@
 <template>
   <Tabs v-model="tabIndex" as="div" :tabs="tabs">
     <template #tab-panel>
+      <!-- A scripted tab mounts with `page` plus its author's props; a built-in
+           keeps the host's own contract. -->
+      <component
+        :is="current.component"
+        v-if="current.component"
+        :key="current.name"
+        :page="controller?.page"
+        v-bind="scriptProps(current)"
+      />
       <component
         :is="resolveTab(current.type)"
+        v-else
         :key="current.name"
         v-model:doc="doc"
         :item="current"
@@ -18,10 +28,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Tabs } from 'frappe-ui'
+import type { TabItem } from '@framework/ui/experimental'
 
+import { RecordPageKey } from '@/data/pageContext'
 import { activeTab, useRecordLayout } from '@/data/recordLayout'
 import { resolveTab, type TabProps } from '@/data/tabTypes'
 
@@ -31,11 +43,24 @@ const doc = defineModel<Record<string, any>>('doc', { required: true })
 const route = useRoute()
 const router = useRouter()
 
-const { tabs } = useRecordLayout(() => props.doctype)
+const { tabs: builtinTabs } = useRecordLayout(() => props.doctype)
+
+const controller = inject(RecordPageKey, null)
+controller?.tabs.provideBuiltins(() => builtinTabs.value as any[])
+
+const tabs = computed<any[]>(() =>
+  controller ? controller.tabs.visible() : builtinTabs.value,
+)
 
 const current = computed(() =>
-  activeTab(tabs.value, route.query.tab as string | undefined),
+  activeTab(tabs.value as any[], route.query.tab as string | undefined),
 )
+
+/** The author's props, v-bound beside the host's; `page` is not theirs to claim. */
+function scriptProps(item: TabItem) {
+  const { page: _claimed, ...rest } = item.props ?? {}
+  return rest
+}
 
 const tabIndex = computed({
   get: () => tabs.value.indexOf(current.value),

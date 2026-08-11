@@ -10,6 +10,7 @@ declare const __SOCKETIO_PORT__: number
 declare global {
   interface Window {
     socketio_port?: number
+    extend_frontend?: string[]
   }
 }
 
@@ -23,6 +24,12 @@ const [{ default: App }, { default: router }] = await Promise.all([
   import('@/App.vue'),
   import('@/router'),
 ])
+
+// Every source registers before the router's first resolution: the host's own
+// file scripts first, then boot-listed extensions in install order.
+await import('@/customizations/register')
+const { loadFrontendExtensions } = await import('@framework/ui/experimental')
+await loadFrontendExtensions(window.extend_frontend ?? [])
 
 const app = createApp(App)
 

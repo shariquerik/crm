@@ -61,9 +61,22 @@ export function resolveTab(type: string): Component {
   return TABS[type]?.component ?? UnknownTab
 }
 
-/** The composer's `+` menu: what the tabs on the strip can create. */
-export function createActions(tabs: NavigationItem[]): CreateAction[] {
-  return tabs
-    .map((tab) => TABS[tab.type]?.create)
-    .filter((action): action is CreateAction => Boolean(action))
+/** The composer's `+` menu: what the tabs on the strip can create. A scripted
+    tab carries its own `create`, whose `run` receives `page` like every callback. */
+export function createActions(
+  tabs: { type?: string; create?: any }[],
+  page?: any,
+): CreateAction[] {
+  return tabs.flatMap((tab) => {
+    if (tab.create)
+      return [
+        {
+          label: tab.create.label,
+          icon: tab.create.icon,
+          run: () => tab.create.run(page),
+        },
+      ]
+    const create = tab.type ? TABS[tab.type]?.create : undefined
+    return create ? [create] : []
+  })
 }

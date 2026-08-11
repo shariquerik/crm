@@ -54,8 +54,15 @@ def get_boot():
 				or get_system_timezone(),
 			},
 			"state_options": get_state_options(),
+			"extend_frontend": get_frontend_extensions(),
 		}
 	)
+
+
+def get_frontend_extensions() -> list[str]:
+	"""Asset URLs of every installed app extending this frontend, in install order."""
+	entries = frappe.get_hooks("extend_frontend") or {}
+	return [f"/assets/{entry}" for entry in entries.get("crm", [])]
 
 
 def get_state_options() -> dict[str, list[str]]:

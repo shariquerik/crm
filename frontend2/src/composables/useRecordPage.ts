@@ -1,8 +1,8 @@
 import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { call, toast } from 'frappe-ui'
 import { useDoctypeMeta } from '@framework/ui'
-import { useNavigation } from '@framework/ui/experimental'
+import { createRecordPage, useNavigation } from '@framework/ui/experimental'
 import { APP_NAME } from '@/data/apps'
 import { doctypeLabel, routeDoctype } from '@/data/doctypes'
 import { errorMessage } from '@/data/errors'
@@ -29,6 +29,7 @@ const MOVED_TWICE =
 export function useRecordPage(resources: any) {
   const { docResource, fieldsLayout, files } = resources
   const route = useRoute()
+  const router = useRouter()
 
   const doc = ref<Record<string, any>>({})
   /** The document as the server last showed it. */
@@ -74,7 +75,22 @@ export function useRecordPage(resources: any) {
 
   const isDirty = computed(() => Object.keys(changedFields()).length > 0)
 
+  const pageController = createRecordPage({
+    doctype: doctype.value,
+    docname,
+    doc,
+    meta,
+    perms: () => docResource.data?.docinfo?.permissions ?? {},
+    isDirty: () => isDirty.value,
+    save: () => save(),
+    reload: async () => {
+      await refetchCached(docResource, recordKey, doctype.value)
+    },
+    router,
+  })
+
   let lastPainted: any = null
+  let painted = false
 
   function paint(payload: any) {
     lastPainted = payload
@@ -82,7 +98,24 @@ export function useRecordPage(resources: any) {
     doc.value = { ...stored.value }
     rememberLinkTitles(payload?.linkTitles ?? {})
     saveError.value = ''
+    painted = true
+    pageController.refresh()
   }
+
+  // Scripts' `<fieldname>` handlers fire on edits, not on paints: a paint only
+  // resyncs the snapshot the next edit diffs against.
+  let fieldSnapshot: Record<string, any> = {}
+
+  watch(
+    doc,
+    () => {
+      const changed = Object.keys(fieldDiff(doc.value, fieldSnapshot))
+      fieldSnapshot = { ...doc.value }
+      if (painted) return (painted = false)
+      for (const fieldname of changed) pageController.fireEvent(fieldname)
+    },
+    { deep: true },
+  )
 
   // The cached record paints first and the fetched one lands behind it; typing in that
   // window is the reader's, not a stale copy to overwrite.
@@ -126,7 +159,9 @@ export function useRecordPage(resources: any) {
     saving.value = true
     saveError.value = ''
     try {
+      await pageController.fireEvent('before_save')
       await saveOrRecover()
+      await pageController.fireEvent('after_save')
     } catch (error: any) {
       saveError.value = errorMessage(error)
       toast.error(saveError.value)
@@ -233,10 +268,13 @@ export function useRecordPage(resources: any) {
     stored.value = { ...saved }
     doc.value = { ...saved }
     doctypeChanged(doctype.value)
+    painted = true
+    pageController.refresh()
   }
 
   return {
     doc,
+    pageController,
     isDirty,
     changedFields,
     feeds: { files },

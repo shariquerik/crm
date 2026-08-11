@@ -35,7 +35,7 @@ export default defineConfig({
     }),
     vue(),
     vueJsx(),
-    frameworkUI(),
+    frameworkUI({ extensions: true }),
   ],
   resolve: {
     alias: {

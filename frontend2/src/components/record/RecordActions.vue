@@ -9,7 +9,7 @@
       :class="vertical ? 'flex-col' : ''"
     >
       <!-- Named from the left while the width lasts; the rest keep to their tooltip. -->
-      <template v-for="(action, index) in actions.slice(0, visible)">
+      <template v-for="(action, index) in resolved.slice(0, visible)">
         <TagPicker
           v-if="action.tagging"
           :key="`${action.icon}-picker`"
@@ -35,7 +35,7 @@
             :label="index < labelled ? action.label : undefined"
             :aria-label="index < labelled ? undefined : action.description"
             variant="subtle"
-            @click="action.run"
+            @click="invoke(action)"
           />
         </Tooltip>
       </template>
@@ -74,7 +74,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, useTemplateRef, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  inject,
+  ref,
+  useTemplateRef,
+  watch,
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button, Dropdown, Tooltip, TooltipProvider } from 'frappe-ui'
 
@@ -84,6 +91,7 @@ import TagPicker from '@/components/record/TagPicker.vue'
 import type { ComposerMode } from '@/data/composer'
 import { requestComposer } from '@/data/composerRequest'
 import type { RecordChrome } from '@/data/docinfo'
+import { RecordPageKey } from '@/data/pageContext'
 import { printUrl } from '@/data/recordActions'
 import { useFittedActions } from '@/composables/useFittedActions'
 import { ACTIVITY_TAB, EMAILS_TAB, hasComposer } from '@/data/recordLayout'
@@ -111,39 +119,50 @@ const placement = computed(() => (props.vertical ? 'left' : 'top'))
 const picking = ref(false)
 
 type QuickAction = {
+  name: string
   icon: string
   label: string
-  description: string
-  run: () => void
+  description?: string
+  run?: (page?: any) => void
   tagging?: boolean
 }
 
 // Tagging comes last, so it is the first thing the row gives up. A tagged record has
 // the chips' own "+" instead.
-const actions = computed<QuickAction[]>(() => [
+const builtins = computed<QuickAction[]>(() => [
   {
+    name: 'email',
     icon: 'lucide-mail',
     label: 'Compose email',
     description: 'Compose an email',
     run: writeEmail,
   },
   {
+    name: 'comment',
     icon: 'lucide-message-circle',
     label: 'Add comment',
     description: 'Add a comment',
     run: addComment,
   },
   {
+    name: 'attach',
     icon: 'lucide-paperclip',
     label: 'Attach',
     description: 'Attach a file',
     run: attach,
   },
-  { icon: 'lucide-printer', label: 'Print', description: 'Print', run: print },
+  {
+    name: 'print',
+    icon: 'lucide-printer',
+    label: 'Print',
+    description: 'Print',
+    run: print,
+  },
   ...(props.chrome.tags.length
     ? []
     : [
         {
+          name: 'tags',
           icon: 'lucide-tag',
           label: 'Tags',
           description: 'Tags',
@@ -153,24 +172,37 @@ const actions = computed<QuickAction[]>(() => [
       ]),
 ])
 
+const controller = inject(RecordPageKey, null)
+controller?.quickActions.provideBuiltins(() => builtins.value)
+
+const resolved = computed<QuickAction[]>(() =>
+  controller
+    ? (controller.quickActions.visible() as QuickAction[])
+    : builtins.value,
+)
+
+function invoke(action: QuickAction) {
+  action.run?.(controller?.page)
+}
+
 // The rail has no width to spend, so it names nothing and hides nothing.
 const row = useTemplateRef<HTMLElement>('row')
 const { labelled, visible } = useFittedActions(
   row,
-  () => actions.value.length,
+  () => resolved.value.length,
   () => !props.vertical,
 )
 
 const overflow = computed(() =>
-  actions.value.slice(visible.value).map(({ label, icon, run }) => ({
-    label,
-    icon,
-    onClick: run,
+  resolved.value.slice(visible.value).map((action) => ({
+    label: action.label,
+    icon: action.icon,
+    onClick: () => invoke(action),
   })),
 )
 
 const taggingOverflowed = computed(() =>
-  actions.value.slice(visible.value).some((action) => action.tagging),
+  resolved.value.slice(visible.value).some((action) => action.tagging),
 )
 
 function writeEmail() {
