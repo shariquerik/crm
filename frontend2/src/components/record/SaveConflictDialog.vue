@@ -23,9 +23,10 @@
             :key="side.key"
             class="mt-1.5 flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-surface-gray-2"
           >
+            <!-- accent- reads only theme.colors, so semantic tokens need the CSS var -->
             <input
               type="radio"
-              class="size-3.5 shrink-0 accent-surface-gray-7"
+              class="size-3.5 shrink-0 accent-[var(--surface-gray-7)]"
               :name="field.fieldname"
               :value="side.key"
               :checked="choices[field.fieldname] === side.key"
