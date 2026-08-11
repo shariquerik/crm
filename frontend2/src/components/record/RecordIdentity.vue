@@ -1,7 +1,39 @@
 <!-- The panel's headline: who this record is, what you do to it, and what is true of it.
      Never scrolls. -->
 <template>
-  <div class="flex shrink-0 flex-col border-b border-outline-gray-1">
+  <div
+    v-if="!doc.name"
+    class="flex shrink-0 flex-col border-b border-outline-gray-1"
+  >
+    <div class="flex flex-col gap-3 p-4">
+      <div class="flex flex-col gap-2.5">
+        <div class="flex flex-col gap-2">
+          <Skeleton class="h-5 w-40 rounded" />
+          <Skeleton class="h-4 w-28 rounded" />
+        </div>
+        <div class="flex items-center gap-1">
+          <Skeleton
+            v-for="button in 2"
+            :key="button"
+            class="h-7 w-28 rounded"
+          />
+          <Skeleton v-for="icon in 3" :key="icon" class="size-7 rounded" />
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col gap-1.5 border-t border-outline-gray-1 px-4 py-3">
+      <div
+        v-for="fact in 2"
+        :key="fact"
+        class="grid grid-cols-[130px_1fr] items-center gap-2"
+      >
+        <Skeleton class="h-4 w-24 rounded" />
+        <Skeleton class="h-4 w-28 rounded" />
+      </div>
+    </div>
+  </div>
+
+  <div v-else class="flex shrink-0 flex-col border-b border-outline-gray-1">
     <div class="flex flex-col gap-3 p-4">
       <div class="flex items-start gap-3">
         <RecordImage
@@ -40,6 +72,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Skeleton } from 'frappe-ui'
 import { useDoctypeMeta } from '@framework/ui'
 
 import RecordActions from '@/components/record/RecordActions.vue'

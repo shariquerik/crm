@@ -7,11 +7,23 @@
       :layout="layout"
       :class="formClasses"
     />
+
+    <!-- Mirrors the form's section band so the swap to real fields doesn't shift the page. -->
+    <div v-else class="mx-auto w-full max-w-3xl p-6">
+      <Skeleton class="h-4 w-24 rounded" />
+      <div class="mt-6 grid grid-cols-2 gap-x-10 gap-y-6">
+        <div v-for="index in 8" :key="index" class="flex flex-col gap-2">
+          <Skeleton class="h-3 w-20 rounded" />
+          <Skeleton class="h-7 w-full rounded" />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Skeleton } from 'frappe-ui'
 import { FormLayout } from '@framework/ui/components/FormLayout'
 
 import { useScrollRestore } from '@/composables/usePageState'

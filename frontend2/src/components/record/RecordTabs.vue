@@ -25,12 +25,37 @@
       />
     </template>
   </Tabs>
+
+  <!-- Mirrors the strip's own metrics so the swap to real tabs doesn't shift the page. -->
+  <div v-else class="flex flex-1 flex-col overflow-hidden">
+    <div class="flex items-center gap-5 border-b p-1 px-5">
+      <Skeleton
+        v-for="index in 4"
+        :key="index"
+        class="my-2.5 h-4 w-16 rounded"
+      />
+    </div>
+    <div class="flex flex-col gap-4 p-5">
+      <div v-for="index in 3" :key="index" class="flex items-center gap-3">
+        <Skeleton class="size-8 shrink-0 rounded-full" />
+        <div class="flex w-full max-w-md flex-col gap-2">
+          <Skeleton class="h-3 w-1/3 rounded" />
+          <Skeleton class="h-3 w-2/3 rounded" />
+        </div>
+      </div>
+    </div>
+    <div class="mt-auto px-6 pb-4">
+      <div class="mx-auto w-full max-w-3xl">
+        <Skeleton class="h-10 w-full rounded-lg" />
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Tabs } from 'frappe-ui'
+import { Skeleton, Tabs } from 'frappe-ui'
 import type { TabItem } from '@framework/ui/experimental'
 
 import { RecordPageKey } from '@/data/pageContext'

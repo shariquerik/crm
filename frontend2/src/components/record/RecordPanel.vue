@@ -13,7 +13,11 @@
     :style="{ width: `${collapsed ? RAIL_WIDTH : width}px` }"
   >
     <div v-if="collapsed" class="flex flex-col items-center py-3">
+      <div v-if="!doc.name" class="flex flex-col items-center gap-1">
+        <Skeleton v-for="action in 6" :key="action" class="size-7 rounded" />
+      </div>
       <RecordActions
+        v-else
         vertical
         :doctype="doctype"
         :docname="docname"
@@ -45,6 +49,23 @@
             :page="controller?.page"
             @expand="expand"
           />
+
+          <!-- Mirrors PanelSection's header and row grid so real fields land without a shift. -->
+          <template v-else>
+            <div v-for="section in 3" :key="section" class="px-4">
+              <Skeleton class="my-2 h-4 w-24 rounded" />
+              <div class="flex flex-col gap-2.5 pb-3 pt-2.5">
+                <div
+                  v-for="row in 4"
+                  :key="row"
+                  class="grid grid-cols-[130px_1fr] items-center gap-2"
+                >
+                  <Skeleton class="h-3 w-20 rounded" />
+                  <Skeleton class="mx-1.5 h-3 w-2/3 rounded" />
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -66,6 +87,7 @@
 <script setup lang="ts">
 import { inject, nextTick, ref, useTemplateRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Skeleton } from 'frappe-ui'
 import { PanelLayout } from '@framework/ui/experimental'
 import type {
   FieldNode,

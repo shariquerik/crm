@@ -1,7 +1,23 @@
 <!-- The record's chrome: breadcrumbs, the favourite star, the overflow menu and Save. -->
 <template>
   <PageHeaderPortal>
-    <div class="flex w-full items-center justify-between gap-3">
+    <div
+      v-if="!doc.name"
+      class="flex w-full items-center justify-between gap-3"
+    >
+      <div class="flex items-center gap-2">
+        <Skeleton class="h-4 w-12 rounded" />
+        <span class="text-ink-gray-4">/</span>
+        <Skeleton class="h-4 w-28 rounded" />
+        <Skeleton class="ml-1 size-4 rounded-full" />
+      </div>
+      <div class="flex items-center gap-2">
+        <Skeleton class="h-7 w-9 rounded" />
+        <Skeleton class="h-7 w-16 rounded" />
+      </div>
+    </div>
+
+    <div v-else class="flex w-full items-center justify-between gap-3">
       <div class="flex min-w-0 items-center">
         <PageBreadcrumbs :items="breadcrumbs" />
 
@@ -39,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button, Tooltip } from 'frappe-ui'
+import { Button, Skeleton, Tooltip } from 'frappe-ui'
 
 import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
 import PageHeaderPortal from '@/components/PageHeaderPortal.vue'
