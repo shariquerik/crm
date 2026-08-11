@@ -94,7 +94,12 @@ import type { RecordChrome } from '@/data/docinfo'
 import { RecordPageKey } from '@/data/pageContext'
 import { printUrl } from '@/data/recordActions'
 import { useFittedActions } from '@/composables/useFittedActions'
-import { ACTIVITY_TAB, EMAILS_TAB, hasComposer } from '@/data/recordLayout'
+import {
+  ACTIVITY_TAB,
+  EMAILS_TAB,
+  RECORD_TABS,
+  hasComposer,
+} from '@/data/recordLayout'
 
 const props = defineProps<{
   doctype: string
@@ -216,7 +221,8 @@ function addComment() {
 // The tab only changes when the one in view carries no composer to serve the request.
 function openComposer(mode: ComposerMode, tab: string) {
   requestComposer(mode)
-  if (!hasComposer(route.query.tab as string | undefined))
+  const tabs = controller?.tabs.visible() ?? RECORD_TABS
+  if (!hasComposer(tabs, route.query.tab as string | undefined))
     router.replace({ query: { ...route.query, tab } })
 }
 

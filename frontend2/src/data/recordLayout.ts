@@ -25,8 +25,11 @@ export const EMAILS_TAB = 'emails'
 /** Tabs that carry the email composer themselves, so the Email action stays where it is. */
 const COMPOSER_TABS = [ACTIVITY_TAB, EMAILS_TAB]
 
-export function hasComposer(name?: string) {
-  return COMPOSER_TABS.includes(activeTab(RECORD_TABS, name).name)
+// Resolved against the tabs actually on the strip: a scripted tab carries no
+// composer, so the action must switch away from it.
+export function hasComposer(tabs: { name: string }[], name?: string) {
+  const current = activeTab(tabs, name)
+  return current ? COMPOSER_TABS.includes(current.name) : false
 }
 
 export const RECORD_TABS: NavigationItem[] = [

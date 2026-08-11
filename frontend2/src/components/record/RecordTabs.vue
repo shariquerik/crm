@@ -1,6 +1,6 @@
 <!-- The tab strip and the one tab under it. -->
 <template>
-  <Tabs v-model="tabIndex" as="div" :tabs="tabs">
+  <Tabs v-if="tabs.length" v-model="tabIndex" as="div" :tabs="tabs">
     <template #tab-panel>
       <!-- A scripted tab mounts with `page` plus its author's props; a built-in
            keeps the host's own contract. -->
@@ -48,9 +48,12 @@ const { tabs: builtinTabs } = useRecordLayout(() => props.doctype)
 const controller = inject(RecordPageKey, null)
 controller?.tabs.provideBuiltins(() => builtinTabs.value as any[])
 
-const tabs = computed<any[]>(() =>
-  controller ? controller.tabs.visible() : builtinTabs.value,
-)
+// Held back until the first replay: rendering built-ins first would restructure
+// the strip on screen when scripted tabs splice in.
+const tabs = computed<any[]>(() => {
+  if (!controller) return builtinTabs.value
+  return controller.ready.value ? controller.tabs.visible() : []
+})
 
 const current = computed(() =>
   activeTab(tabs.value as any[], route.query.tab as string | undefined),
