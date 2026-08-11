@@ -10,6 +10,7 @@ from crm.domain_enrichment.install import seed_default_rules_and_mappings
 from crm.fcrm.doctype.crm_dashboard.crm_dashboard import create_default_manager_dashboard
 from crm.fcrm.doctype.crm_products.crm_products import create_product_details_script
 from crm.navigation.rail import seed_rail
+from crm.saved_views.permissions import grant_sidebar_management
 from crm.saved_views.seed import seed_saved_views
 
 
@@ -38,6 +39,7 @@ def after_install(force=False):
 	seed_default_rules_and_mappings()
 	seed_saved_views()
 	seed_rail()
+	grant_sidebar_management()
 	frappe.db.commit()
 
 
