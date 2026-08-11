@@ -35,13 +35,25 @@
         class="my-2.5 h-4 w-16 rounded"
       />
     </div>
-    <div class="flex flex-col gap-4 p-5">
-      <div v-for="index in 3" :key="index" class="flex items-center gap-3">
-        <Skeleton class="size-8 shrink-0 rounded-full" />
-        <div class="flex w-full max-w-md flex-col gap-2">
-          <Skeleton class="h-3 w-1/3 rounded" />
-          <Skeleton class="h-3 w-2/3 rounded" />
-        </div>
+    <div class="px-6 pt-4">
+      <div class="mx-auto flex w-full max-w-3xl flex-col gap-5">
+        <template v-for="(row, index) in FEED_SKELETON" :key="index">
+          <div v-if="row.kind === 'change'" class="flex items-center gap-3">
+            <Skeleton class="size-5 shrink-0 rounded-full" />
+            <Skeleton class="h-3 rounded" :class="row.width" />
+          </div>
+          <div v-else class="flex items-start gap-3">
+            <Skeleton class="size-8 shrink-0 rounded-full" />
+            <div class="flex w-full flex-col gap-2">
+              <Skeleton class="h-3 w-1/4 rounded" />
+              <Skeleton v-if="row.kind === 'email'" class="h-3 w-1/3 rounded" />
+              <Skeleton
+                class="w-full rounded-lg"
+                :class="row.kind === 'email' ? 'h-24' : 'h-16'"
+              />
+            </div>
+          </div>
+        </template>
       </div>
     </div>
     <div class="mt-auto px-6 pb-4">
@@ -83,6 +95,17 @@ const tabs = computed<any[]>(() => {
 const current = computed(() =>
   activeTab(tabs.value as any[], route.query.tab as string | undefined),
 )
+
+/** The loading feed: the shapes of a record change, a comment and an email. */
+const FEED_SKELETON = [
+  { kind: 'change', width: 'w-2/5' },
+  { kind: 'change', width: 'w-1/2' },
+  { kind: 'comment' },
+  { kind: 'change', width: 'w-1/3' },
+  { kind: 'email' },
+  { kind: 'change', width: 'w-3/5' },
+  { kind: 'comment' },
+] as { kind: string; width?: string }[]
 
 /** The author's props, v-bound beside the host's; `page` is not theirs to claim. */
 function scriptProps(item: TabItem) {
