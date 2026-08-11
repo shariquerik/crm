@@ -4,6 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Frappe CRM</title>
+    <!--
+      The rail and sidebar are transparent in dark mode (`surface-sidebar` maps to
+      `neutral/transparent`), so <html> is what paints behind them. Set here, before
+      first paint: `bg-surface-base` only resolves once the Tailwind bundle loads.
+      Mirrors frappe-ui's useTheme, which owns the same key and attribute.
+    -->
+    <script>
+      ;(function () {
+        try {
+          var stored = localStorage.getItem('theme')
+          var theme = stored === 'light' || stored === 'dark' ? stored : null
+          if (!theme) {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+          }
+          document.documentElement.setAttribute('data-theme', theme)
+          document.documentElement.style.backgroundColor =
+            theme === 'dark' ? '#171717' : '#ffffff'
+        } catch (e) {}
+      })()
+    </script>
   </head>
   <body class="h-full overflow-hidden no-scrollbar">
     <div id="app" class="h-full"></div>

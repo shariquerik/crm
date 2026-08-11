@@ -284,10 +284,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   @apply border-l border-outline-gray-1 bg-surface-base;
 }
 
-.crm-desktop-shell {
-  @apply bg-surface-sidebar dark:bg-surface-elevation-1;
-}
-
 .crm-desktop-shell :deep([data-slot='rail-item'][data-variant='tile']) {
   @apply dark:bg-surface-gray-2 dark:text-ink-gray-6;
 }
