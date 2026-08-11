@@ -4,8 +4,6 @@ import { createApp } from 'vue'
 import { FrappeUI, frappeRequest, setConfig } from 'frappe-ui'
 import { spritePlugin } from 'frappe-ui/icons'
 
-import router from '@/router'
-
 setConfig('resourceFetcher', frappeRequest)
 
 declare const __SOCKETIO_PORT__: number
@@ -19,9 +17,12 @@ declare global {
 // any other port gets a socket that silently never connects.
 const socketioPort = window.socketio_port || __SOCKETIO_PORT__
 
-// Module-scope resources with `auto` fetch as they are created, so App.vue's
-// import graph must be pulled in after the fetcher is set.
-const { default: App } = await import('@/App.vue')
+// Module-scope resources with `auto` fetch as they are created, so both import
+// graphs must be pulled in after the fetcher is set.
+const [{ default: App }, { default: router }] = await Promise.all([
+  import('@/App.vue'),
+  import('@/router'),
+])
 
 const app = createApp(App)
 
