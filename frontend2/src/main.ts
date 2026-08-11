@@ -1,7 +1,7 @@
 import '@/index.css'
 
 import { createApp } from 'vue'
-import { FrappeUI, frappeRequest, setConfig } from 'frappe-ui'
+import { FrappeUI, call, frappeRequest, setConfig } from 'frappe-ui'
 import { spritePlugin } from 'frappe-ui/icons'
 
 setConfig('resourceFetcher', frappeRequest)
@@ -29,7 +29,19 @@ const [{ default: App }, { default: router }] = await Promise.all([
 // file scripts first, then boot-listed extensions in install order.
 await import('@/customizations/register')
 const { loadFrontendExtensions } = await import('@framework/ui/experimental')
-await loadFrontendExtensions(window.extend_frontend ?? [])
+await loadFrontendExtensions(await extensionEntries())
+
+// Dev serves the raw index.html without the Jinja boot globals, so the
+// extension list comes from the dev boot endpoint instead.
+async function extensionEntries(): Promise<string[]> {
+  if (!import.meta.env.DEV) return window.extend_frontend ?? []
+  try {
+    const boot = await call('crm.www.crm.get_context_for_dev')
+    return boot?.extend_frontend ?? []
+  } catch {
+    return []
+  }
+}
 
 const app = createApp(App)
 
