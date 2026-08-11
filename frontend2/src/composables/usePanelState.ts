@@ -11,7 +11,7 @@ import { sectionName } from '@framework/ui/experimental/PanelLayout/sectionName'
 
 export const MIN_WIDTH = 320
 export const MAX_WIDTH = 640
-export const DEFAULT_WIDTH = 420
+export const DEFAULT_WIDTH = 380
 export const COLLAPSE_AT = 260
 export const REOPEN_DISTANCE = 40
 export const SNAP_DISTANCE = 7
