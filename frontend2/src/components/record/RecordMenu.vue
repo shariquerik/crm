@@ -5,7 +5,7 @@
          and a display:contents wrapper would anchor it at 0,0. -->
     <div class="flex shrink-0">
       <Tooltip text="More actions">
-        <Button icon="lucide-more-vertical" variant="subtle" />
+        <Button icon="lucide-more-horizontal" variant="subtle" />
       </Tooltip>
     </div>
   </Dropdown>
