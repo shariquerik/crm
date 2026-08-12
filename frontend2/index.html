@@ -1,15 +1,11 @@
 <!doctype html>
-<html class="h-full" lang="en">
+<!-- The rail and sidebar are transparent in dark mode, so <html> paints behind them. -->
+<html class="h-full bg-surface-base" lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Frappe CRM</title>
-    <!--
-      The rail and sidebar are transparent in dark mode (`surface-sidebar` maps to
-      `neutral/transparent`), so <html> is what paints behind them. Set here, before
-      first paint: `bg-surface-base` only resolves once the Tailwind bundle loads.
-      Mirrors frappe-ui's useTheme, which owns the same key and attribute.
-    -->
+    <!-- Sets the attribute the theme tokens key off, before first paint. -->
     <script>
       ;(function () {
         try {
@@ -21,8 +17,6 @@
               : 'light'
           }
           document.documentElement.setAttribute('data-theme', theme)
-          document.documentElement.style.backgroundColor =
-            theme === 'dark' ? '#171717' : '#ffffff'
         } catch (e) {}
       })()
     </script>
