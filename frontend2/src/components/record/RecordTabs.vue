@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Skeleton, Tabs } from 'frappe-ui'
 import type { TabItem } from '@framework/ui/experimental'
@@ -94,6 +94,14 @@ const tabs = computed<any[]>(() => {
 
 const current = computed(() =>
   activeTab(tabs.value as any[], route.query.tab as string | undefined),
+)
+
+// Fires only on a change between two shown tabs, never on the strip's first paint.
+watch(
+  () => current.value?.name,
+  (name, previous) => {
+    if (name && previous) controller?.fireEvent('on_tab_change')
+  },
 )
 
 /** The loading feed: the shapes of a record change, a comment and an email. */

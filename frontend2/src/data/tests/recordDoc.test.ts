@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  childRowEvents,
   collidingFields,
   conflictRows,
   fieldDiff,
@@ -84,6 +85,49 @@ describe('fieldDiff', () => {
     expect(fieldDiff({ website: '' }, { website: null })).toEqual({
       website: '',
     })
+  })
+})
+
+describe('childRowEvents', () => {
+  const row = (name: string) => ({ name, item: name })
+
+  it('fires _add for a new saved row and an unsaved push alike', () => {
+    expect(
+      childRowEvents(
+        ['items'],
+        { items: [row('a'), row('b')] },
+        { items: [row('a')] },
+      ),
+    ).toEqual(['items_add'])
+    expect(
+      childRowEvents(
+        ['items'],
+        { items: [row('a'), { item: 'new' }] },
+        { items: [row('a')] },
+      ),
+    ).toEqual(['items_add'])
+  })
+
+  it('fires _remove when a row leaves, both when a swap keeps the count', () => {
+    expect(
+      childRowEvents(['items'], { items: [] }, { items: [row('a')] }),
+    ).toEqual(['items_remove'])
+    expect(
+      childRowEvents(['items'], { items: [row('b')] }, { items: [row('a')] }),
+    ).toEqual(['items_add', 'items_remove'])
+  })
+
+  it('stays silent for scalar fields and for edits inside existing rows', () => {
+    expect(
+      childRowEvents(['status'], { status: 'Won' }, { status: 'Open' }),
+    ).toEqual([])
+    expect(
+      childRowEvents(
+        ['items'],
+        { items: [{ name: 'a', item: 'edited' }] },
+        { items: [row('a')] },
+      ),
+    ).toEqual([])
   })
 })
 

@@ -61,7 +61,12 @@ export function recordImageField(
   if (!fieldname) return null
   const field = docfield(meta, fieldname)
   const source = fetchSource(field, meta, doc)
-  const reason = uneditableReason(field, source, titleOf, linkLabel(field, meta))
+  const reason = uneditableReason(
+    field,
+    source,
+    titleOf,
+    linkLabel(field, meta),
+  )
   return { fieldname, editable: !reason, reason, source }
 }
 
@@ -124,6 +129,30 @@ export function fieldDiff(
     if (!isSame(current?.[fieldname], stored?.[fieldname]))
       changes[fieldname] = current?.[fieldname]
   return changes
+}
+
+/** The `<table>_add` / `<table>_remove` events a change batch implies. */
+export function childRowEvents(
+  changed: string[],
+  current: Record<string, any>,
+  previous: Record<string, any>,
+): string[] {
+  const events: string[] = []
+  for (const fieldname of changed) {
+    const before = previous?.[fieldname]
+    const after = current?.[fieldname]
+    if (!Array.isArray(before) || !Array.isArray(after)) continue
+    if (hasNewRows(after, before)) events.push(`${fieldname}_add`)
+    if (hasNewRows(before, after)) events.push(`${fieldname}_remove`)
+  }
+  return events
+}
+
+/** Whether `rows` holds a row `others` lacks — by row name, or by count for unsaved rows. */
+function hasNewRows(rows: any[], others: any[]) {
+  if (rows.length > others.length) return true
+  const names = new Set(others.map((row) => row?.name))
+  return rows.some((row) => row?.name && !names.has(row.name))
 }
 
 /** The fields two diffs off one baseline disagree about. */

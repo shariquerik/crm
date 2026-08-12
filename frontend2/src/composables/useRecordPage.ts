@@ -16,7 +16,9 @@ import { useDocinfo } from '@/composables/useDocinfo'
 import { userName } from '@/data/docinfo'
 import { fieldMetaByName } from '@/data/fieldsLayout'
 import { rememberLinkTitles } from '@/data/linkTitles'
+import { activeTab } from '@/data/recordLayout'
 import {
+  childRowEvents,
   collidingFields,
   conflictRows,
   fieldDiff,
@@ -99,6 +101,11 @@ export function useRecordPage(resources: any) {
     meta,
     perms: () => docResource.data?.docinfo?.permissions ?? {},
     isDirty: () => isDirty.value,
+    activeTab: () =>
+      activeTab(
+        pageController.tabs.visible(),
+        route.query.tab as string | undefined,
+      )?.name ?? '',
     save: () => save(),
     reload: async () => {
       await refetchCached(docResource, recordKey, doctype.value)
@@ -112,7 +119,9 @@ export function useRecordPage(resources: any) {
   function paint(payload: any) {
     lastPainted = payload
     stored.value = { ...(payload?.doc ?? {}) }
-    doc.value = { ...stored.value }
+    // Deep clone: a shared child-table array would let an in-place row push
+    // mutate the baseline too, hiding the edit from isDirty.
+    doc.value = JSON.parse(JSON.stringify(stored.value))
     rememberLinkTitles(payload?.linkTitles ?? {})
     saveError.value = ''
     painted = true
@@ -126,10 +135,14 @@ export function useRecordPage(resources: any) {
   watch(
     doc,
     () => {
-      const changed = Object.keys(fieldDiff(doc.value, fieldSnapshot))
-      fieldSnapshot = { ...doc.value }
+      const previous = fieldSnapshot
+      const changed = Object.keys(fieldDiff(doc.value, previous))
+      // A deep clone: a row pushed into a shared child-table array must still diff.
+      fieldSnapshot = JSON.parse(JSON.stringify(doc.value))
       if (painted) return (painted = false)
       for (const fieldname of changed) pageController.fireEvent(fieldname)
+      for (const event of childRowEvents(changed, doc.value, previous))
+        pageController.fireEvent(event)
     },
     { deep: true },
   )
@@ -176,9 +189,9 @@ export function useRecordPage(resources: any) {
     saving.value = true
     saveError.value = ''
     try {
+      // A before_save throw is a script's veto: it lands in this catch unsaved.
       await pageController.fireEvent('before_save')
-      await saveOrRecover()
-      await pageController.fireEvent('after_save')
+      if (await saveOrRecover()) await pageController.fireEvent('after_save')
     } catch (error: any) {
       saveError.value = errorMessage(error)
       toast.error(saveError.value)
@@ -187,13 +200,15 @@ export function useRecordPage(resources: any) {
     }
   }
 
-  async function saveOrRecover() {
+  /** Resolves true only when the server accepted a save. */
+  async function saveOrRecover(): Promise<boolean> {
     try {
       await send()
       toast.success('Saved')
+      return true
     } catch (error: any) {
       if (!isTimestampMismatch(error)) throw error
-      await recover(true)
+      return recover(true)
     }
   }
 
@@ -204,7 +219,7 @@ export function useRecordPage(resources: any) {
   }
 
   /** Recovers from a concurrent edit by three-way merge, retrying at most once. */
-  async function recover(mayRetry: boolean) {
+  async function recover(mayRetry: boolean): Promise<boolean> {
     const mine = changedFields()
     const baseline = stored.value
     await docResource.reload()
@@ -213,7 +228,10 @@ export function useRecordPage(resources: any) {
 
     const collisions = collidingFields(mine, fieldDiff(stored.value, baseline))
     reapply(mine, collisions)
-    if (collisions.length) return openConflict(editor, mine, collisions)
+    if (collisions.length) {
+      openConflict(editor, mine, collisions)
+      return false
+    }
     if (!mayRetry) throw new Error(MOVED_TWICE)
 
     try {
@@ -225,6 +243,7 @@ export function useRecordPage(resources: any) {
     toast.success(
       `Saved. ${editor} also edited this record while you were working.`,
     )
+    return true
   }
 
   function reapply(mine: Record<string, any>, collisions: string[]) {
@@ -283,7 +302,7 @@ export function useRecordPage(resources: any) {
   /** Takes the save response as the new baseline. */
   function paintSaved(saved: Record<string, any>) {
     stored.value = { ...saved }
-    doc.value = { ...saved }
+    doc.value = JSON.parse(JSON.stringify(saved))
     doctypeChanged(doctype.value)
     painted = true
     pageController.refresh()
