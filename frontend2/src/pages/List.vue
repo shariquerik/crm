@@ -100,12 +100,9 @@
       :actions="createActions"
     >
       <template #body-content>
-        <FormLayout
-          v-if="createLayout.length"
-          class="w-full"
-          :doc="newDoc"
-          :layout="createLayout"
-        />
+        <div v-if="createLayout.length" @focusout="commitDraft">
+          <FormLayout class="w-full" :doc="newDoc" :layout="createLayout" />
+        </div>
         <ErrorMessage v-if="createError" :message="createError" />
       </template>
     </Dialog>
@@ -185,6 +182,7 @@ const {
   createTitle,
   createActions,
   openCreate,
+  commitDraft,
   deleteDialog,
   deleteError,
   deleteTitle,

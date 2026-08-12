@@ -13,21 +13,29 @@ export function useCreateDoc(options: {
 
   const createDialog = ref(false)
   const newDoc = ref<Record<string, any>>({})
+  // Conditions read this focus-out snapshot of the draft, not the draft itself:
+  // reshaping on the keystroke that satisfies them would remount under the cursor.
+  const committedDoc = ref<Record<string, any>>({})
   const creating = ref(false)
   const createError = ref('')
 
   const { layout: createLayout } = useFormLayout({
     doctype,
     type: 'Quick Entry',
-    doc: newDoc,
+    doc: committedDoc,
   })
 
   const createTitle = `New ${doctype}`
 
   function openCreate() {
     newDoc.value = {}
+    committedDoc.value = {}
     createError.value = ''
     createDialog.value = true
+  }
+
+  function commitDraft() {
+    committedDoc.value = { ...newDoc.value }
   }
 
   async function createDoc() {
@@ -69,5 +77,6 @@ export function useCreateDoc(options: {
     createTitle,
     createActions,
     openCreate,
+    commitDraft,
   }
 }
