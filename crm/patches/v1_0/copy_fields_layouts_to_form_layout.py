@@ -1,6 +1,6 @@
 import frappe
 
-TYPE_MAP = {"Data Fields": "Record", "Quick Entry": "Quick Entry"}
+TYPE_MAP = {"Data Fields": "Details", "Side Panel": "Side Panel", "Quick Entry": "Quick Entry"}
 
 
 def execute():

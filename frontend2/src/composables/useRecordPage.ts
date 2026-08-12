@@ -50,9 +50,18 @@ export function useRecordPage(resources: any) {
   // keystroke that satisfied it would remount the form and steal focus.
   const { layout } = useFormLayout({
     doctype: doctype.value,
-    type: 'Record',
+    type: 'Details',
     doc: stored,
   })
+  const panelSource = useFormLayout({
+    doctype: doctype.value,
+    type: 'Side Panel',
+    doc: stored,
+    fallback: 'none',
+  })
+  const panelLayout = computed(() =>
+    panelSource.layout.value.length ? panelSource.layout.value : layout.value,
+  )
 
   const recordKey = `record:${doctype.value}/${docname}`
 
@@ -283,6 +292,7 @@ export function useRecordPage(resources: any) {
   return {
     doc,
     layout,
+    panelLayout,
     pageController,
     isDirty,
     changedFields,

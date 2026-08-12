@@ -28,7 +28,7 @@
       :doctype="doctype"
       :docname="docname"
       :chrome="chrome"
-      :layout="layout"
+      :layout="panelLayout"
     />
 
     <SaveConflictDialog
@@ -67,6 +67,7 @@ const resources = recordResources(doctype, docname)
 const {
   doc,
   layout,
+  panelLayout,
   pageController,
   isDirty,
   saving,
