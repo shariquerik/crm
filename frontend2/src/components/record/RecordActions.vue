@@ -21,11 +21,12 @@
         />
 
         <!-- `icon` is what makes a Button icon-only; a named one takes `icon-left`. -->
-        <!-- A named button says it already; the tooltip is for the bare icons. -->
+        <!-- The tooltip names a bare icon with the label, so a script's relabel
+             shows wherever the label would. -->
         <Tooltip
           v-else
           :key="action.icon"
-          :text="action.description"
+          :text="action.label"
           :placement="placement"
           :disabled="index < labelled"
         >
@@ -33,7 +34,7 @@
             :icon="index < labelled ? undefined : action.icon"
             :icon-left="index < labelled ? action.icon : undefined"
             :label="index < labelled ? action.label : undefined"
-            :aria-label="index < labelled ? undefined : action.description"
+            :aria-label="index < labelled ? undefined : action.label"
             variant="subtle"
             @click="invoke(action)"
           />
