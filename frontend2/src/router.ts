@@ -9,6 +9,11 @@ const routes = [
     component: () => import('@/pages/Home.vue'),
   },
   {
+    path: '/page-scripts/:doctype',
+    name: 'PageScripts',
+    component: () => import('@/pages/PageScripts.vue'),
+  },
+  {
     path: '/:doctype',
     name: 'List',
     component: () => import('@/pages/List.vue'),

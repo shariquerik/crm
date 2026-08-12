@@ -11,12 +11,18 @@
   </Dropdown>
 
   <Dialog v-model="confirmingDelete" :options="deleteOptions" />
+
+  <PageScriptEditorDialog v-model="editingScripts" :dt="doctype" />
 </template>
 
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button, Dialog, Dropdown, Tooltip, call, toast } from 'frappe-ui'
+import {
+  PageScriptEditorDialog,
+  canWritePageScripts,
+} from '@framework/ui/experimental'
 
 import type { RecordChrome } from '@/data/docinfo'
 import { doctypeChanged } from '@/data/doctypeChanged'
@@ -34,6 +40,7 @@ const props = defineProps<{
 const router = useRouter()
 
 const confirmingDelete = ref(false)
+const editingScripts = ref(false)
 
 const listRoute = computed(() => `/${encodeURIComponent(props.doctype)}`)
 
@@ -72,6 +79,17 @@ const builtins = computed<MenuAction[]>(() => [
     icon: 'lucide-copy',
     run: duplicate,
   },
+  ...(canWritePageScripts.value
+    ? [
+        {
+          name: 'page_scripts',
+          group: 'customize',
+          label: 'Edit page scripts',
+          icon: 'lucide-code',
+          run: () => (editingScripts.value = true),
+        },
+      ]
+    : []),
   {
     name: 'delete',
     group: 'delete',
