@@ -6,6 +6,7 @@ import {
   createRecordPage,
   useFormLayout,
   useNavigation,
+  usePageScripts,
 } from '@framework/ui/experimental'
 import { APP_NAME } from '@/data/apps'
 import { doctypeLabel, routeDoctype } from '@/data/doctypes'
@@ -94,6 +95,10 @@ export function useRecordPage(resources: any) {
 
   const isDirty = computed(() => Object.keys(changedFields()).length > 0)
 
+  const pageScripts = usePageScripts(doctype.value, {
+    onChange: () => pageController.refresh(),
+  })
+
   const pageController = createRecordPage({
     doctype: doctype.value,
     docname,
@@ -111,6 +116,7 @@ export function useRecordPage(resources: any) {
       await refetchCached(docResource, recordKey, doctype.value)
     },
     router,
+    sourcesReady: () => pageScripts.ready,
   })
 
   let lastPainted: any = null
