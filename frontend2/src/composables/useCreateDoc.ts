@@ -1,27 +1,32 @@
 import { computed, ref } from 'vue'
 import { call, toast } from 'frappe-ui'
+import { useFormLayout } from '@framework/ui/experimental'
 import { errorMessage } from '@/data/errors'
 import { doctypeChanged } from '@/data/doctypeChanged'
 
 export function useCreateDoc(options: {
-  createLayout: any
   doctype: string
   route: any
   router: any
 }) {
-  const { createLayout, doctype, route, router } = options
+  const { doctype, route, router } = options
 
   const createDialog = ref(false)
   const newDoc = ref<Record<string, any>>({})
   const creating = ref(false)
   const createError = ref('')
 
+  const { layout: createLayout } = useFormLayout({
+    doctype,
+    type: 'Quick Entry',
+    doc: newDoc,
+  })
+
   const createTitle = `New ${doctype}`
 
   function openCreate() {
     newDoc.value = {}
     createError.value = ''
-    if (!createLayout.data && !createLayout.loading) createLayout.fetch()
     createDialog.value = true
   }
 
@@ -57,6 +62,7 @@ export function useCreateDoc(options: {
 
   return {
     createDialog,
+    createLayout,
     newDoc,
     creating,
     createError,

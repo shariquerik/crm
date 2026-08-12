@@ -20,7 +20,7 @@
       :docname="docname"
       :docinfo="docinfo"
       :feeds="feeds"
-      :layout="fieldsLayout.data || []"
+      :layout="layout"
     />
 
     <RecordPanel
@@ -28,7 +28,7 @@
       :doctype="doctype"
       :docname="docname"
       :chrome="chrome"
-      :layout="fieldsLayout.data || []"
+      :layout="layout"
     />
 
     <SaveConflictDialog
@@ -63,10 +63,10 @@ const doctype = route.params.doctype as string
 const docname = route.params.id as string
 
 const resources = recordResources(doctype, docname)
-const { fieldsLayout } = resources
 
 const {
   doc,
+  layout,
   pageController,
   isDirty,
   saving,

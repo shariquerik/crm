@@ -20,7 +20,7 @@ const GENERIC_COLUMNS = [
 ]
 
 export function useListPage(resources: any) {
-  const { listData, createLayout } = resources
+  const { listData } = resources
   const route = useRoute()
   const router = useRouter()
 
@@ -80,7 +80,7 @@ export function useListPage(resources: any) {
 
   if (routeDoctype(doctype) !== null) loadMeta(doctype)
 
-  const createDoc = useCreateDoc({ createLayout, doctype, route, router })
+  const createDoc = useCreateDoc({ doctype, route, router })
   const bulkDelete = useBulkDelete({ listData, doctype, submit: query.submit })
 
   const controlOptions = computed(() => [

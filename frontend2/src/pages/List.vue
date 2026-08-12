@@ -101,10 +101,10 @@
     >
       <template #body-content>
         <FormLayout
-          v-if="createLayout.data?.length"
+          v-if="createLayout.length"
           class="w-full"
           :doc="newDoc"
-          :layout="createLayout.data || []"
+          :layout="createLayout"
         />
         <ErrorMessage v-if="createError" :message="createError" />
       </template>
@@ -152,7 +152,7 @@ const knownDoctype = computed(
 )
 
 const resources = listResources(route.params.doctype as string)
-const { listData, createLayout } = resources
+const { listData } = resources
 
 const {
   filters,
@@ -179,6 +179,7 @@ const {
   saveAsLabel,
   saveAsActions,
   createDialog,
+  createLayout,
   newDoc,
   createError,
   createTitle,

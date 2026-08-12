@@ -2,7 +2,11 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { call, toast } from 'frappe-ui'
 import { useDoctypeMeta } from '@framework/ui'
-import { createRecordPage, useNavigation } from '@framework/ui/experimental'
+import {
+  createRecordPage,
+  useFormLayout,
+  useNavigation,
+} from '@framework/ui/experimental'
 import { APP_NAME } from '@/data/apps'
 import { doctypeLabel, routeDoctype } from '@/data/doctypes'
 import { errorMessage } from '@/data/errors'
@@ -22,12 +26,11 @@ import {
   type Conflict,
 } from '@/data/recordDoc'
 
-const FIELDS_LAYOUT_TAG = 'CRM Fields Layout'
 const MOVED_TWICE =
   'The record changed again while it was saving. Your edits are kept — save again to try once more.'
 
 export function useRecordPage(resources: any) {
-  const { docResource, fieldsLayout, files } = resources
+  const { docResource, files } = resources
   const route = useRoute()
   const router = useRouter()
 
@@ -43,6 +46,11 @@ export function useRecordPage(resources: any) {
   const docname = route.params.id as string
   const doctypeLink = computed(() => `/${encodeURIComponent(doctype.value)}`)
   const { meta } = useDoctypeMeta(doctype)
+  const { layout } = useFormLayout({
+    doctype: doctype.value,
+    type: 'Record',
+    doc,
+  })
 
   const recordKey = `record:${doctype.value}/${docname}`
 
@@ -64,9 +72,7 @@ export function useRecordPage(resources: any) {
     : null
 
   if (routeDoctype(doctype.value) !== null) {
-    const name = doctype.value
-    fetchCached(docResource, recordKey, name)
-    fetchCached(fieldsLayout, `layout:${name}`, FIELDS_LAYOUT_TAG)
+    fetchCached(docResource, recordKey, doctype.value)
   }
 
   function changedFields() {
@@ -227,7 +233,7 @@ export function useRecordPage(resources: any) {
         collisions,
         mine,
         stored.value,
-        fieldMetaByName(fieldsLayout.data || []),
+        fieldMetaByName(layout.value),
         stored.value,
       ),
     }
@@ -274,6 +280,7 @@ export function useRecordPage(resources: any) {
 
   return {
     doc,
+    layout,
     pageController,
     isDirty,
     changedFields,
