@@ -46,10 +46,12 @@ export function useRecordPage(resources: any) {
   const docname = route.params.id as string
   const doctypeLink = computed(() => `/${encodeURIComponent(doctype.value)}`)
   const { meta } = useDoctypeMeta(doctype)
+  // Conditions read the saved doc, not the draft: a layout that flipped on the
+  // keystroke that satisfied it would remount the form and steal focus.
   const { layout } = useFormLayout({
     doctype: doctype.value,
     type: 'Record',
-    doc,
+    doc: stored,
   })
 
   const recordKey = `record:${doctype.value}/${docname}`
