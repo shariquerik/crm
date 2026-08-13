@@ -29,7 +29,7 @@ describe('clampWidth', () => {
   })
 
   it('falls back to the default for a value that is not a number', () => {
-    expect(clampWidth(NaN)).toBe(420)
+    expect(clampWidth(NaN)).toBe(380)
   })
 })
 
@@ -44,9 +44,9 @@ describe('dragOutcome', () => {
   })
 
   it('settles on the default width when the drag passes close to it', () => {
-    expect(dragOutcome(true, 480, -55)).toEqual({ width: 420 })
-    expect(dragOutcome(true, 480, -66)).toEqual({ width: 420 })
-    expect(dragOutcome(true, 480, -45)).toEqual({ width: 435 })
+    expect(dragOutcome(true, 480, -105)).toEqual({ width: 380 })
+    expect(dragOutcome(true, 480, -94)).toEqual({ width: 380 })
+    expect(dragOutcome(true, 480, -85)).toEqual({ width: 395 })
   })
 
   it('collapses when the drag passes the threshold', () => {
@@ -125,10 +125,10 @@ describe('divergencesOf', () => {
 describe('usePanelState', () => {
   beforeEach(() => localStorage.clear())
 
-  it('opens expanded at 420px on a first visit', () => {
+  it('opens expanded at 380px on a first visit', () => {
     const panel = usePanelState('Contact', () => layout)
 
-    expect(panel.width.value).toBe(420)
+    expect(panel.width.value).toBe(380)
     expect(panel.collapsed.value).toBe(false)
   })
 
