@@ -1,11 +1,13 @@
 # Copyright (c) 2022, Frappe Technologies Pvt. Ltd. and Contributors
 # GNU GPLv3 License. See license.txt
 
+import os
+
 import frappe
 from frappe import _, get_installed_apps
 from frappe.integrations.frappe_providers.frappecloud_billing import is_fc_site
 from frappe.translate import get_messages_for_boot, get_translated_doctypes
-from frappe.utils import cint, get_system_timezone
+from frappe.utils import cint, get_build_version, get_system_timezone
 from frappe.utils.telemetry import capture
 
 no_cache = 1
@@ -60,9 +62,29 @@ def get_boot():
 
 
 def get_frontend_extensions() -> list[str]:
-	"""Asset URLs of every installed app extending this frontend, in install order."""
+	"""Asset URLs of every installed app extending this frontend, in install order.
+
+	Each URL carries the file's own mtime: extension files are stable-named
+	(``extension.js``, not ``extension-<hash>.js``), so without a cache key a redeploy
+	is served from the browser cache. Per-file rather than the site's
+	``get_build_version()``, because an extension is rebuilt by its own ``vite build``
+	into its app's ``public/`` — which never touches ``sites/assets/assets.json``.
+	"""
 	entries = frappe.get_hooks("extend_frontend") or {}
-	return [f"/assets/{entry}" for entry in entries.get("crm", [])]
+	return [f"/assets/{entry}?v={get_asset_version(entry)}" for entry in entries.get("crm", [])]
+
+
+def get_asset_version(entry: str) -> str:
+	"""mtime of a built asset; the site build version when it cannot be read.
+
+	Broad except on purpose: this runs inside ``get_boot``, so a missing asset or an
+	unset ``sites_path`` must degrade to a stale-but-working cache key, never break
+	the whole CRM page load.
+	"""
+	try:
+		return str(int(os.path.getmtime(os.path.join(frappe.local.sites_path, "assets", entry))))
+	except Exception:
+		return get_build_version()
 
 
 def get_state_options() -> dict[str, list[str]]:
