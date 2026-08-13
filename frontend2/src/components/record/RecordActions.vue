@@ -20,9 +20,8 @@
           @remove="chrome.removeTag"
         />
 
-        <!-- `icon` is what makes a Button icon-only; a named one takes `icon-left`. -->
-        <!-- The tooltip names a bare icon with the label, so a script's relabel
-             shows wherever the label would. -->
+        <!-- `icon` is what makes a Button icon-only; a named one takes `icon-left`.
+             `label` goes on both: Button overwrites any `aria-label` with its own. -->
         <Tooltip
           v-else
           :key="action.icon"
@@ -33,8 +32,7 @@
           <Button
             :icon="index < labelled ? undefined : action.icon"
             :icon-left="index < labelled ? action.icon : undefined"
-            :label="index < labelled ? action.label : undefined"
-            :aria-label="index < labelled ? undefined : action.label"
+            :label="action.label"
             variant="subtle"
             @click="invoke(action)"
           />
@@ -46,7 +44,11 @@
         <Dropdown :options="overflow" side="bottom" align="end">
           <div class="flex shrink-0">
             <Tooltip text="More quick actions" :placement="placement">
-              <Button icon="lucide-more-horizontal" variant="subtle" />
+              <Button
+                icon="lucide-more-horizontal"
+                label="More quick actions"
+                variant="subtle"
+              />
             </Tooltip>
           </div>
         </Dropdown>
