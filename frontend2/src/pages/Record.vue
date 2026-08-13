@@ -38,6 +38,11 @@
       @resolve="resolveConflict"
       @discard="discardConflict"
     />
+
+    <!-- Scripts' `page.dialog.open`/`form` stack. Inside the record page on
+         purpose: leaving the record unmounts it, which closes what a script
+         left open. -->
+    <PageDialogs :controller="pageController" />
   </div>
 
   <NotFoundPage v-else :doctype="doctype" />
@@ -47,6 +52,7 @@
 import { computed, provide } from 'vue'
 import { useRoute } from 'vue-router'
 
+import { PageDialogs } from '@framework/ui/experimental'
 import NotFoundPage from '@/components/NotFoundPage.vue'
 import RecordHeader from '@/components/record/RecordHeader.vue'
 import RecordPanel from '@/components/record/RecordPanel.vue'
