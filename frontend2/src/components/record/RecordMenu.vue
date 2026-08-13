@@ -12,7 +12,13 @@
 
   <Dialog v-model="confirmingDelete" :options="deleteOptions" />
 
-  <PageScriptEditorDialog v-model="editingScripts" :dt="doctype" />
+  <!-- `replaysOn` names the record the editor is open over, so a save can say
+       what it just took effect on rather than just "Saved". -->
+  <PageScriptEditorDialog
+    v-model="editingScripts"
+    :dt="doctype"
+    :replaysOn="docname"
+  />
 </template>
 
 <script setup lang="ts">
