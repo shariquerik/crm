@@ -11,25 +11,15 @@
   </Dropdown>
 
   <Dialog v-model="confirmingDelete" :options="deleteOptions" />
-
-  <!-- `replaysOn` names the record the editor is open over, so a save can say
-       what it just took effect on rather than just "Saved". -->
-  <PageScriptEditorDialog
-    v-model="editingScripts"
-    :dt="doctype"
-    :replaysOn="docname"
-  />
 </template>
 
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button, Dialog, Dropdown, Tooltip, call, toast } from 'frappe-ui'
-import {
-  PageScriptEditorDialog,
-  canWritePageScripts,
-} from '@framework/ui/experimental'
+import { canWritePageScripts } from '@framework/ui/experimental'
 
+import { usePageScriptsDialog } from '@/composables/usePageScriptsDialog'
 import type { RecordChrome } from '@/data/docinfo'
 import { doctypeChanged } from '@/data/doctypeChanged'
 import { errorMessage } from '@/data/errors'
@@ -46,7 +36,8 @@ const props = defineProps<{
 const router = useRouter()
 
 const confirmingDelete = ref(false)
-const editingScripts = ref(false)
+
+const { openPageScripts } = usePageScriptsDialog()
 
 const listRoute = computed(() => `/${encodeURIComponent(props.doctype)}`)
 
@@ -92,7 +83,7 @@ const builtins = computed<MenuAction[]>(() => [
           group: 'customize',
           label: 'Edit page scripts',
           icon: 'lucide-code',
-          run: () => (editingScripts.value = true),
+          run: () => openPageScripts(props.doctype),
         },
       ]
     : []),

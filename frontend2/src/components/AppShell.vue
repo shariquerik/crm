@@ -155,6 +155,12 @@
 
     <RailEditorDialog v-model="editingRail" />
     <SettingsDialog />
+    <PageScriptEditorDialog
+      v-model="editingScripts"
+      v-model:script="editedScript"
+      :dt="scriptedDoctype"
+      :replaysOn="replaysOn"
+    />
     <AboutDialog v-model="showAbout" />
   </DesktopShell>
 </template>
@@ -175,6 +181,7 @@ import {
   IconGlyph,
   itemTarget,
   NavigationSidebar,
+  PageScriptEditorDialog,
 } from '@framework/ui/experimental'
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -187,6 +194,7 @@ import SidebarEdge from '@/components/SidebarEdge.vue'
 import { deriveShellChrome } from '@/components/shellChrome'
 import { useAccountMenu } from '@/composables/useAccountMenu'
 import { useAppMenu } from '@/composables/useAppMenu'
+import { usePageScriptsDialog } from '@/composables/usePageScriptsDialog'
 import { APP_NAME, LOGO_URL } from '@/data/apps'
 import { doctypeIcon, doctypeLabel } from '@/data/doctypes'
 import {
@@ -273,6 +281,20 @@ function openDocs() {
 }
 
 const { userMenuOptions } = useAccountMenu()
+
+const {
+  open: editingScripts,
+  doctype: scriptedDoctype,
+  script: editedScript,
+} = usePageScriptsDialog()
+
+// The editor is addressed from anywhere, so the record it replays on is the one
+// the page behind it is showing — and only when it is that doctype's.
+const replaysOn = computed(() =>
+  route.params.doctype === scriptedDoctype.value
+    ? (route.params.id as string) || undefined
+    : undefined,
+)
 
 onMounted(() => window.addEventListener('keydown', onKeydown))
 

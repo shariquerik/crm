@@ -1,39 +1,27 @@
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useHashDialog } from '@framework/ui/experimental'
 
-const HASH_ROOT = 'settings'
 const DEFAULT_TAB = 'profile'
 
 export function useSettingsDialog() {
-  const route = useRoute()
-  const router = useRouter()
-
-  const segments = computed(() => {
-    const parts = route.hash.replace(/^#/, '').split('/')
-    return parts[0] === HASH_ROOT ? parts.slice(1) : null
-  })
+  const dialog = useHashDialog('settings')
 
   const open = computed({
-    get: () => segments.value !== null,
+    get: () => dialog.open.value,
     set: (value) => {
-      if (value === open.value) return
+      if (value === dialog.open.value) return
       if (value) openSettings()
-      else write([])
+      else dialog.close()
     },
   })
 
   const tab = computed({
-    get: () => segments.value?.[0] || DEFAULT_TAB,
-    set: (value) => write([String(value ?? DEFAULT_TAB)]),
+    get: () => dialog.segments.value[0] || DEFAULT_TAB,
+    set: (value) => dialog.write(String(value ?? DEFAULT_TAB)),
   })
 
   function openSettings(...path: string[]) {
-    write(path.length ? path : [DEFAULT_TAB])
-  }
-
-  function write(path: string[]) {
-    const hash = path.length ? `#${[HASH_ROOT, ...path].join('/')}` : ''
-    router.push({ query: route.query, hash })
+    dialog.write(...(path.length ? path : [DEFAULT_TAB]))
   }
 
   return { open, tab, openSettings }
