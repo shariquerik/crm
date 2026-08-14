@@ -14,16 +14,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button, Dialog, Dropdown, Tooltip, call, toast } from 'frappe-ui'
-import { canWritePageScripts } from '@framework/ui/experimental'
+import {
+  canWritePageScripts,
+  type RecordPageController,
+} from '@framework/ui/experimental'
 
 import { usePageScriptsDialog } from '@/composables/usePageScriptsDialog'
 import type { RecordChrome } from '@/data/docinfo'
 import { doctypeChanged } from '@/data/doctypeChanged'
 import { errorMessage } from '@/data/errors'
-import { RecordPageKey } from '@/data/pageContext'
 import { duplicatePayload } from '@/data/recordActions'
 
 const props = defineProps<{
@@ -31,6 +33,9 @@ const props = defineProps<{
   docname: string
   doc: Record<string, any>
   chrome: RecordChrome
+  // Passed down, not injected: the header renders through PageHeaderPortal, whose
+  // slot mounts under AppShell, where inject() cannot reach Record.vue's provide.
+  controller?: RecordPageController | null
 }>()
 
 const router = useRouter()
@@ -96,12 +101,14 @@ const builtins = computed<MenuAction[]>(() => [
   },
 ])
 
-const controller = inject(RecordPageKey, null)
-controller?.headerActions.provideBuiltins(() => builtins.value)
+const controller = computed(() => props.controller ?? null)
+watchEffect(() =>
+  controller.value?.headerActions.provideBuiltins(() => builtins.value),
+)
 
 const resolved = computed<MenuAction[]>(() =>
-  controller
-    ? (controller.headerActions.visible() as MenuAction[])
+  controller.value
+    ? (controller.value.headerActions.visible() as MenuAction[])
     : builtins.value,
 )
 
@@ -112,7 +119,7 @@ const menuOptions = computed(() =>
     options: band.items.map((item) => ({
       label: item.label,
       icon: item.icon,
-      onClick: () => item.run?.(controller?.page),
+      onClick: () => item.run?.(controller.value?.page),
     })),
   })),
 )

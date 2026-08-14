@@ -34,6 +34,7 @@
           :docname="docname"
           :doc="doc"
           :chrome="chrome"
+          :controller="controller"
         />
 
         <Tooltip text="No changes to save" :disabled="isDirty">
@@ -55,6 +56,7 @@
 </template>
 
 <script setup lang="ts">
+import { inject } from 'vue'
 import { Button, Skeleton, Tooltip } from 'frappe-ui'
 
 import PageBreadcrumbs from '@/components/PageBreadcrumbs.vue'
@@ -62,6 +64,7 @@ import PageHeaderPortal from '@/components/PageHeaderPortal.vue'
 import RecordFavourite from '@/components/record/RecordFavourite.vue'
 import RecordMenu from '@/components/record/RecordMenu.vue'
 import type { RecordChrome } from '@/data/docinfo'
+import { RecordPageKey } from '@/data/pageContext'
 
 defineProps<{
   breadcrumbs: any[]
@@ -74,4 +77,6 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{ save: [] }>()
+
+const controller = inject(RecordPageKey, null)
 </script>
