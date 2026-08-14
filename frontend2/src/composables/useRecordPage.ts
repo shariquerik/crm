@@ -3,6 +3,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { call, toast } from 'frappe-ui'
 import { useDoctypeMeta } from '@framework/ui'
 import {
+  createCommitChannel,
   createRecordPage,
   useFormLayout,
   useNavigation,
@@ -19,7 +20,6 @@ import { fieldMetaByName } from '@/data/fieldsLayout'
 import { rememberLinkTitles } from '@/data/linkTitles'
 import { activeTab } from '@/data/recordLayout'
 import {
-  childRowEvents,
   collidingFields,
   conflictRows,
   fieldDiff,
@@ -119,8 +119,13 @@ export function useRecordPage(resources: any) {
     sourcesReady: () => pageScripts.ready,
   })
 
+  // Field events are dispatched where the edit happens, so a paint — which
+  // replaces the whole document — fires nothing and needs no flag to suppress.
+  const commits = createCommitChannel({
+    dispatch: (event) => pageController.fireEvent(event),
+  })
+
   let lastPainted: any = null
-  let painted = false
 
   function paint(payload: any) {
     lastPainted = payload
@@ -130,28 +135,8 @@ export function useRecordPage(resources: any) {
     doc.value = JSON.parse(JSON.stringify(stored.value))
     rememberLinkTitles(payload?.linkTitles ?? {})
     saveError.value = ''
-    painted = true
     pageController.refresh()
   }
-
-  // Scripts' `<fieldname>` handlers fire on edits, not on paints: a paint only
-  // resyncs the snapshot the next edit diffs against.
-  let fieldSnapshot: Record<string, any> = {}
-
-  watch(
-    doc,
-    () => {
-      const previous = fieldSnapshot
-      const changed = Object.keys(fieldDiff(doc.value, previous))
-      // A deep clone: a row pushed into a shared child-table array must still diff.
-      fieldSnapshot = JSON.parse(JSON.stringify(doc.value))
-      if (painted) return (painted = false)
-      for (const fieldname of changed) pageController.fireEvent(fieldname)
-      for (const event of childRowEvents(changed, doc.value, previous))
-        pageController.fireEvent(event)
-    },
-    { deep: true },
-  )
 
   // The cached record paints first and the fetched one lands behind it; typing in that
   // window is the reader's, not a stale copy to overwrite.
@@ -190,6 +175,9 @@ export function useRecordPage(resources: any) {
       conflictVisible.value = true
       return
     }
+    // An edit still in a focused input has not committed, so its handler runs
+    // here — a save must never carry a value the script never saw.
+    await commits.flush()
     if (!isDirty.value) return toast('No changes to save')
 
     saving.value = true
@@ -310,7 +298,6 @@ export function useRecordPage(resources: any) {
     stored.value = { ...saved }
     doc.value = JSON.parse(JSON.stringify(saved))
     doctypeChanged(doctype.value)
-    painted = true
     pageController.refresh()
   }
 
@@ -319,6 +306,7 @@ export function useRecordPage(resources: any) {
     layout,
     panelLayout,
     pageController,
+    commits,
     isDirty,
     changedFields,
     feeds: { files },

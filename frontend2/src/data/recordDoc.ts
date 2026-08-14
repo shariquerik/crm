@@ -131,30 +131,6 @@ export function fieldDiff(
   return changes
 }
 
-/** The `<table>_add` / `<table>_remove` events a change batch implies. */
-export function childRowEvents(
-  changed: string[],
-  current: Record<string, any>,
-  previous: Record<string, any>,
-): string[] {
-  const events: string[] = []
-  for (const fieldname of changed) {
-    const before = previous?.[fieldname]
-    const after = current?.[fieldname]
-    if (!Array.isArray(before) || !Array.isArray(after)) continue
-    if (hasNewRows(after, before)) events.push(`${fieldname}_add`)
-    if (hasNewRows(before, after)) events.push(`${fieldname}_remove`)
-  }
-  return events
-}
-
-/** Whether `rows` holds a row `others` lacks — by row name, or by count for unsaved rows. */
-function hasNewRows(rows: any[], others: any[]) {
-  if (rows.length > others.length) return true
-  const names = new Set(others.map((row) => row?.name))
-  return rows.some((row) => row?.name && !names.has(row.name))
-}
-
 /** The fields two diffs off one baseline disagree about. */
 export function collidingFields(
   mine: Record<string, any>,

@@ -123,14 +123,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button, Dialog, Dropdown, ErrorMessage, TextInput } from 'frappe-ui'
 import { Filter } from '@framework/ui/components/Filter'
 import { SortBy } from '@framework/ui/components/SortBy'
 import { ColumnSettings } from '@framework/ui/components/ColumnSettings'
 import { QuickFilter } from '@framework/ui/components/QuickFilter'
-import { FormLayout } from '@framework/ui/components/FormLayout'
+import { CommitKey, FormLayout, NO_COMMIT } from '@framework/ui/components/FormLayout'
 
 import ListSurface from '@/components/list/ListSurface.vue'
 import NotFoundPage from '@/components/NotFoundPage.vue'
@@ -143,6 +143,9 @@ import { useScrollRestore } from '@/composables/usePageState'
 
 const route = useRoute()
 const router = useRouter()
+
+// The create dialog's doc is not a record, so nothing scripts its fields.
+provide(CommitKey, NO_COMMIT)
 
 const knownDoctype = computed(
   () => routeDoctype(route.params.doctype as string) !== null,

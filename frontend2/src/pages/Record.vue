@@ -53,6 +53,7 @@ import { computed, provide } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { PageDialogs } from '@framework/ui/experimental'
+import { CommitKey } from '@framework/ui/components/FormLayout'
 import NotFoundPage from '@/components/NotFoundPage.vue'
 import RecordHeader from '@/components/record/RecordHeader.vue'
 import RecordPanel from '@/components/record/RecordPanel.vue'
@@ -75,6 +76,7 @@ const {
   layout,
   panelLayout,
   pageController,
+  commits,
   isDirty,
   saving,
   breadcrumbs,
@@ -89,6 +91,8 @@ const {
 } = useRecordPage(resources)
 
 provide(RecordPageKey, pageController)
+// Field commits reach the page from here: the form itself emits nothing.
+provide(CommitKey, commits)
 
 const knownDoctype = computed(() => routeDoctype(doctype) !== null)
 </script>
