@@ -49,18 +49,23 @@ export function useRecordPage(resources: any) {
   const docname = route.params.id as string
   const doctypeLink = computed(() => `/${encodeURIComponent(doctype.value)}`)
   const { meta } = useDoctypeMeta(doctype)
+  // What `page.fields` has overridden this replay. A getter, not a value: the
+  // controller is built below, and the layout is only ever read after setup.
+  const overrides = () => pageController.fields.resolve()
   // Conditions read the saved doc, not the draft: a layout that flipped on the
   // keystroke that satisfied it would remount the form and steal focus.
   const { layout } = useFormLayout({
     doctype: doctype.value,
     type: 'Details',
     doc: stored,
+    overrides,
   })
   const panelSource = useFormLayout({
     doctype: doctype.value,
     type: 'Side Panel',
     doc: stored,
     fallback: 'none',
+    overrides,
   })
   const panelLayout = computed(() =>
     panelSource.layout.value.length ? panelSource.layout.value : layout.value,
@@ -103,6 +108,7 @@ export function useRecordPage(resources: any) {
     doctype: doctype.value,
     docname,
     doc,
+    saved: stored,
     meta,
     perms: () => docResource.data?.docinfo?.permissions ?? {},
     isDirty: () => isDirty.value,
