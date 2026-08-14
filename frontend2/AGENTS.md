@@ -24,8 +24,16 @@ beta.19. Never reach across into `frontend/`.
 ```
 yarn dev          # dev server
 yarn build        # writes crm/public/frontend2 + crm/www/crm2.html
-yarn test:run
+yarn test:run     # this app's own tests
+yarn test:engine  # @framework/ui's suite, run from here
 ```
+
+`yarn test:engine` exists because the engine repo (`apps/frappe/ui`) ships no vitest
+config and cannot easily have one — its tests import `frappe-ui`, which is installed
+in *this* app's `node_modules`. Run it before touching anything under
+`@framework/ui`; **it is green, so any red is yours.** Both of its long-standing
+failures were fixed on 2026-08-15 (`vitest.engine.config.js` explains what they were),
+and the config is committed precisely so nobody re-derives it from memory again.
 
 Two constraints worth knowing:
 

@@ -8,7 +8,8 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:engine": "vitest run --config vitest.engine.config.js"
   },
   "dependencies": {
     "@framework/ui": "link:../../frappe/ui",
