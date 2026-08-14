@@ -48,7 +48,9 @@ export function useRecordPage(resources: any) {
   const doctype = computed(() => route.params.doctype as string)
   const docname = route.params.id as string
   const doctypeLink = computed(() => `/${encodeURIComponent(doctype.value)}`)
-  const { meta } = useDoctypeMeta(doctype)
+  // `metas` is every doctype `getdoctype` returned, child tables included — it is
+  // what lets the engine know a child table's fieldnames, and so its events.
+  const { meta, metas } = useDoctypeMeta(doctype)
   // What `page.fields` has overridden this replay. A getter, not a value: the
   // controller is built below, and the layout is only ever read after setup.
   const overrides = () => pageController.fields.resolve()
@@ -122,13 +124,14 @@ export function useRecordPage(resources: any) {
       await refetchCached(docResource, recordKey, doctype.value)
     },
     router,
+    childFields: (childDoctype: string) => metas.value[childDoctype]?.fields,
     sourcesReady: () => pageScripts.ready,
   })
 
   // Field events are dispatched where the edit happens, so a paint — which
   // replaces the whole document — fires nothing and needs no flag to suppress.
   const commits = createCommitChannel({
-    dispatch: (event) => pageController.fireEvent(event),
+    dispatch: (event, row) => pageController.fireEvent(event, row),
   })
 
   let lastPainted: any = null
