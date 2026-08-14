@@ -32,3 +32,21 @@ separated only by a section name the sidebar editor can rename or delete.
 
 Both changes land in frappe, deepening frontend2's existing dependency on a frappe branch
 carrying `Navigation`, `SavedViews` and `IconPicker`.
+
+## Amendment (2026-08-14) — the `applyMetaScript` seam no longer exists
+
+The "imperative behaviour feeds the framework's existing `applyMetaScript` seam as
+`MetaOp[]`" clause above is **historical**. `applyMetaScript`, `useScriptedLayout` and
+`useDoctypeLayout` were deleted from `@framework/ui` — they had no caller in any app, and
+`setFieldProperty`'s open, camelCase, pre-`resolveLayout` patch was a competing design to
+the enumerated field-property override the Page Script tier now uses.
+
+Imperative behaviour still stays host-owned; only the seam changed. A field property
+override is now plain data on the layout node (`FieldNode.override`, limited to `hidden` /
+`readOnly` / `reqd`), threaded in through `joinLayout`'s options and applied last by
+`resolveFieldConditionals` — after the `depends_on` family, so an override can beat a
+conditional expression, and never over a permlevel denial. The rest of the decision — layout
+arrangement in the framework Form Layout doctype — stands unchanged.
+
+The paragraph under *Consequences* about `useScriptedLayout`'s docstring is moot: the module
+is gone.
