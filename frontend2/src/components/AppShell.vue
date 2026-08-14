@@ -157,9 +157,10 @@
     <SettingsDialog />
     <PageScriptEditorDialog
       v-model="editingScripts"
+      v-model:dt="scriptedDoctype"
       v-model:script="editedScript"
-      :dt="scriptedDoctype"
       :replaysOn="replaysOn"
+      :record="record"
     />
     <AboutDialog v-model="showAbout" />
   </DesktopShell>
@@ -295,6 +296,11 @@ const replaysOn = computed(() =>
     ? (route.params.id as string) || undefined
     : undefined,
 )
+
+// The same record whatever doctype the editor is showing. Switching the header's
+// doctype crumb (ticket 37) empties `replaysOn`, and the editor needs this to
+// withdraw the replay claim out loud rather than going quiet about it.
+const record = computed(() => (route.params.id as string) || undefined)
 
 onMounted(() => window.addEventListener('keydown', onKeydown))
 

@@ -11,7 +11,16 @@ export function usePageScriptsDialog() {
     },
   })
 
-  const doctype = computed(() => dialog.segments.value[0] ?? '')
+  // The editor's own doctype crumb switches this (ticket 37), and switching it
+  // is exactly what `#page-scripts/<doctype>` already addresses — so a pick
+  // rewrites the hash and the script segment goes with the doctype it belonged
+  // to, rather than pointing at a script the new doctype has never heard of.
+  const doctype = computed({
+    get: () => dialog.segments.value[0] ?? '',
+    set: (value) => {
+      if (value) dialog.write(value)
+    },
+  })
 
   // The editor corrects a name it cannot find, so this is written back to as
   // often as it is read from.
