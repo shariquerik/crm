@@ -4,6 +4,7 @@
     <FormLayout
       v-if="layout.length"
       v-model:doc="doc"
+      v-model:tab="tab"
       :layout="layout"
       :class="formClasses"
     />
@@ -31,6 +32,10 @@ import type { TabProps } from '@/data/tabTypes'
 
 const props = defineProps<Omit<TabProps, 'doc'>>()
 const doc = defineModel<Record<string, any>>('doc', { required: true })
+
+// Passed straight through to the form's own strip: this tab is rebuilt on every
+// save, so the reader's place is held one level up, by `RecordTabs`.
+const tab = defineModel<string>('tab', { default: '' })
 
 const formClasses = [
   '!rounded-none !border-0',

@@ -22,6 +22,7 @@
         :docinfo="docinfo"
         :feeds="feeds"
         :layout="layout"
+        v-bind="formTabModel"
       />
     </template>
   </Tabs>
@@ -65,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, watch } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Skeleton, Tabs } from 'frappe-ui'
 import type { TabItem } from '@framework/ui/experimental'
@@ -120,6 +121,29 @@ function scriptProps(item: TabItem) {
   const { page: _claimed, ...rest } = item.props ?? {}
   return rest
 }
+
+// The tab the reader chose *inside* the form, by identity. It lives here because
+// the panel below is torn down and rebuilt on every save, and this component
+// survives that — a ref in `DetailsTab` would be reborn as empty every time.
+// It resets per record: a remembered identity is a coordinate in one record's
+// layout, and carrying it across records lands the reader somewhere they never
+// chose.
+const formTab = ref('')
+watch(
+  () => `${props.doctype}/${props.docname}`,
+  () => (formTab.value = ''),
+)
+
+// Bound only on the details tab; every other tab would take `tab` as a stray
+// fallthrough attribute.
+const formTabModel = computed(() =>
+  current.value?.type === 'details'
+    ? {
+        tab: formTab.value,
+        'onUpdate:tab': (identity: string) => (formTab.value = identity),
+      }
+    : {},
+)
 
 const tabIndex = computed({
   get: () => tabs.value.indexOf(current.value),
