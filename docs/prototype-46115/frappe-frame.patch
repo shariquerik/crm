@@ -1,5 +1,5 @@
 diff --git a/frontend/src/shell/StandingWindowFrame.vue b/frontend/src/shell/StandingWindowFrame.vue
-index 3f2a4768af..2d6181f053 100644
+index 3f2a4768af..b4a800c6ed 100644
 --- a/frontend/src/shell/StandingWindowFrame.vue
 +++ b/frontend/src/shell/StandingWindowFrame.vue
 @@ -3,6 +3,7 @@
@@ -34,7 +34,7 @@ index 3f2a4768af..2d6181f053 100644
  					<span
  						v-if="entry.icon"
  						class="size-4 shrink-0 text-ink-gray-5"
-@@ -70,15 +79,20 @@
+@@ -70,15 +79,24 @@
  				</div>
  			</template>
  
@@ -51,13 +51,17 @@ index 3f2a4768af..2d6181f053 100644
  		v-show="entry.state === 'minimised'"
 -		class="pointer-events-auto flex h-10 max-w-[400px] cursor-pointer items-center gap-2 rounded-full border border-outline-gray-2 bg-surface-elevation-1 pl-3.5 pr-1.5 shadow-2xl"
 +		class="pointer-events-auto flex h-10 max-w-[400px] cursor-pointer items-center gap-2 rounded-full border bg-surface-elevation-1 pl-3.5 shadow-2xl"
-+		:class="[entry.actions.length ? 'pr-1.5' : 'pr-3.5', LOOK_CLASS[proto.look]]"
++		:class="[
++			entry.actions.length ? 'pr-1.5' : 'pr-3.5',
++			LOOK_CLASS[proto.look],
++			{ 'standing-attention': entry.attention && proto.motion === 'on' },
++		]"
 +		:data-theme="proto.look === '4' ? 'dark' : undefined"
 +		:style="lookBg"
  		:data-standing-minimised="entry.app"
  		@click="restore"
  	>
-@@ -92,7 +106,7 @@
+@@ -92,7 +110,7 @@
  			<button
  				ref="restoreButton"
  				type="button"
@@ -66,7 +70,7 @@ index 3f2a4768af..2d6181f053 100644
  				:aria-label="__('Restore {0}', [entry.title])"
  				data-standing-restore
  			>
-@@ -113,12 +127,13 @@
+@@ -113,12 +131,13 @@
  			/>
  		</div>
  	</div>
@@ -81,7 +85,7 @@ index 3f2a4768af..2d6181f053 100644
  import { Button, Tooltip } from "frappe-ui";
  import { FloatingWindow } from "frappe-ui/experimental";
  import { __ } from "@/i18n";
-@@ -129,6 +144,39 @@ const props = defineProps<{ entry: StandingWindow; shell: Shell; maxHeight: numb
+@@ -129,6 +148,39 @@ const props = defineProps<{ entry: StandingWindow; shell: Shell; maxHeight: numb
  
  const DIVIDER_WIDTH = 280;
  
@@ -120,4 +124,62 @@ index 3f2a4768af..2d6181f053 100644
 +
  const titleId = `standing-window-title-${props.entry.app}`;
  const restoreButton = ref<HTMLButtonElement | null>(null);
+ 
+@@ -160,3 +212,20 @@ async function run(action: StandingWindowAction) {
+ 	}
+ }
+ </script>
++
++<style>
++/* PROTOTYPE (#46115): the same soft ring as CRM's ringing avatar. */
++@media (prefers-reduced-motion: no-preference) {
++	.standing-attention {
++		animation: standing-attention 1.6s ease-out infinite;
++	}
++}
++@keyframes standing-attention {
++	from {
++		box-shadow: 0 0 0 0 var(--outline-gray-3), var(--tw-shadow);
++	}
++	to {
++		box-shadow: 0 0 0 10px transparent, var(--tw-shadow);
++	}
++}
++</style>
+diff --git a/frontend/src/shell/standingWindows.ts b/frontend/src/shell/standingWindows.ts
+index 1451fe2ab1..65be71a02b 100644
+--- a/frontend/src/shell/standingWindows.ts
++++ b/frontend/src/shell/standingWindows.ts
+@@ -31,6 +31,8 @@ export interface StandingWindowHandle {
+ 	setActions(actions: StandingWindowAction[]): void;
+ 	/** Whether the frame offers close; true until set. */
+ 	setClosable(closable: boolean): void;
++	/** PROTOTYPE (#46115): the pill pulses while something waits on the user. */
++	setAttention(attention: boolean): void;
+ }
+ 
+ /** One app's window as the row draws it. */
+@@ -43,6 +45,7 @@ export interface StandingWindow {
+ 	title: string;
+ 	actions: StandingWindowAction[];
+ 	closable: boolean;
++	attention: boolean;
+ 	handle: StandingWindowHandle;
+ }
+ 
+@@ -73,6 +76,7 @@ export function attachWindow(
+ 		title,
+ 		actions: [],
+ 		closable: true,
++		attention: false,
+ 	}) as unknown as StandingWindow;
+ 	entry.handle = handleFor(entry, title);
+ 	const rank = order.indexOf(app);
+@@ -97,6 +101,7 @@ function handleFor(entry: StandingWindow, appTitle: string): StandingWindowHandl
+ 			entry.actions = actions.slice(0, MAX_ACTIONS).map((action) => markRaw({ ...action }));
+ 		},
+ 		setClosable: (closable: boolean) => void (entry.closable = Boolean(closable)),
++		setAttention: (attention: boolean) => void (entry.attention = Boolean(attention)),
+ 	});
+ }
  

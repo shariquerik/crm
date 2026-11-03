@@ -72,17 +72,8 @@
     >
       {{ clock }}
     </div>
-    <TransitionGroup
-      tag="div"
-      class="flex items-center justify-center"
-      :class="roomy ? 'gap-3' : 'gap-2'"
-      :css="proto.motion === 'on'"
-      enter-active-class="overflow-hidden transition-all duration-200 ease-out motion-reduce:transition-none"
-      :enter-from-class="collapsed"
-      leave-active-class="overflow-hidden transition-all duration-200 ease-in motion-reduce:transition-none"
-      :leave-to-class="collapsed"
-    >
-      <div v-for="a in cardButtons" :key="a.label" class="w-9">
+    <div class="flex items-center justify-center" :class="roomy ? 'gap-3' : 'gap-2'">
+      <div v-for="a in cardButtons" :key="a.label">
       <Tooltip :text="a.label">
         <Button
           class="!size-9 !rounded-full"
@@ -95,7 +86,7 @@
         />
       </Tooltip>
       </div>
-    </TransitionGroup>
+    </div>
   </div>
 
   <!-- The prototype's own bar, not part of the design under review. -->
@@ -161,8 +152,6 @@ const width = Number(url.get('w')) || 240
 // The frame reads the same object (prototype patch in StandingWindowFrame.vue).
 const proto = (window.__p46115 ??= reactive({ look: url.get('look') || '1', space: url.get('space') || 'roomy', motion: url.get('motion') || 'on' }))
 const ringing = computed(() => s.step === 'incoming' || s.step === 'ringing')
-// A button leaving or arriving takes its width and its gap with it, so the row re-centres smoothly.
-const collapsed = computed(() => `!w-0 scale-75 opacity-0 ${roomy.value ? '-mr-3' : '-mr-2'}`)
 const roomy = computed(() => proto.space === 'roomy')
 const s = reactive({
   variant: url.get('variant') || 'C',
@@ -262,6 +251,7 @@ watchEffect(() => {
   )
   props.window.setActions(frameActions.value)
   props.window.setClosable(closable.value)
+  props.window.setAttention(ringing.value)
 })
 watch(
   () => [s.variant, s.medium, s.step, s.known, s.pillTime, proto.look, proto.space, proto.motion],
