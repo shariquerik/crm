@@ -53,9 +53,9 @@
   </div>
 
   <!-- C: a phone card; round buttons in the content, frame actions only on the pill. -->
-  <div v-else class="flex flex-col items-center gap-3 pt-1 text-center">
+  <div v-else class="flex flex-col items-center text-center" :class="roomy ? 'gap-4 pb-1 pt-2' : 'gap-3 pt-1'">
     <Avatar :label="contact.name || '#'" size="3xl" shape="circle" />
-    <div class="flex min-w-0 max-w-full flex-col gap-1">
+    <div class="flex min-w-0 max-w-full flex-col" :class="roomy ? 'gap-1.5' : 'gap-1'">
       <div class="truncate text-lg font-medium text-ink-gray-8">
         {{ contact.name || contact.number }}
       </div>
@@ -66,10 +66,11 @@
     <div v-if="s.step === 'oncall' || s.step === 'ended'" class="text-base tabular-nums text-ink-gray-7">
       {{ clock }}
     </div>
-    <div class="flex items-center justify-center gap-2">
+    <div class="flex items-center justify-center" :class="roomy ? 'gap-3' : 'gap-2'">
       <Tooltip v-for="a in cardButtons" :key="a.label" :text="a.label">
         <Button
           class="!size-9 !rounded-full"
+          :class="proto.look === '3' && !a.theme ? '!bg-surface-white shadow-sm hover:!bg-surface-gray-2' : ''"
           :icon="a.icon"
           :label="a.label"
           :variant="a.theme ? 'solid' : 'subtle'"
@@ -112,6 +113,29 @@
         <span class="opacity-40">|</span>
         <button @click="s.pillTime = !s.pillTime">pill: {{ s.pillTime ? 'name · time' : 'name' }}</button>
         <button @click="go({ known: !s.known })">{{ s.known ? 'known' : 'unknown' }}</button>
+        <span class="opacity-40">|</span>
+        look
+        <button
+          v-for="(label, k) in LOOKS"
+          :key="k"
+          :class="proto.look === k ? 'underline' : 'opacity-60'"
+          @click="proto.look = k"
+        >
+          {{ k }} {{ label }}
+        </button>
+        <span class="opacity-40">|</span>
+        <button @click="proto.space = roomy ? 'tight' : 'roomy'">space: {{ proto.space }}</button>
+        <span class="opacity-40">|</span>
+        w
+        <button
+          v-for="px in WIDTHS"
+          :key="px"
+          :class="width === px ? 'underline' : 'opacity-60'"
+          @click="reloadWidth(px)"
+        >
+          {{ px }}
+        </button>
+        <span class="opacity-40">|</span>
         <button @click="win.state === 'open' ? win.minimise() : win.open()">
           {{ win.state }}
         </button>
@@ -138,6 +162,12 @@ const VARIANTS = { A: 'Frame actions', B: 'Footer buttons', C: 'Phone card' }
 const LEAD = { doctype: 'CRM Lead', name: 'CRM-LEAD-2026-00002', label: 'Lead' }
 
 const url = new URLSearchParams(location.search)
+const LOOKS = { 1: 'white', 2: 'gray-3 border', 3: 'gray body', 4: 'dark' }
+const WIDTHS = [240, 260, 280]
+const width = Number(url.get('w')) || 240
+// The frame reads the same object (prototype patch in StandingWindowFrame.vue).
+const proto = (window.__p46115 ??= reactive({ look: url.get('look') || '1', space: url.get('space') || 'tight' }))
+const roomy = computed(() => proto.space === 'roomy')
 const s = reactive({
   variant: url.get('variant') || 'A',
   medium: url.get('medium') || 'Twilio',
@@ -238,10 +268,10 @@ watchEffect(() => {
   props.window.setClosable(closable.value)
 })
 watch(
-  () => [s.variant, s.medium, s.step, s.known, s.pillTime],
+  () => [s.variant, s.medium, s.step, s.known, s.pillTime, proto.look, proto.space],
   () => {
     const q = new URLSearchParams(location.search)
-    Object.entries({ variant: s.variant, medium: s.medium, step: s.step, known: s.known ? 1 : 0, pill: s.pillTime ? 1 : 0 }).forEach(
+    Object.entries({ variant: s.variant, medium: s.medium, step: s.step, known: s.known ? 1 : 0, pill: s.pillTime ? 1 : 0, look: proto.look, space: proto.space }).forEach(
       ([k, v]) => q.set(k, v),
     )
     history.replaceState(history.state, '', `${location.pathname}?${q}${location.hash}`)
@@ -252,6 +282,12 @@ function go(patch) {
   Object.assign(s, patch)
   if (patch.step === 'oncall' || patch.step === 'ringing' || patch.step === 'incoming') s.muted = false
   props.window.open()
+}
+// The width is fixed when the window attaches, so a new width is a reload with ?w=.
+function reloadWidth(px) {
+  const q = new URLSearchParams(location.search)
+  q.set('w', px)
+  location.search = q
 }
 function choose(medium) {
   go({ medium, step: 'ringing' })

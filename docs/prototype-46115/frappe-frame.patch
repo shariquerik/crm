@@ -1,18 +1,47 @@
 diff --git a/frontend/src/shell/StandingWindowFrame.vue b/frontend/src/shell/StandingWindowFrame.vue
-index 3f2a4768af..2daa31736f 100644
+index 3f2a4768af..0cae580589 100644
 --- a/frontend/src/shell/StandingWindowFrame.vue
 +++ b/frontend/src/shell/StandingWindowFrame.vue
-@@ -78,7 +78,8 @@
+@@ -10,12 +10,14 @@
+ 			role="dialog"
+ 			aria-modal="false"
+ 			:aria-labelledby="titleId"
+-			class="border border-outline-gray-2 shadow-2xl"
+-			:style="{ width: `${entry.width}px`, maxHeight: `${maxHeight}px` }"
++			class="border shadow-2xl"
++			:class="LOOK_CLASS[proto.look]"
++			:data-theme="proto.look === '4' ? 'dark' : undefined"
++			:style="{ width: `${entry.width}px`, maxHeight: `${maxHeight}px`, ...lookBg }"
+ 			:data-standing-window="entry.app"
+ 		>
+ 			<template #header>
+-				<div class="flex shrink-0 items-center gap-2 px-3 pt-3">
++				<div class="flex shrink-0 items-center gap-2" :class="roomy ? 'px-4 pt-4' : 'px-3 pt-3'">
+ 					<span
+ 						v-if="entry.icon"
+ 						class="size-4 shrink-0 text-ink-gray-5"
+@@ -70,7 +72,7 @@
+ 				</div>
+ 			</template>
+ 
+-			<div class="p-3">
++			<div :class="roomy ? 'p-4' : 'p-3'">
+ 				<component :is="entry.component" :shell="shell" :window="entry.handle" />
+ 			</div>
+ 		</FloatingWindow>
+@@ -78,7 +80,10 @@
  
  	<div
  		v-show="entry.state === 'minimised'"
 -		class="pointer-events-auto flex h-10 max-w-[400px] cursor-pointer items-center gap-2 rounded-full border border-outline-gray-2 bg-surface-elevation-1 pl-3.5 pr-1.5 shadow-2xl"
-+		class="pointer-events-auto flex h-10 max-w-[400px] cursor-pointer items-center gap-2 rounded-full border border-outline-gray-2 bg-surface-elevation-1 pl-3.5 shadow-2xl"
-+		:class="entry.actions.length ? 'pr-1.5' : 'pr-3.5'"
++		class="pointer-events-auto flex h-10 max-w-[400px] cursor-pointer items-center gap-2 rounded-full border bg-surface-elevation-1 pl-3.5 shadow-2xl"
++		:class="[entry.actions.length ? 'pr-1.5' : 'pr-3.5', LOOK_CLASS[proto.look]]"
++		:data-theme="proto.look === '4' ? 'dark' : undefined"
++		:style="lookBg"
  		:data-standing-minimised="entry.app"
  		@click="restore"
  	>
-@@ -92,7 +93,7 @@
+@@ -92,7 +97,7 @@
  			<button
  				ref="restoreButton"
  				type="button"
@@ -21,3 +50,44 @@ index 3f2a4768af..2daa31736f 100644
  				:aria-label="__('Restore {0}', [entry.title])"
  				data-standing-restore
  			>
+@@ -118,7 +123,7 @@
+ </template>
+ 
+ <script setup lang="ts">
+-import { nextTick, ref } from "vue";
++import { computed, nextTick, reactive, ref } from "vue";
+ import { Button, Tooltip } from "frappe-ui";
+ import { FloatingWindow } from "frappe-ui/experimental";
+ import { __ } from "@/i18n";
+@@ -129,6 +134,31 @@ const props = defineProps<{ entry: StandingWindow; shell: Shell; maxHeight: numb
+ 
+ const DIVIDER_WIDTH = 280;
+ 
++// PROTOTYPE (#46115): the look switch from CRM's prototype bar; never merge.
++const LOOK_CLASS: Record<string, string> = {
++	"1": "border-outline-gray-2",
++	"2": "border-outline-gray-3",
++	"3": "border-outline-gray-2 !bg-surface-gray-1",
++	"4": "border-outline-gray-3",
++};
++const w = window as unknown as { __p46115?: { look: string } };
++const q = new URLSearchParams(location.search);
++const proto = (w.__p46115 ??= reactive({
++	look: q.get("look") || "1",
++	space: q.get("space") || "tight",
++	theme: document.documentElement.dataset.theme || "light",
++}));
++new MutationObserver(() => (proto.theme = document.documentElement.dataset.theme || "light")).observe(
++	document.documentElement,
++	{ attributes: true, attributeFilter: ["data-theme"] },
++);
++const roomy = computed(() => proto.space === "roomy");
++// Light desk: light theme's gray-10 (near black). Dark desk keeps its own dark surface.
++const LIGHT_GRAY_10 = "oklch(0.205 0 0)";
++const lookBg = computed(() =>
++	proto.look === "4" && proto.theme !== "dark" ? { background: LIGHT_GRAY_10 } : {},
++);
++
+ const titleId = `standing-window-title-${props.entry.app}`;
+ const restoreButton = ref<HTMLButtonElement | null>(null);
+ 
