@@ -9,17 +9,18 @@ const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, d
 await ctx.addCookies([{ name: "sid", value: sid, domain: "desk.localhost", path: "/" }]);
 const page = await ctx.newPage();
 const cells = [];
+const pad = async (p) => { const b = await p.locator("[data-standing-row]").boundingBox(); return { x: b.x - 20, y: b.y - 20, width: b.width + 40, height: b.height + 40 }; };
 for (const v of variants.split(",")) for (const st of steps.split(",")) {
   await page.goto(`http://desk.localhost:8115/apps/crm/crm-lead?variant=${v}&medium=${medium}&step=${st}&known=${known}`);
   await page.waitForSelector("[data-standing-window]", { timeout: 30000 });
   await page.waitForTimeout(700);
-  const open = (await page.locator("[data-standing-row]").screenshot()).toString("base64");
+  const open = (await page.screenshot({ clip: await pad(page) })).toString("base64");
   let pill = "";
   if (st !== "picker") {
     await page.click("[data-standing-minimise]");
     await page.evaluate(() => document.activeElement?.blur());
     await page.waitForTimeout(400);
-    pill = (await page.locator("[data-standing-row]").screenshot()).toString("base64");
+    pill = (await page.screenshot({ clip: await pad(page) })).toString("base64");
   }
   cells.push({ v, st, open, pill });
 }

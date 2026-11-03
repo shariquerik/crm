@@ -1,0 +1,23 @@
+diff --git a/frontend/src/shell/StandingWindowFrame.vue b/frontend/src/shell/StandingWindowFrame.vue
+index 3f2a4768af..2daa31736f 100644
+--- a/frontend/src/shell/StandingWindowFrame.vue
++++ b/frontend/src/shell/StandingWindowFrame.vue
+@@ -78,7 +78,8 @@
+ 
+ 	<div
+ 		v-show="entry.state === 'minimised'"
+-		class="pointer-events-auto flex h-10 max-w-[400px] cursor-pointer items-center gap-2 rounded-full border border-outline-gray-2 bg-surface-elevation-1 pl-3.5 pr-1.5 shadow-2xl"
++		class="pointer-events-auto flex h-10 max-w-[400px] cursor-pointer items-center gap-2 rounded-full border border-outline-gray-2 bg-surface-elevation-1 pl-3.5 shadow-2xl"
++		:class="entry.actions.length ? 'pr-1.5' : 'pr-3.5'"
+ 		:data-standing-minimised="entry.app"
+ 		@click="restore"
+ 	>
+@@ -92,7 +93,7 @@
+ 			<button
+ 				ref="restoreButton"
+ 				type="button"
+-				class="min-w-0 truncate rounded-2 text-base font-medium text-ink-gray-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
++				class="min-w-0 truncate rounded-2 text-base font-medium tabular-nums [font-kerning:none] text-ink-gray-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-outline-gray-3"
+ 				:aria-label="__('Restore {0}', [entry.title])"
+ 				data-standing-restore
+ 			>

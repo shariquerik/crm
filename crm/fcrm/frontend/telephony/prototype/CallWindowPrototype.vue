@@ -63,9 +63,8 @@
         {{ contact.name ? contact.number : contact.record?.doctype || __('Unknown number') }}
       </div>
     </div>
-    <div
-      class="text-base tabular-nums text-ink-gray-7">
-      {{ statusText }}
+    <div v-if="s.step === 'oncall' || s.step === 'ended'" class="text-base tabular-nums text-ink-gray-7">
+      {{ clock }}
     </div>
     <div class="flex items-center justify-center gap-2">
       <Tooltip v-for="a in cardButtons" :key="a.label" :text="a.label">
@@ -226,9 +225,14 @@ const closable = computed(() => s.step === 'picker' || s.step === 'ended')
 
 watchEffect(() => {
   const short = { incoming: __('Incoming'), ringing: __('Calling…'), oncall: clock.value, ended: __('Ended') }
-  const pill = s.pillTime && props.window.state === 'minimised' && short[s.step]
+  const minimised = props.window.state === 'minimised'
+  const pill = s.pillTime && minimised && short[s.step]
+  // C: the card shows the name, so the open frame's title is the call's state.
+  const state = { incoming: __('Incoming call'), ringing: twilio.value ? __('Calling…') : __('Ringing your phone…'), oncall: __('On call'), ended: __('Call ended') }
   props.window.setTitle(
-    s.step === 'picker' ? `${__('Call')} ${title.value}` : pill ? `${title.value} · ${pill}` : title.value,
+    s.step === 'picker' ? `${__('Call')} ${title.value}`
+      : s.variant === 'C' && !minimised ? state[s.step]
+      : pill ? `${title.value} · ${pill}` : title.value,
   )
   props.window.setActions(frameActions.value)
   props.window.setClosable(closable.value)
