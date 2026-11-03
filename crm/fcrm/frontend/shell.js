@@ -8,6 +8,6 @@ const RELOAD_FIELDS = ['enable_forecasting', 'currency']
 
 export function setup(shell) {
 	shell.afterSave('FCRM Settings', (saved) => askReload(saved, RELOAD_FIELDS))
-	const width = Number(new URLSearchParams(location.search).get('w')) || 240
+	const width = Number(new URLSearchParams(location.search).get('w')) || 260
 	shell.window(CallWindowPrototype, { icon: 'lucide-phone', width })?.open()
 }

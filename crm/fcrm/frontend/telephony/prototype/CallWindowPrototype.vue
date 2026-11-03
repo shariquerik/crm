@@ -54,7 +54,9 @@
 
   <!-- C: a phone card; round buttons in the content, frame actions only on the pill. -->
   <div v-else class="flex flex-col items-center text-center" :class="roomy ? 'gap-4 pb-1 pt-2' : 'gap-3 pt-1'">
-    <Avatar :label="contact.name || '#'" size="3xl" shape="circle" />
+    <div class="rounded-full" :class="{ 'p46115-ring': ringing && proto.motion === 'on' }">
+      <Avatar :label="contact.name || '#'" size="3xl" shape="circle" />
+    </div>
     <div class="flex min-w-0 max-w-full flex-col" :class="roomy ? 'gap-1.5' : 'gap-1'">
       <div class="truncate text-lg font-medium text-ink-gray-8">
         {{ contact.name || contact.number }}
@@ -63,11 +65,25 @@
         {{ contact.name ? contact.number : contact.record?.doctype || __('Unknown number') }}
       </div>
     </div>
-    <div v-if="s.step === 'oncall' || s.step === 'ended'" class="text-base tabular-nums text-ink-gray-7">
+    <div
+      v-if="s.step === 'oncall' || s.step === 'ended'"
+      class="text-base tabular-nums transition-colors duration-300"
+      :class="s.step === 'ended' ? 'text-ink-gray-5' : 'text-ink-gray-7'"
+    >
       {{ clock }}
     </div>
-    <div class="flex items-center justify-center" :class="roomy ? 'gap-3' : 'gap-2'">
-      <Tooltip v-for="a in cardButtons" :key="a.label" :text="a.label">
+    <TransitionGroup
+      tag="div"
+      class="flex items-center justify-center"
+      :class="roomy ? 'gap-3' : 'gap-2'"
+      :css="proto.motion === 'on'"
+      enter-active-class="overflow-hidden transition-all duration-200 ease-out motion-reduce:transition-none"
+      :enter-from-class="collapsed"
+      leave-active-class="overflow-hidden transition-all duration-200 ease-in motion-reduce:transition-none"
+      :leave-to-class="collapsed"
+    >
+      <div v-for="a in cardButtons" :key="a.label" class="w-9">
+      <Tooltip :text="a.label">
         <Button
           class="!size-9 !rounded-full"
           :class="proto.look === '3' && !a.theme ? '!bg-surface-white shadow-sm hover:!bg-surface-gray-2' : ''"
@@ -78,7 +94,8 @@
           @click="a.run"
         />
       </Tooltip>
-    </div>
+      </div>
+    </TransitionGroup>
   </div>
 
   <!-- The prototype's own bar, not part of the design under review. -->
@@ -89,10 +106,6 @@
       data-prototype-bar
     >
       <div class="flex items-center gap-2">
-        <button class="px-1" @click="cycle(-1)">←</button>
-        <b>{{ s.variant }} ({{ VARIANTS[s.variant] }})</b>
-        <button class="px-1" @click="cycle(1)">→</button>
-        <span class="opacity-40">|</span>
         <button
           v-for="m in MEDIA"
           :key="m"
@@ -114,27 +127,7 @@
         <button @click="s.pillTime = !s.pillTime">pill: {{ s.pillTime ? 'name · time' : 'name' }}</button>
         <button @click="go({ known: !s.known })">{{ s.known ? 'known' : 'unknown' }}</button>
         <span class="opacity-40">|</span>
-        look
-        <button
-          v-for="(label, k) in LOOKS"
-          :key="k"
-          :class="proto.look === k ? 'underline' : 'opacity-60'"
-          @click="proto.look = k"
-        >
-          {{ k }} {{ label }}
-        </button>
-        <span class="opacity-40">|</span>
-        <button @click="proto.space = roomy ? 'tight' : 'roomy'">space: {{ proto.space }}</button>
-        <span class="opacity-40">|</span>
-        w
-        <button
-          v-for="px in WIDTHS"
-          :key="px"
-          :class="width === px ? 'underline' : 'opacity-60'"
-          @click="reloadWidth(px)"
-        >
-          {{ px }}
-        </button>
+        <button @click="proto.motion = proto.motion === 'on' ? 'off' : 'on'">motion: {{ proto.motion }}</button>
         <span class="opacity-40">|</span>
         <button @click="win.state === 'open' ? win.minimise() : win.open()">
           {{ win.state }}
@@ -162,14 +155,17 @@ const VARIANTS = { A: 'Frame actions', B: 'Footer buttons', C: 'Phone card' }
 const LEAD = { doctype: 'CRM Lead', name: 'CRM-LEAD-2026-00002', label: 'Lead' }
 
 const url = new URLSearchParams(location.search)
-const LOOKS = { 1: 'white', 2: 'gray-3 border', 3: 'gray body', 4: 'dark' }
+const LOOKS = { 1: 'white', 2: 'gray-3 border', 3: 'gray body', 4: 'dark', 5: 'shadow only', 6: 'gray header' }
 const WIDTHS = [240, 260, 280]
 const width = Number(url.get('w')) || 240
 // The frame reads the same object (prototype patch in StandingWindowFrame.vue).
-const proto = (window.__p46115 ??= reactive({ look: url.get('look') || '1', space: url.get('space') || 'tight' }))
+const proto = (window.__p46115 ??= reactive({ look: url.get('look') || '1', space: url.get('space') || 'roomy', motion: url.get('motion') || 'on' }))
+const ringing = computed(() => s.step === 'incoming' || s.step === 'ringing')
+// A button leaving or arriving takes its width and its gap with it, so the row re-centres smoothly.
+const collapsed = computed(() => `!w-0 scale-75 opacity-0 ${roomy.value ? '-mr-3' : '-mr-2'}`)
 const roomy = computed(() => proto.space === 'roomy')
 const s = reactive({
-  variant: url.get('variant') || 'A',
+  variant: url.get('variant') || 'C',
   medium: url.get('medium') || 'Twilio',
   step: url.get('step') || 'oncall',
   known: url.get('known') !== '0',
@@ -268,10 +264,10 @@ watchEffect(() => {
   props.window.setClosable(closable.value)
 })
 watch(
-  () => [s.variant, s.medium, s.step, s.known, s.pillTime, proto.look, proto.space],
+  () => [s.variant, s.medium, s.step, s.known, s.pillTime, proto.look, proto.space, proto.motion],
   () => {
     const q = new URLSearchParams(location.search)
-    Object.entries({ variant: s.variant, medium: s.medium, step: s.step, known: s.known ? 1 : 0, pill: s.pillTime ? 1 : 0, look: proto.look, space: proto.space }).forEach(
+    Object.entries({ variant: s.variant, medium: s.medium, step: s.step, known: s.known ? 1 : 0, pill: s.pillTime ? 1 : 0, look: proto.look, space: proto.space, motion: proto.motion }).forEach(
       ([k, v]) => q.set(k, v),
     )
     history.replaceState(history.state, '', `${location.pathname}?${q}${location.hash}`)
@@ -332,3 +328,20 @@ const ContactRow = defineComponent({
     ]),
 })
 </script>
+
+<style>
+/* PROTOTYPE (#46115): a soft gray ring while the call rings. */
+@media (prefers-reduced-motion: no-preference) {
+  .p46115-ring {
+    animation: p46115-ring 1.6s ease-out infinite;
+  }
+}
+@keyframes p46115-ring {
+  from {
+    box-shadow: 0 0 0 0 var(--outline-gray-3);
+  }
+  to {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+</style>

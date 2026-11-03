@@ -1,8 +1,16 @@
 diff --git a/frontend/src/shell/StandingWindowFrame.vue b/frontend/src/shell/StandingWindowFrame.vue
-index 3f2a4768af..0cae580589 100644
+index 3f2a4768af..2d6181f053 100644
 --- a/frontend/src/shell/StandingWindowFrame.vue
 +++ b/frontend/src/shell/StandingWindowFrame.vue
-@@ -10,12 +10,14 @@
+@@ -3,6 +3,7 @@
+   stays mounted in the frame's body whatever the state, so hiding is `v-show`, never `v-if`.
+ -->
+ <template>
++	<Transition :css="proto.motion === 'on'" v-bind="ENTER">
+ 	<div v-show="entry.state === 'open'" class="pointer-events-auto">
+ 		<FloatingWindow
+ 			mode="docked"
+@@ -10,12 +11,20 @@
  			role="dialog"
  			aria-modal="false"
  			:aria-labelledby="titleId"
@@ -16,11 +24,17 @@ index 3f2a4768af..0cae580589 100644
  		>
  			<template #header>
 -				<div class="flex shrink-0 items-center gap-2 px-3 pt-3">
-+				<div class="flex shrink-0 items-center gap-2" :class="roomy ? 'px-4 pt-4' : 'px-3 pt-3'">
++				<div
++					class="flex shrink-0 items-center gap-2"
++					:class="[
++						roomy ? 'px-4 pt-4' : 'px-3 pt-3',
++						proto.look === '6' ? 'rounded-t-6 border-b border-outline-gray-1 bg-surface-gray-1 pb-3' : '',
++					]"
++				>
  					<span
  						v-if="entry.icon"
  						class="size-4 shrink-0 text-ink-gray-5"
-@@ -70,7 +72,7 @@
+@@ -70,15 +79,20 @@
  				</div>
  			</template>
  
@@ -29,8 +43,10 @@ index 3f2a4768af..0cae580589 100644
  				<component :is="entry.component" :shell="shell" :window="entry.handle" />
  			</div>
  		</FloatingWindow>
-@@ -78,7 +80,10 @@
+ 	</div>
++	</Transition>
  
++	<Transition :css="proto.motion === 'on'" v-bind="ENTER">
  	<div
  		v-show="entry.state === 'minimised'"
 -		class="pointer-events-auto flex h-10 max-w-[400px] cursor-pointer items-center gap-2 rounded-full border border-outline-gray-2 bg-surface-elevation-1 pl-3.5 pr-1.5 shadow-2xl"
@@ -41,7 +57,7 @@ index 3f2a4768af..0cae580589 100644
  		:data-standing-minimised="entry.app"
  		@click="restore"
  	>
-@@ -92,7 +97,7 @@
+@@ -92,7 +106,7 @@
  			<button
  				ref="restoreButton"
  				type="button"
@@ -50,7 +66,13 @@ index 3f2a4768af..0cae580589 100644
  				:aria-label="__('Restore {0}', [entry.title])"
  				data-standing-restore
  			>
-@@ -118,7 +123,7 @@
+@@ -113,12 +127,13 @@
+ 			/>
+ 		</div>
+ 	</div>
++	</Transition>
+ 
+ 	<span class="sr-only" aria-live="polite">{{ entry.state === "open" ? entry.title : "" }}</span>
  </template>
  
  <script setup lang="ts">
@@ -59,7 +81,7 @@ index 3f2a4768af..0cae580589 100644
  import { Button, Tooltip } from "frappe-ui";
  import { FloatingWindow } from "frappe-ui/experimental";
  import { __ } from "@/i18n";
-@@ -129,6 +134,31 @@ const props = defineProps<{ entry: StandingWindow; shell: Shell; maxHeight: numb
+@@ -129,6 +144,39 @@ const props = defineProps<{ entry: StandingWindow; shell: Shell; maxHeight: numb
  
  const DIVIDER_WIDTH = 280;
  
@@ -69,12 +91,15 @@ index 3f2a4768af..0cae580589 100644
 +	"2": "border-outline-gray-3",
 +	"3": "border-outline-gray-2 !bg-surface-gray-1",
 +	"4": "border-outline-gray-3",
++	"5": "border-transparent",
++	"6": "border-outline-gray-2",
 +};
 +const w = window as unknown as { __p46115?: { look: string } };
 +const q = new URLSearchParams(location.search);
 +const proto = (w.__p46115 ??= reactive({
 +	look: q.get("look") || "1",
-+	space: q.get("space") || "tight",
++	space: q.get("space") || "roomy",
++	motion: q.get("motion") || "on",
 +	theme: document.documentElement.dataset.theme || "light",
 +}));
 +new MutationObserver(() => (proto.theme = document.documentElement.dataset.theme || "light")).observe(
@@ -82,6 +107,11 @@ index 3f2a4768af..0cae580589 100644
 +	{ attributes: true, attributeFilter: ["data-theme"] },
 +);
 +const roomy = computed(() => proto.space === "roomy");
++// Enter only: the leaving element hides at once, so the row never holds both.
++const ENTER = {
++	enterActiveClass: "origin-bottom-right transition duration-150 ease-out motion-reduce:transition-none",
++	enterFromClass: "scale-[0.98] opacity-0",
++};
 +// Light desk: light theme's gray-10 (near black). Dark desk keeps its own dark surface.
 +const LIGHT_GRAY_10 = "oklch(0.205 0 0)";
 +const lookBg = computed(() =>
